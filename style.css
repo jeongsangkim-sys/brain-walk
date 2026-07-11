@@ -78,6 +78,9 @@ h2 { font-size: 30px; }
 .game-intro { text-align: center; margin-top: 30px; display: flex; flex-direction: column; gap: 18px; align-items: center; }
 #intro-desc { font-size: 22px; line-height: 1.6; max-width: 480px; }
 .intro-icon { font-size: 72px; animation: bounce 1.2s ease infinite; }
+.intro-img { width: 130px; height: 130px; object-fit: contain; border-radius: 20px; animation: bounce 1.2s ease infinite; }
+.name-img { width: 34px; height: 34px; object-fit: contain; border-radius: 8px; vertical-align: -8px; }
+.credits { margin-top: 26px; font-size: 15px; color: #9a8f7c; letter-spacing: 0.5px; }
 .intro-best { font-size: 20px; color: var(--accent); font-weight: 700; min-height: 26px; }
 @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
@@ -200,6 +203,7 @@ h2 { font-size: 30px; }
 }
 .free-card:active { transform: translateY(2px); }
 .fc-icon { font-size: 40px; }
+.fc-img { width: 80px; height: 80px; object-fit: contain; border-radius: 14px; }
 .fc-name { font-size: 22px; font-weight: 700; color: var(--ink); }
 .fc-best { font-size: 17px; color: #8a7f6d; }
 

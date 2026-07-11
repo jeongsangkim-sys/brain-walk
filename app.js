@@ -30,6 +30,7 @@
 
   const ICONS = { calc: "➕", memory: "👀", stroop: "🎨", trail: "🔗" }; // v1 게임 아이콘 보강
   const icon = g => g.icon || ICONS[g.id] || "🧠";
+  const iconSrc = g => `assets/icons/${g.id}.png`; // 게임별 일러스트 아이콘
 
   // ---------- 저장 ----------
   const store = {
@@ -113,12 +114,14 @@
     const game = session.queue[session.i];
     const lv = levelOf(game.id);
     show("game");
-    $("#game-name").textContent = `${icon(game)} ${game.name} (레벨 ${lv})`;
+    $("#game-name").innerHTML = `<img class="name-img" src="${iconSrc(game)}" alt="" onerror="this.remove()"> ${game.name} (레벨 ${lv})`;
     $("#game-timer").textContent = "";
     $("#timer-fill").style.width = "100%";
     $("#game-area").innerHTML = "";
     $("#game-intro").style.display = "flex";
-    $("#intro-icon").textContent = icon(game);
+    const ii = $("#intro-icon");
+    ii.style.visibility = "visible";
+    ii.src = iconSrc(game);
     $("#intro-title").textContent = game.name;
     $("#intro-desc").textContent = game.intro;
     const b = best()[game.id];
@@ -265,7 +268,7 @@
       const b = document.createElement("button");
       b.className = "free-card";
       const bs = best()[g.id];
-      b.innerHTML = `<span class="fc-icon">${icon(g)}</span><span class="fc-name">${g.name}</span><span class="fc-best">${bs != null ? bs + "점 " + medal(bs) : "미도전"}</span>`;
+      b.innerHTML = `<img class="fc-img" src="${iconSrc(g)}" alt="" onerror="this.outerHTML='<span class=fc-icon>${icon(g)}</span>'"><span class="fc-name">${g.name}</span><span class="fc-best">${bs != null ? bs + "점 " + medal(bs) : "미도전"}</span>`;
       b.onclick = () => startSession("free", [g]);
       list.appendChild(b);
     });
