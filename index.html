@@ -11,23 +11,40 @@
 <!-- 홈 -->
 <section id="screen-home" class="screen active">
   <header class="home-head">
+    <img class="brand-logo" src="assets/aia-logo.png" alt="AIA" onerror="this.style.display='none'">
     <img id="mascot" src="assets/mascot.png" alt="두뇌 산책 마스코트" onerror="this.style.display='none'">
     <h1>두뇌 산책</h1>
     <p id="home-date"></p>
     <p id="home-streak" class="streak"></p>
   </header>
   <nav class="home-menu">
-    <button class="big-btn primary" id="btn-daily">🌞 오늘의 훈련</button>
-    <button class="big-btn accent" id="btn-check">🧠 뇌 나이 체크</button>
-    <button class="big-btn" id="btn-free">🎮 자유 플레이</button>
-    <button class="big-btn" id="btn-stats">📈 기록 보기</button>
+    <button class="menu-btn primary" id="btn-daily">
+      <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg></span>
+      <span class="mt"><b>오늘의 훈련</b><small>매일 3가지 두뇌 게임</small></span>
+      <span class="mc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span>
+    </button>
+    <button class="menu-btn" id="btn-check">
+      <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></span>
+      <span class="mt"><b>뇌 나이 체크</b><small>3가지 과제로 재미있게 측정</small></span>
+      <span class="mc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span>
+    </button>
+    <button class="menu-btn" id="btn-free">
+      <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg></span>
+      <span class="mt"><b>자유 플레이</b><small>원하는 게임을 골라서</small></span>
+      <span class="mc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span>
+    </button>
+    <button class="menu-btn" id="btn-stats">
+      <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 7 13.5 15.5 8.5 10.5 2 18"></path><path d="M16 7h6v6"></path></svg></span>
+      <span class="mt"><b>기록 보기</b><small>도장 달력과 점수 흐름</small></span>
+      <span class="mc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span>
+    </button>
   </nav>
   <div class="toggles">
     <label class="relax-toggle">
-      <input type="checkbox" id="chk-relax"> 여유 모드 (시간 1.5배)
+      <input type="checkbox" id="chk-relax"><span class="tswitch"></span>여유 모드 (시간 1.5배)
     </label>
     <label class="relax-toggle">
-      <input type="checkbox" id="chk-sound" checked> 🔊 소리
+      <input type="checkbox" id="chk-sound" checked><span class="tswitch"></span>소리
     </label>
   </div>
   <footer class="credits">고객총괄본부 상품마케팅팀 제작 · Made by JeongSang</footer>

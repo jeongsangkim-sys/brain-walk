@@ -42,14 +42,15 @@ window.FX = {
   },
   confetti() {
     if (window.SND) SND.fanfare();
-    const EMO = ["🎉", "✨", "⭐", "🎊"];
-    for (let i = 0; i < 26; i++) {
+    // AIA 브랜드 팔레트 색종이 (레드·살몬·퍼플·차콜)
+    const COLORS = ["#D31145", "#F2876B", "#8A6BBC", "#1A1A1A", "#FBA48A", "#B70D3A"];
+    for (let i = 0; i < 30; i++) {
       const s = document.createElement("span");
       s.className = "confetti";
-      s.textContent = EMO[i % 4];
+      s.style.background = COLORS[i % COLORS.length];
       s.style.left = Math.random() * 100 + "vw";
       s.style.animationDelay = Math.random() * 0.6 + "s";
-      s.style.fontSize = 18 + Math.random() * 22 + "px";
+      s.style.transform = `rotate(${Math.random() * 360}deg)`;
       document.body.appendChild(s);
       setTimeout(() => s.remove(), 3000);
     }

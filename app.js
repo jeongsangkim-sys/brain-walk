@@ -114,7 +114,7 @@
     const game = session.queue[session.i];
     const lv = levelOf(game.id);
     show("game");
-    $("#game-name").innerHTML = `<img class="name-img" src="${iconSrc(game)}" alt="" onerror="this.remove()"> ${game.name} (레벨 ${lv})`;
+    $("#game-name").innerHTML = `<img class="name-img" src="${iconSrc(game)}" alt="" onerror="this.remove()"> ${game.name} <span class="lv-chip">Lv.${lv}</span>`;
     $("#game-timer").textContent = "";
     $("#timer-fill").style.width = "100%";
     $("#game-area").innerHTML = "";
@@ -272,7 +272,7 @@
         session.queue.map(g => `${icon(g)} ${g.name}: ${session.results[g.id]}점`).join("<br>") +
         `<br><span class="disclaimer">놀이용 추정치예요. 의료 검사가 아닙니다.</span>`;
       $("#coach-bubble").textContent =
-        prev != null && age < prev ? "젊어졌어요! 산책 효과 제대로네요! 🐾"
+        prev != null && age < prev ? "젊어졌어요! 훈련 효과 제대로네요! 🐾"
           : age <= 35 ? "이 두뇌, 팔팔한데요?"
             : "내일 또 재면 더 젊어질 거예요!";
       if (prev != null && age < prev) FX.confetti();
@@ -338,21 +338,21 @@
     const h = history().slice(-14);
     const cv = $("#chart"), ctx = cv.getContext("2d");
     ctx.clearRect(0, 0, cv.width, cv.height);
-    ctx.font = "14px sans-serif";
-    ctx.fillStyle = "#2B3A55";
+    ctx.font = "14px Manrope, sans-serif";
+    ctx.fillStyle = "#1A1A1A";
     if (h.length === 0) {
       ctx.font = "20px sans-serif";
       ctx.fillText("아직 기록이 없어요. 오늘의 훈련을 시작해 보세요!", 90, 145);
     } else {
       const P = 40, W = cv.width - P * 2, H = cv.height - P * 2;
-      ctx.strokeStyle = "#B9AC97";
+      ctx.strokeStyle = "#DDDDDD";
       ctx.beginPath(); ctx.moveTo(P, P); ctx.lineTo(P, P + H); ctx.lineTo(P + W, P + H); ctx.stroke();
       [0, 50, 100].forEach(v => {
         const y = P + H - (v / 100) * H;
         ctx.fillText(String(v), 10, y + 5);
       });
       const step = h.length > 1 ? W / (h.length - 1) : 0;
-      ctx.strokeStyle = "#E8862E"; ctx.lineWidth = 3;
+      ctx.strokeStyle = "#D31145"; ctx.lineWidth = 3;
       ctx.beginPath();
       h.forEach((r, i) => {
         const x = P + (h.length > 1 ? i * step : W / 2);
@@ -360,14 +360,14 @@
         i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       });
       ctx.stroke();
-      ctx.fillStyle = "#E8862E";
+      ctx.fillStyle = "#D31145";
       h.forEach((r, i) => {
         const x = P + (h.length > 1 ? i * step : W / 2);
         const y = P + H - (r.score / 100) * H;
         ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = "#2B3A55";
+        ctx.fillStyle = "#757575";
         ctx.fillText(r.date.slice(5), x - 18, P + H + 20);
-        ctx.fillStyle = "#E8862E";
+        ctx.fillStyle = "#D31145";
       });
     }
     renderTrend();

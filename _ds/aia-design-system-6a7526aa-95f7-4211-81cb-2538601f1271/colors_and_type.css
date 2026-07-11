@@ -1,0 +1,198 @@
+/* =========================================================
+   AIA Design System — Colors & Type tokens
+   Inspired by AIA Qi (design.aia.com)
+   ---------------------------------------------------------
+   - Single signature action color (Digital Red)
+   - 10-step Digital Charcoal spectrum
+   - 7-step tints for Digital Salmon / Purple / Warm Grey
+   - AIA Everest (display) + Open Sans (body) + Noto Sans (i18n)
+   - 4px soft grid spacing
+   ========================================================= */
+
+/* ---------- Web fonts (substitutes — see README) ----------
+   로컬 게임: 업로드 폰트 파일 대신 Google Fonts의 Noto Sans KR 사용 */
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Open+Sans:wght@400;600;700&family=Noto+Sans:wght@400;600;700&family=Noto+Sans+KR:wght@400;600;700&display=swap");
+
+:root {
+  /* ============== PRIMARY ============== */
+  --aia-red:            #D31145;   /* Digital Red — single action color */
+  --aia-red-700:        #B70D3A;   /* hover / pressed */
+  --aia-red-800:        #930A2E;
+  --aia-red-100:        #FBE4EB;   /* tint surface */
+
+  /* ============== CHARCOAL (10 steps) ============== */
+  --charcoal-50:        #F7F7F7;
+  --charcoal-100:       #EEEEEE;
+  --charcoal-200:       #DDDDDD;
+  --charcoal-300:       #C4C4C4;
+  --charcoal-400:       #9E9E9E;
+  --charcoal-500:       #757575;
+  --charcoal-600:       #555555;
+  --charcoal-700:       #3D3D3D;
+  --charcoal-800:       #2A2A2A;
+  --charcoal-900:       #1A1A1A;   /* Digital Charcoal core */
+
+  /* ============== SECONDARY (surfaces only) ============== */
+  /* Digital Salmon */
+  --salmon-50:          #FFF4F1;
+  --salmon-100:         #FFE3DA;
+  --salmon-200:         #FFC7B5;
+  --salmon-300:         #FBA48A;
+  --salmon-400:         #F2876B;
+  --salmon-500:         #E26A4D;
+  --salmon-600:         #BD4F36;
+  --salmon-700:         #8C3826;
+
+  /* Digital Purple */
+  --purple-50:          #F4F0FA;
+  --purple-100:         #E5DCF3;
+  --purple-200:         #C8B6E5;
+  --purple-300:         #A88FD1;
+  --purple-400:         #8A6BBC;
+  --purple-500:         #6F4DA1;
+  --purple-600:         #563B7E;
+  --purple-700:         #3E2B5C;
+
+  /* Digital Warm Grey */
+  --warmgrey-50:        #F5F2EE;
+  --warmgrey-100:       #E8E2D9;
+  --warmgrey-200:       #D2C8B9;
+  --warmgrey-300:       #B6A992;
+  --warmgrey-400:       #998A6F;
+  --warmgrey-500:       #7B6D54;
+  --warmgrey-600:       #5C5240;
+  --warmgrey-700:       #3F392D;
+
+  /* ============== SEMANTIC ============== */
+  --success-500:        #1F8F5C;
+  --success-100:        #DDF4E7;
+  --warning-500:        #C77700;
+  --warning-100:        #FCEFD3;
+  --error-500:          #C8102E;   /* note: tonally distinct from brand red */
+  --error-100:          #FBE0E5;
+  --info-500:           #1F6FB2;
+  --info-100:           #DEECF7;
+
+  /* ============== ROLES ============== */
+  --bg-canvas:          #FFFFFF;
+  --bg-subtle:          var(--charcoal-50);
+  --bg-dark:            var(--charcoal-900);
+  --surface:            #FFFFFF;
+  --surface-hover:      var(--charcoal-50);
+
+  --fg-primary:         var(--charcoal-900);
+  --fg-secondary:       var(--charcoal-700);
+  --fg-tertiary:        var(--charcoal-500);
+  --fg-on-dark:         #FFFFFF;
+  --fg-on-red:          #FFFFFF;
+  --fg-link:            var(--aia-red);
+
+  --border-hairline:    var(--charcoal-200);
+  --border-default:     var(--charcoal-300);
+  --border-strong:      var(--charcoal-700);
+  --border-focus:       var(--aia-red);
+
+  /* ============== TYPE FAMILIES ============== */
+  --font-display: "AIA Everest", "Manrope", "Open Sans", -apple-system,
+                  BlinkMacSystemFont, sans-serif;
+  --font-body:    "Open Sans", system-ui, -apple-system,
+                  BlinkMacSystemFont, "Noto Sans", sans-serif;
+  --font-i18n:    "Noto Sans", "Open Sans", sans-serif;
+  --font-kr:      "Noto Sans KR", "Noto Sans", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+
+  /* ============== TYPE SCALE ============== */
+  --fs-hero:      64px;
+  --fs-h1:        40px;
+  --fs-h2:        32px;
+  --fs-h3:        24px;
+  --fs-h4:        20px;
+  --fs-lead:      18px;
+  --fs-body:      16px;
+  --fs-small:     14px;
+  --fs-caption:   12px;
+
+  /* ============== WEIGHTS (3-tier system; never 500) ============== */
+  --fw-regular:   400;
+  --fw-semibold:  600;
+  --fw-bold:      700;
+
+  /* ============== LINE HEIGHTS ============== */
+  --lh-display:   1.10;
+  --lh-heading:   1.20;
+  --lh-body:      1.50;
+  --lh-tight:     1.25;
+
+  /* ============== SPACING (4px soft grid) ============== */
+  --sp-1:   4px;
+  --sp-2:   8px;
+  --sp-3:   12px;
+  --sp-4:   16px;
+  --sp-5:   20px;
+  --sp-6:   24px;
+  --sp-8:   32px;
+  --sp-10:  40px;
+  --sp-12:  48px;
+  --sp-16:  64px;
+  --sp-20:  80px;
+  --sp-24:  96px;
+
+  /* ============== RADII ============== */
+  --radius-0:     0;
+  --radius-sm:    4px;
+  --radius-md:    8px;
+  --radius-lg:    12px;
+  --radius-xl:    16px;
+  --radius-2xl:   24px;
+  --radius-pill:  999px;
+
+  /* ============== ELEVATION ============== */
+  --shadow-0:     none;
+  --shadow-1:     0 1px 2px rgba(26,26,26,.04), 0 2px 8px rgba(26,26,26,.06);
+  --shadow-2:     0 2px 4px rgba(26,26,26,.06), 0 8px 20px rgba(26,26,26,.08);
+  --shadow-3:     0 6px 12px rgba(26,26,26,.08), 0 16px 32px rgba(26,26,26,.14);
+  --scrim:        rgba(26,26,26,0.65);
+
+  /* ============== LAYOUT ============== */
+  --container-max:   1280px;
+  --container-wide:  1440px;
+  --gutter:          24px;
+  --gutter-mobile:   16px;
+  --nav-height:      72px;
+}
+
+/* =========================================================
+   Element-level semantic styles
+   ========================================================= */
+html, body {
+  background: var(--bg-canvas);
+  color: var(--fg-primary);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--fg-primary);
+  margin: 0;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+h1 { font-size: var(--fs-h1); line-height: var(--lh-display); letter-spacing:-0.01em; }
+h2 { font-size: var(--fs-h2); line-height: var(--lh-heading); }
+h3 { font-size: var(--fs-h3); line-height: var(--lh-tight); font-weight: var(--fw-semibold); }
+h4 { font-size: var(--fs-h4); line-height: var(--lh-tight); font-weight: var(--fw-semibold); }
+
+p { margin: 0; line-height: var(--lh-body); text-wrap: pretty; }
+small { font-size: var(--fs-small); color: var(--fg-secondary); }
+
+a { color: var(--fg-link); text-decoration: none; font-weight: var(--fw-semibold); }
+a:hover { text-decoration: underline; }
+
+.lead     { font-size: var(--fs-lead);    line-height: var(--lh-body); color: var(--fg-secondary); }
+.caption  { font-size: var(--fs-caption); line-height: 1.33; letter-spacing: 0.01em; color: var(--fg-secondary); text-transform: none; }
+.eyebrow  { font-size: var(--fs-caption); letter-spacing: 0.08em; text-transform: uppercase; font-weight: var(--fw-semibold); color: var(--aia-red); }
+.body-strong { font-weight: var(--fw-semibold); }
