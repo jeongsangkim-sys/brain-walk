@@ -37,7 +37,9 @@
     get(k, def) { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch { return def; } },
     set(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
   };
-  const today = () => new Date().toISOString().slice(0, 10);
+  // 로컬(한국) 날짜 기준 — toISOString은 UTC라 오전 9시 전에 어제로 찍히는 버그 방지
+  const localDate = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const today = () => localDate(new Date());
   const levels = () => store.get("bw_levels", {});
   const best = () => store.get("bw_best", {});
   const history = () => store.get("bw_history", []);
@@ -53,10 +55,30 @@
     else lv[id] = cur;
     store.set("bw_levels", lv);
   }
+  // 플레이어 이름 (오락실식 명예 기록 — 같은 기기 가족 대결용)
+  const player = () => store.get("bw_player", "");
+  function askPlayer(force) {
+    let p = player();
+    if (!p || force) {
+      const input = window.prompt("플레이어 이름을 알려주세요! (최고 기록에 남아요)", p || "");
+      p = (input || p || "게스트").trim().slice(0, 8) || "게스트";
+      store.set("bw_player", p);
+      renderHome();
+    }
+    return p;
+  }
+  const champs = () => store.get("bw_champs", {});
+
   function updateBest(id, score) {
     const b = best();
     const prev = b[id] || 0;
-    if (score > prev) { b[id] = score; store.set("bw_best", b); }
+    if (score > prev) {
+      b[id] = score;
+      store.set("bw_best", b);
+      const c = champs();
+      c[id] = { name: player() || "게스트", date: today() };
+      store.set("bw_champs", c);
+    }
     return prev;
   }
 
@@ -78,7 +100,7 @@
     let n = 0;
     const d = new Date();
     if (!dates.has(today())) d.setDate(d.getDate() - 1);
-    while (dates.has(d.toISOString().slice(0, 10))) { n++; d.setDate(d.getDate() - 1); }
+    while (dates.has(localDate(d))) { n++; d.setDate(d.getDate() - 1); }
     return n;
   }
   function renderHome() {
@@ -88,6 +110,8 @@
     let line = s > 0 ? `🔥 ${s}일 연속 산책 중` : "";
     if (ac.length) line += (line ? "  ·  " : "") + `🧠 최근 뇌 나이 ${ac[ac.length - 1].age}세`;
     $("#home-streak").textContent = line;
+    $("#home-player").textContent = player() ? `🙋 ${player()} (바꾸기)` : "🙋 이름 정하기";
+    $("#home-player").onclick = () => askPlayer(true);
     $("#chk-relax").checked = settings().relaxMode;
     $("#chk-sound").checked = settings().sound !== false;
   }
@@ -105,6 +129,7 @@
   let session = null; // { mode: daily|free|check, queue, i, results }
 
   function startSession(mode, queue) {
+    askPlayer(false); // 첫 플레이 때 한 번만 물어봄
     session = { mode, queue, i: 0, results: {} };
     runCurrent();
   }
@@ -228,7 +253,7 @@
     }
     // 어제의 나와 대결
     const yd = new Date(); yd.setDate(yd.getDate() - 1);
-    const yRec = h.find(r => r.date === yd.toISOString().slice(0, 10));
+    const yRec = h.find(r => r.date === localDate(yd));
     let vs = "";
     if (yRec) {
       const d = total - yRec.score;
@@ -371,10 +396,12 @@
       });
     }
     renderTrend();
-    const b = best();
-    $("#best-table").innerHTML = "<h3>게임별 최고 기록</h3>" + ALL.map(g =>
-      `<div class="best-row"><span>${icon(g)} ${g.name}</span><b>${b[g.id] != null ? b[g.id] + "점 " + medal(b[g.id]) : "—"}</b></div>`
-    ).join("");
+    const b = best(), c = champs();
+    $("#best-table").innerHTML = "<h3>게임별 최고 기록</h3>" + ALL.map(g => {
+      const score = b[g.id] != null ? b[g.id] + "점 " + medal(b[g.id]) : "—";
+      const who = c[g.id] ? `<span class="champ-name">${c[g.id].name}</span>` : "";
+      return `<div class="best-row"><span>${icon(g)} ${g.name}</span><b>${score}${who}</b></div>`;
+    }).join("");
   }
 
   // ---------- 흐름 분석 (치매 위험 "판정"이 아닌 정직한 추세 알림) ----------
@@ -407,7 +434,8 @@
   $("#btn-export").onclick = () => {
     const data = {
       bw_history: history(), bw_levels: levels(), bw_best: best(),
-      bw_settings: settings(), bw_agecheck: ageChecks()
+      bw_settings: settings(), bw_agecheck: ageChecks(),
+      bw_player: player(), bw_champs: champs()
     };
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
@@ -420,7 +448,7 @@
     if (!f) return;
     f.text().then(t => {
       const d = JSON.parse(t);
-      ["bw_history", "bw_levels", "bw_best", "bw_settings", "bw_agecheck"].forEach(k => { if (d[k] != null) store.set(k, d[k]); });
+      ["bw_history", "bw_levels", "bw_best", "bw_settings", "bw_agecheck", "bw_player", "bw_champs"].forEach(k => { if (d[k] != null) store.set(k, d[k]); });
       renderStats();
       alert("가져오기 완료!");
     }).catch(() => alert("파일을 읽을 수 없어요."));
