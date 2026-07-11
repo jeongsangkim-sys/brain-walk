@@ -210,6 +210,31 @@ h2 { font-size: 30px; }
 /* 결과 */
 .score-big { font-size: 84px; font-weight: 800; color: var(--accent); animation: scorePop 0.5s ease; }
 @keyframes scorePop { 0% { transform: scale(0.3); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
+
+/* 말티즈 코치 말풍선 */
+.coach { display: flex; align-items: center; gap: 14px; max-width: 480px; width: 100%; }
+.coach-img { width: 92px; height: 92px; object-fit: contain; border-radius: 50%; border: 3px solid var(--accent); background: var(--card); flex-shrink: 0; }
+.speech {
+  position: relative; background: var(--card); border: 3px solid var(--ink);
+  border-radius: 16px; padding: 14px 18px; font-size: 21px; line-height: 1.5; flex: 1;
+  animation: speechIn 0.4s ease;
+}
+.speech::before {
+  content: ""; position: absolute; left: -14px; top: 38px;
+  border: 8px solid transparent; border-right-color: var(--ink);
+}
+@keyframes speechIn { 0% { transform: translateX(-8px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+
+/* 도장 달력 */
+#stamp-cal { width: 100%; max-width: 560px; background: var(--card); border: 3px solid var(--ink); border-radius: 16px; padding: 16px 18px; }
+#stamp-cal h3 { font-size: 22px; margin-bottom: 10px; }
+#stamp-cal small { color: var(--accent); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+.cal-head { font-size: 15px; color: #9a8f7c; padding: 2px 0; }
+.cal-day { font-size: 17px; padding: 6px 0; border-radius: 8px; min-height: 34px; }
+.cal-day.today { outline: 3px solid var(--accent); }
+.stamp { font-size: 22px; display: inline-block; animation: stampIn 0.35s cubic-bezier(0.2, 2.2, 0.4, 1); }
+@keyframes stampIn { 0% { transform: scale(2.4) rotate(-18deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
 #result-comment { font-size: 24px; }
 #result-detail { font-size: 20px; line-height: 1.8; text-align: center; }
 

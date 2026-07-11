@@ -1,12 +1,44 @@
 // 공통 연출(FX) + 유틸
 window.FX = {
+  _combo: 0, _lastGood: 0,
   flash(ok) {
-    if (window.SND) SND[ok ? "good" : "bad"]();
+    // 자체 콤보 추적: 2.5초 내 연속 정답이면 효과음 피치 상승
+    const now = Date.now();
+    if (ok) { this._combo = (now - this._lastGood < 2500) ? this._combo + 1 : 0; this._lastGood = now; }
+    else this._combo = 0;
+    if (window.SND) ok ? SND.good(this._combo) : SND.bad();
     const el = document.getElementById("game-area");
     if (!el) return;
     el.classList.remove("fx-good", "fx-bad");
     void el.offsetWidth;
     el.classList.add(ok ? "fx-good" : "fx-bad");
+  },
+  // 숫자 카운트업 (결과 점수 롤링). rAF는 백그라운드 탭에서 멈추므로 최종값 안전판 필수.
+  countUp(el, to, suffix, dur) {
+    const t0 = performance.now(), D = dur || 700;
+    const failsafe = setTimeout(() => { el.textContent = to + suffix; }, D + 150);
+    const step = t => {
+      const p = Math.min(1, (t - t0) / D);
+      el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))) + suffix;
+      if (p < 1) requestAnimationFrame(step);
+      else clearTimeout(failsafe);
+    };
+    requestAnimationFrame(step);
+  },
+  // 드럼롤 숫자 플리커 후 공개 (뇌 나이 발표)
+  reveal(el, to, suffix, onDone) {
+    if (window.SND) SND.drumroll(1.6);
+    const t0 = performance.now();
+    const iv = setInterval(() => {
+      el.textContent = (20 + Math.floor(Math.random() * 60)) + suffix;
+      if (performance.now() - t0 > 1600) {
+        clearInterval(iv);
+        el.textContent = to + suffix;
+        el.classList.remove("score-big"); void el.offsetWidth; el.classList.add("score-big");
+        if (window.SND) SND.crash();
+        onDone && onDone();
+      }
+    }, 70);
   },
   confetti() {
     if (window.SND) SND.fanfare();
@@ -48,5 +80,9 @@ window.BW_UTIL = {
     });
   },
   // 콤보 문구
-  comboText(streak) { return streak >= 3 ? ` 🔥${streak}연속!` : ""; }
+  comboText(streak) { return streak >= 3 ? ` 🔥${streak}연속!` : ""; },
+  // 속도 등급 (목표시간/실제시간 비율)
+  speedGrade(r) {
+    return r >= 1 ? "🚀 로켓급!" : r >= 0.8 ? "🚄 고속열차급" : r >= 0.6 ? "🚗 자동차급" : r >= 0.4 ? "🚲 자전거급" : "🚶 산책급";
+  }
 };

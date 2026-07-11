@@ -129,7 +129,8 @@
           if (done >= COUNT) {
             const el = api.elapsedSec();
             const acc = ok / COUNT;
-            api.finish(Math.round(100 * acc * Math.min(1, TARGET_SEC / el)), `${COUNT}문제 ${el}초 · 정답 ${ok}`);
+            api.finish(Math.round(100 * acc * Math.min(1, TARGET_SEC / el)),
+              `${COUNT}문제 ${el}초 · 정답 ${ok} · ${U.speedGrade(TARGET_SEC / el)}`);
             return;
           }
           prog.textContent = `${done + 1} / ${COUNT}`;
@@ -172,7 +173,8 @@
       function next() {
         if (step >= STEPS) {
           const el = api.elapsedSec();
-          api.finish(Math.round(100 * (ok / STEPS) * Math.min(1, 30 / el)), `${ok}/${STEPS} 정답 · ${el}초`);
+          api.finish(Math.round(100 * (ok / STEPS) * Math.min(1, 30 / el)),
+            `${ok}/${STEPS} 정답 · ${el}초 · ${U.speedGrade(30 / el)}`);
           return;
         }
         const ans = cur - SUB;
@@ -280,7 +282,7 @@
           fb.textContent = ""; fb.className = "feedback";
           if (n >= GOAL) {
             const el = api.elapsedSec();
-            api.finish(Math.min(100, Math.round(100 * 14 / el)), `40까지 ${el}초`);
+            api.finish(Math.min(100, Math.round(100 * 14 / el)), `40까지 ${el}초 · ${U.speedGrade(14 / el)}`);
           }
         };
         c.appendChild(b);

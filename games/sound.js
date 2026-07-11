@@ -34,7 +34,11 @@ window.SND = (function () {
 
   return {
     setEnabled(v) { enabled = v; if (!v) this.bgmStop(); },
-    good() { tone(660, 0.09, "triangle", 0.5); tone(880, 0.12, "triangle", 0.5, 0.07); },
+    // combo(0부터): 연속 정답일수록 반음씩 상승 — 아케이드 손맛
+    good(combo) {
+      const up = Math.pow(1.0595, Math.min(combo || 0, 12)); // 최대 한 옥타브
+      tone(660 * up, 0.09, "triangle", 0.5); tone(880 * up, 0.12, "triangle", 0.5, 0.07);
+    },
     bad() { tone(160, 0.18, "sawtooth", 0.35); tone(120, 0.2, "sawtooth", 0.25, 0.05); },
     tick() { tone(1000, 0.05, "square", 0.15); },
     start() { tone(523, 0.1, "triangle", 0.4); tone(659, 0.1, "triangle", 0.4, 0.1); tone(784, 0.16, "triangle", 0.45, 0.2); },
@@ -42,6 +46,12 @@ window.SND = (function () {
       [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.22, "triangle", 0.5, i * 0.13));
       tone(1319, 0.4, "triangle", 0.4, 0.55);
     },
+    // 뇌 나이 발표용 드럼롤 (dur초)
+    drumroll(dur) {
+      const n = Math.floor((dur || 1.6) / 0.07);
+      for (let i = 0; i < n; i++) tone(90 + Math.random() * 50, 0.05, "square", 0.18, i * 0.07);
+    },
+    crash() { tone(1568, 0.5, "triangle", 0.55); tone(784, 0.5, "triangle", 0.45, 0.02); tone(2093, 0.6, "triangle", 0.35, 0.05); },
     // 잔잔한 마림바풍 배경 루프 (게임 중에만)
     bgmStart() {
       if (!enabled || bgmTimer) return;

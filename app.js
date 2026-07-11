@@ -180,6 +180,18 @@
     return "천천히 가도 괜찮아요. 산책은 매일이 중요하니까요.";
   }
 
+  // 말티즈 코치 대사 (결과 화면 말풍선)
+  const COACH = {
+    record: ["신기록이에요! 오늘 간식 두 배! 🦴", "역대 최고! 저 방금 세 바퀴 돌았어요!", "이 기록, 액자에 걸어야 해요! 🏆"],
+    high: ["대단해요! 제 꼬리가 저절로 흔들려요 🐾", "이 정도면 제가 배워야겠는걸요?", "오늘 두뇌 산책, 최고 속도예요!"],
+    mid: ["좋아요, 어제의 나를 이기는 중!", "꾸준함이 제일 무서운 재능이에요.", "산책 코스가 점점 익숙해지네요!"],
+    low: ["괜찮아요, 넘어져도 산책은 산책!", "내일 또 같이 걸어요. 약속! 🐾", "처음 가는 길은 원래 낯선 법이에요."]
+  };
+  function coachSay(score, isRecord) {
+    const pool = isRecord ? COACH.record : score >= 80 ? COACH.high : score >= 50 ? COACH.mid : COACH.low;
+    $("#coach-bubble").textContent = pool[Math.floor(Math.random() * pool.length)];
+  }
+
   function onGameDone(game, score, detail) {
     session.results[game.id] = score;
     adjustLevel(game.id, score);
@@ -189,9 +201,10 @@
     const last = session.i >= session.queue.length - 1;
     show("result");
     $("#result-title").textContent = (isRecord ? "🏆 신기록! " : "") + game.name + " 결과";
-    $("#result-score").textContent = score + "점 " + medal(score);
+    FX.countUp($("#result-score"), score, "점 " + medal(score));
     $("#result-comment").textContent = isRecord ? `이전 최고 ${prevBest}점을 넘었어요!` : comment(score);
     $("#result-detail").textContent = detail;
+    coachSay(score, isRecord);
     if (isRecord) FX.confetti();
     $("#btn-next").textContent = last
       ? (session.mode === "daily" ? "종합 결과 보기" : session.mode === "check" ? "뇌 나이 확인" : "홈으로")
@@ -226,7 +239,8 @@
     }
     show("result");
     $("#result-title").textContent = "오늘의 두뇌 점수";
-    $("#result-score").textContent = total + "점 " + medal(total);
+    FX.countUp($("#result-score"), total, "점 " + medal(total));
+    coachSay(total, false);
     $("#result-comment").textContent = already ? "오늘 점수는 이미 기록되어 있어 연습으로만 남아요." : comment(total);
     $("#result-detail").innerHTML =
       session.queue.map(g => `${icon(g)} ${g.name}: ${session.results[g.id]}점 ${medal(session.results[g.id])}`).join("<br>") + vs;
@@ -242,18 +256,27 @@
     const prev = ac.length ? ac[ac.length - 1].age : null;
     ac.push({ date: today(), age, avg });
     store.set("bw_agecheck", ac);
-    if (prev != null && age < prev) FX.confetti();
     show("result");
     $("#result-title").textContent = "🧠 재미로 보는 뇌 나이";
-    $("#result-score").textContent = age + "세";
-    $("#result-comment").textContent =
-      prev == null ? "첫 측정이에요. 내일 또 재 보세요!"
-        : age < prev ? `지난번 ${prev}세보다 젊어졌어요!`
-          : age > prev ? `지난번 ${prev}세보다 살짝 높네요. 컨디션 탓일 거예요.`
-            : "지난번과 같아요. 안정적!";
-    $("#result-detail").innerHTML =
-      session.queue.map(g => `${icon(g)} ${g.name}: ${session.results[g.id]}점`).join("<br>") +
-      `<br><span class="disclaimer">놀이용 추정치예요. 의료 검사가 아닙니다.</span>`;
+    $("#result-comment").textContent = "";
+    $("#result-detail").innerHTML = "";
+    $("#coach-bubble").textContent = "두구두구두구…";
+    // 드럼롤 → 숫자 롤링 → 쾅 공개
+    FX.reveal($("#result-score"), age, "세", () => {
+      $("#result-comment").textContent =
+        prev == null ? "첫 측정이에요. 내일 또 재 보세요!"
+          : age < prev ? `지난번 ${prev}세보다 젊어졌어요!`
+            : age > prev ? `지난번 ${prev}세보다 살짝 높네요. 컨디션 탓일 거예요.`
+              : "지난번과 같아요. 안정적!";
+      $("#result-detail").innerHTML =
+        session.queue.map(g => `${icon(g)} ${g.name}: ${session.results[g.id]}점`).join("<br>") +
+        `<br><span class="disclaimer">놀이용 추정치예요. 의료 검사가 아닙니다.</span>`;
+      $("#coach-bubble").textContent =
+        prev != null && age < prev ? "젊어졌어요! 산책 효과 제대로네요! 🐾"
+          : age <= 35 ? "이 두뇌, 팔팔한데요?"
+            : "내일 또 재면 더 젊어질 거예요!";
+      if (prev != null && age < prev) FX.confetti();
+    });
     $("#btn-next").textContent = "홈으로";
     $("#btn-next").onclick = () => { renderHome(); show("home"); };
   }
@@ -276,8 +299,30 @@
   };
   $("#btn-stats").onclick = () => { renderStats(); show("stats"); };
 
+  // ---------- 도장 달력 (훈련·체크한 날 = 발도장) ----------
+  function renderCal() {
+    const now = new Date(), y = now.getFullYear(), m = now.getMonth();
+    const pad2 = n => String(n).padStart(2, "0");
+    const trained = new Set([
+      ...history().map(r => r.date),
+      ...ageChecks().map(r => r.date)
+    ].filter(d => d.startsWith(`${y}-${pad2(m + 1)}`)));
+    const first = new Date(y, m, 1).getDay();
+    const days = new Date(y, m + 1, 0).getDate();
+    let html = `<h3>${m + 1}월 산책 도장 <small>(${trained.size}일)</small></h3><div class="cal-grid">`;
+    "일월화수목금토".split("").forEach(d => html += `<div class="cal-head">${d}</div>`);
+    for (let i = 0; i < first; i++) html += `<div></div>`;
+    for (let d = 1; d <= days; d++) {
+      const key = `${y}-${pad2(m + 1)}-${pad2(d)}`;
+      const today_ = d === now.getDate();
+      html += `<div class="cal-day${today_ ? " today" : ""}">${trained.has(key) ? `<span class="stamp">🐾</span>` : d}</div>`;
+    }
+    $("#stamp-cal").innerHTML = html + "</div>";
+  }
+
   // ---------- 기록 ----------
   function renderStats() {
+    renderCal();
     const h = history().slice(-14);
     const cv = $("#chart"), ctx = cv.getContext("2d");
     ctx.clearRect(0, 0, cv.width, cv.height);
