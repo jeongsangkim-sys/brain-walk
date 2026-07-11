@@ -78,6 +78,7 @@
       const c = champs();
       c[id] = { name: player() || "게스트", date: today() };
       store.set("bw_champs", c);
+      CLOUD.submit(id, player() || "게스트", score); // 온라인 기록판 (연결 시)
     }
     return prev;
   }
@@ -250,6 +251,7 @@
     if (!already) {
       h.push({ date: today(), score: total, games: session.results });
       store.set("bw_history", h);
+      CLOUD.submit("daily", player() || "게스트", total); // 온라인 기록판 (연결 시)
     }
     // 어제의 나와 대결
     const yd = new Date(); yd.setDate(yd.getDate() - 1);
@@ -396,6 +398,7 @@
       });
     }
     renderTrend();
+    renderCloud();
     const b = best(), c = champs();
     $("#best-table").innerHTML = "<h3>게임별 최고 기록</h3>" + ALL.map(g => {
       const score = b[g.id] != null ? b[g.id] + "점 " + medal(b[g.id]) : "—";
@@ -429,6 +432,39 @@
     box.innerHTML = ageLine + `<div>${body}</div>` +
       `<div class="disclaimer">이 게임은 의료 검사가 아니며, 치매를 진단하거나 위험을 예측할 수 없어요.</div>`;
   }
+
+  // ---------- 온라인 기록판 (구글 시트) ----------
+  const GAME_NAMES = {};
+  ALL.forEach(g => GAME_NAMES[g.id] = g.name);
+  GAME_NAMES.daily = "오늘의 훈련";
+
+  async function renderCloud() {
+    const box = $("#cloud-board");
+    if (!CLOUD.enabled()) { box.innerHTML = ""; return; }
+    box.innerHTML = `<h3>🌐 온라인 명예의 전당</h3><div class="cloud-hint">불러오는 중…</div>`;
+    const top = await CLOUD.fetchTop();
+    if (!top) { box.innerHTML = `<h3>🌐 온라인 명예의 전당</h3><div class="cloud-hint">연결 실패 — URL을 확인해 주세요.</div>`; return; }
+    const dailyRows = (top.daily || []).map((r, i) =>
+      `<div class="best-row"><span>${i + 1}위 ${r.name} <span class="champ-name">${r.date}</span></span><b>${r.score}점 ${medal(r.score)}</b></div>`
+    ).join("") || `<div class="cloud-hint">아직 기록이 없어요. 오늘의 훈련 점수가 자동으로 올라가요!</div>`;
+    const gameRows = Object.entries(top.games || {}).filter(([id]) => id !== "daily").map(([id, r]) =>
+      `<div class="best-row"><span>${GAME_NAMES[id] || id}</span><b>${r.score}점 <span class="champ-name">${r.name}</span></b></div>`
+    ).join("");
+    box.innerHTML = `<h3>🌐 온라인 명예의 전당</h3>
+      <h4>오늘의 훈련 TOP 10</h4>${dailyRows}
+      ${gameRows ? `<h4>게임별 1위</h4>${gameRows}` : ""}`;
+  }
+
+  $("#btn-cloud").onclick = () => {
+    const cur = CLOUD.url();
+    const u = window.prompt(
+      "구글 시트 기록판 URL을 붙여넣으세요.\n(만드는 법: cloud/apps-script.gs 파일 참고. 비우면 연결 해제)",
+      cur
+    );
+    if (u === null) return; // 취소
+    CLOUD.setUrl(u);
+    renderCloud();
+  };
 
   // ---------- 내보내기/가져오기 ----------
   $("#btn-export").onclick = () => {

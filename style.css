@@ -422,6 +422,16 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 .trend-age b { color: var(--aia-red); font-size: 24px; font-family: "Manrope", var(--font-kr); }
 .disclaimer { font-size: 14px; color: var(--fg-tertiary); }
 
+/* 온라인 명예의 전당 */
+#cloud-board {
+  width: 100%; max-width: 460px; font-size: 19px; line-height: 2;
+}
+#cloud-board:empty { display: none; }
+#cloud-board h3 { font-size: 19px; margin-bottom: var(--sp-2); }
+#cloud-board h4 { font-size: 16px; color: var(--fg-secondary); margin: var(--sp-3) 0 var(--sp-1); }
+#cloud-board .best-row { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-hairline); padding: 2px 0; }
+.cloud-hint { font-size: 15px; color: var(--fg-tertiary); line-height: 1.5; }
+
 #best-table { width: 100%; max-width: 460px; font-size: 19px; line-height: 2; }
 #best-table h3 { font-size: 19px; margin-bottom: var(--sp-2); }
 #best-table .best-row { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-hairline); padding: 2px 0; }
