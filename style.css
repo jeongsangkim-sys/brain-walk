@@ -111,6 +111,17 @@ h2 { font-size: 30px; }
 
 /* 기록 */
 #chart { width: 100%; max-width: 640px; background: var(--card); border: 3px solid var(--ink); border-radius: 16px; }
+#trend-box {
+  width: 100%; max-width: 640px;
+  background: var(--card); border: 3px solid var(--ink); border-radius: 16px;
+  padding: 18px 20px; font-size: 21px; line-height: 1.6;
+  display: flex; flex-direction: column; gap: 10px;
+}
+#trend-box:empty { display: none; }
+.trend-age { font-size: 24px; }
+.trend-age b { color: var(--accent); font-size: 28px; }
+.disclaimer { font-size: 16px; color: #8a7f6d; }
+
 #best-table { width: 100%; max-width: 440px; font-size: 22px; line-height: 2; }
 #best-table .best-row { display: flex; justify-content: space-between; border-bottom: 1px solid #D8CDBB; }
 .row { display: flex; gap: 12px; width: 100%; max-width: 440px; }

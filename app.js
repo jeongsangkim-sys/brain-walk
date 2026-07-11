@@ -99,6 +99,9 @@
     };
   }
 
+  // 뇌 나이(재미용 추정): 100점=20세 ~ 0점=80세 선형 매핑
+  const brainAge = s => Math.max(20, Math.round(80 - 0.6 * s));
+
   function comment(score) {
     if (score >= 85) return "훌륭해요! 오늘 두뇌가 아주 상쾌하네요.";
     if (score >= 65) return "좋아요, 꾸준함이 실력입니다.";
@@ -138,7 +141,10 @@
     $("#result-title").textContent = "오늘의 두뇌 점수";
     $("#result-score").textContent = total + "점";
     $("#result-comment").textContent = already ? "오늘 점수는 이미 기록되어 있어 연습으로만 남아요." : comment(total);
-    $("#result-detail").innerHTML = session.queue.map(g => `${g.name}: ${session.results[g.id]}점`).join("<br>");
+    $("#result-detail").innerHTML =
+      `<b>재미로 보는 뇌 나이: ${brainAge(total)}세</b><br>` +
+      session.queue.map(g => `${g.name}: ${session.results[g.id]}점`).join("<br>") +
+      `<br><span class="disclaimer">놀이용 추정치예요. 의료 검사가 아닙니다.</span>`;
     $("#btn-next").textContent = "기록 보기";
     $("#btn-next").onclick = () => { renderStats(); show("stats"); };
   }
@@ -200,10 +206,34 @@
         ctx.fillStyle = "#E8862E";
       });
     }
+    renderTrend();
     const b = best();
     $("#best-table").innerHTML = "<h3>게임별 최고 기록</h3>" + GAMES.map(g =>
       `<div class="best-row"><span>${g.name}</span><b>${b[g.id] != null ? b[g.id] + "점" : "—"}</b></div>`
     ).join("");
+  }
+
+  // ---------- 흐름 분석 (치매 위험 "판정"이 아닌 정직한 추세 알림) ----------
+  function renderTrend() {
+    const h = history();
+    const box = $("#trend-box");
+    const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+    let body;
+    if (h.length === 0) { box.innerHTML = ""; return; }
+    const latest = h[h.length - 1];
+    const ageLine = `<div class="trend-age">재미로 보는 뇌 나이: <b>${brainAge(latest.score)}세</b> <small>(최근 기록 ${latest.score}점 기준)</small></div>`;
+    if (h.length < 6) {
+      body = "기록이 6일 이상 쌓이면 점수 흐름 분석을 보여드려요.";
+    } else {
+      const recent = avg(h.slice(-3).map(r => r.score));
+      const base = avg(h.slice(0, -3).slice(-7).map(r => r.score));
+      const diff = Math.round(recent - base);
+      if (diff <= -8) body = `📉 최근 3회 평균이 평소보다 ${-diff}점 낮아요. 수면·컨디션 영향일 수 있어요. 낮은 흐름이 오래 가면 가볍게 점검해 보세요.`;
+      else if (diff >= 5) body = `📈 최근 3회 평균이 평소보다 ${diff}점 높아요. 흐름이 좋습니다!`;
+      else body = `➖ 점수 흐름이 안정적이에요. 꾸준함이 최고의 훈련입니다.`;
+    }
+    box.innerHTML = ageLine + `<div>${body}</div>` +
+      `<div class="disclaimer">이 게임은 의료 검사가 아니며, 치매를 진단하거나 위험을 예측할 수 없어요.</div>`;
   }
 
   // ---------- 내보내기/가져오기 ----------
