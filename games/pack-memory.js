@@ -197,7 +197,9 @@
             ev.textContent = "지금 몇 명일까요?";
             const opts = new Set([inside]);
             while (opts.size < 4) { const d = Math.max(0, inside + U.rand(-3, 3)); if (d !== inside) opts.add(d); }
+            let answered = false; // 라운드 전환 대기 중 연타 방지
             U.renderChoices(choices, U.shuffle([...opts]), v => {
+              if (answered) return; answered = true;
               const good = v === inside;
               if (good) { ok++; fb.textContent = "정답!"; fb.className = "feedback flash-good"; }
               else { fb.textContent = `정답은 ${inside}명`; fb.className = "feedback flash-bad"; }
@@ -261,7 +263,9 @@
           fb.textContent = "새가 몇 마리였죠?";
           const opts = new Set([birds]);
           while (opts.size < 4) { const d = Math.max(1, birds + U.rand(-3, 3)); if (d !== birds) opts.add(d); }
+          let answered = false; // 연타 방지
           U.renderChoices(choices, U.shuffle([...opts]), v => {
+            if (answered) return; answered = true;
             const good = v === birds;
             if (good) { ok++; fb.textContent = "정답!"; fb.className = "feedback flash-good"; }
             else { fb.textContent = `정답은 ${birds}마리`; fb.className = "feedback flash-bad"; }
@@ -343,7 +347,9 @@
             }
         const opts = new Set([total]);
         while (opts.size < 4) { const d = Math.max(1, total + U.rand(-3, 3)); if (d !== total) opts.add(d); }
+        let answered = false; // 연타 방지
         U.renderChoices(choices, U.shuffle([...opts]), v => {
+          if (answered) return; answered = true;
           const good = v === total;
           if (good) { ok++; fb.textContent = "정답!"; fb.className = "feedback flash-good"; }
           else { fb.textContent = `정답은 ${total}개`; fb.className = "feedback flash-bad"; }

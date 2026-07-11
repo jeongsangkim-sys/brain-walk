@@ -63,7 +63,7 @@ window.GAME_MEMORY = {
             t.classList.remove("hidden-num");
             t.classList.add("cleared");
             idx++;
-            if (idx >= N) { roundWins++; fb.textContent = "성공!"; fb.className = "feedback flash-good"; setTimeout(round, 700); }
+            if (idx >= N) { roundWins++; idx = -2; fb.textContent = "성공!"; fb.className = "feedback flash-good"; setTimeout(round, 700); }
           } else {
             bad++;
             t.classList.remove("hidden-num");

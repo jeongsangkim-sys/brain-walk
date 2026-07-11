@@ -174,18 +174,18 @@
   }
 
   function comment(score) {
-    if (score >= 85) return "훌륭해요! 오늘 두뇌가 아주 상쾌하네요.";
-    if (score >= 65) return "좋아요, 꾸준함이 실력입니다.";
-    if (score >= 40) return "잘하고 있어요. 내일 또 걸어봐요.";
-    return "천천히 가도 괜찮아요. 산책은 매일이 중요하니까요.";
+    if (score >= 85) return "훌륭해요! 오늘 머리가 쌩쌩 돌아가네요.";
+    if (score >= 65) return "좋아요, 점점 날카로워지고 있어요.";
+    if (score >= 40) return "좋은 페이스예요. 한 번 더 하면 더 오를 거예요.";
+    return "괜찮아요. 매일 조금씩이 실력의 비결이에요.";
   }
 
   // 말티즈 코치 대사 (결과 화면 말풍선)
   const COACH = {
     record: ["신기록이에요! 오늘 간식 두 배! 🦴", "역대 최고! 저 방금 세 바퀴 돌았어요!", "이 기록, 액자에 걸어야 해요! 🏆"],
-    high: ["대단해요! 제 꼬리가 저절로 흔들려요 🐾", "이 정도면 제가 배워야겠는걸요?", "오늘 두뇌 산책, 최고 속도예요!"],
-    mid: ["좋아요, 어제의 나를 이기는 중!", "꾸준함이 제일 무서운 재능이에요.", "산책 코스가 점점 익숙해지네요!"],
-    low: ["괜찮아요, 넘어져도 산책은 산책!", "내일 또 같이 걸어요. 약속! 🐾", "처음 가는 길은 원래 낯선 법이에요."]
+    high: ["대단해요! 제 꼬리가 저절로 흔들려요 🐾", "이 정도면 제가 배워야겠는걸요?", "오늘 두뇌 회전 최고 속도예요!"],
+    mid: ["좋아요, 어제의 나를 이기는 중!", "꾸준함이 제일 무서운 재능이에요.", "감이 점점 올라오고 있어요!"],
+    low: ["괜찮아요, 실수도 훈련이에요!", "다음 판은 분명 오를 거예요. 한 판 더?", "처음엔 다 그래요. 내일 보자고요! 🐾"]
   };
   function coachSay(score, isRecord) {
     const pool = isRecord ? COACH.record : score >= 80 ? COACH.high : score >= 50 ? COACH.mid : COACH.low;
@@ -207,13 +207,13 @@
     coachSay(score, isRecord);
     if (isRecord) FX.confetti();
     $("#btn-next").textContent = last
-      ? (session.mode === "daily" ? "종합 결과 보기" : session.mode === "check" ? "뇌 나이 확인" : "홈으로")
+      ? (session.mode === "daily" ? "종합 결과 보기" : session.mode === "check" ? "뇌 나이 확인" : "🔁 다시 도전")
       : "다음 게임 →";
     $("#btn-next").onclick = () => {
       if (!last) { session.i++; runCurrent(); }
       else if (session.mode === "daily") finishDaily();
       else if (session.mode === "check") finishCheck();
-      else { renderHome(); show("home"); }
+      else startSession("free", [game]); // 자유 플레이: 같은 게임 재도전 (홈은 아래 버튼)
     };
   }
 
@@ -282,7 +282,19 @@
   }
 
   // ---------- 진입점 ----------
-  $("#btn-daily").onclick = () => startSession("daily", U.shuffle(DAILY_POOL).slice(0, 3));
+  // 데일리: 인지 영역별 1개씩 (계산·기억·반응·관찰 중 3영역) — 완전 랜덤이면 같은 계열 3개가 걸릴 수 있음
+  const CATS = {
+    calc: "수", calc25: "수",
+    memory: "기억", photo: "기억", nback: "기억",
+    stroop: "반응", rps: "반응", flags: "반응", dual: "반응",
+    trail: "관찰", people: "관찰", birds: "관찰", boxes: "관찰"
+  };
+  $("#btn-daily").onclick = () => {
+    const byCat = {};
+    DAILY_POOL.forEach(g => (byCat[CATS[g.id]] = byCat[CATS[g.id]] || []).push(g));
+    const cats = U.shuffle(Object.keys(byCat)).slice(0, 3);
+    startSession("daily", cats.map(c => U.shuffle(byCat[c])[0]));
+  };
   $("#btn-check").onclick = () => startSession("check", U.shuffle(CHECK_POOL).slice(0, 3));
   $("#btn-free").onclick = () => {
     const list = $("#free-list");
