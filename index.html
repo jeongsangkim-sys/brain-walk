@@ -17,9 +17,10 @@
     <p id="home-streak" class="streak"></p>
   </header>
   <nav class="home-menu">
-    <button class="big-btn primary" id="btn-daily">오늘의 훈련</button>
-    <button class="big-btn" id="btn-free">자유 플레이</button>
-    <button class="big-btn" id="btn-stats">기록 보기</button>
+    <button class="big-btn primary" id="btn-daily">🌞 오늘의 훈련</button>
+    <button class="big-btn accent" id="btn-check">🧠 뇌 나이 체크</button>
+    <button class="big-btn" id="btn-free">🎮 자유 플레이</button>
+    <button class="big-btn" id="btn-stats">📈 기록 보기</button>
   </nav>
   <label class="relax-toggle">
     <input type="checkbox" id="chk-relax"> 여유 모드 (시간 1.5배)
@@ -29,7 +30,7 @@
 <!-- 자유 플레이 게임 선택 -->
 <section id="screen-free" class="screen">
   <h2>어떤 게임을 할까요?</h2>
-  <div id="free-list" class="home-menu"></div>
+  <div id="free-list" class="free-grid"></div>
   <button class="big-btn ghost" data-goto="home">← 돌아가기</button>
 </section>
 
@@ -39,9 +40,12 @@
     <span id="game-name"></span>
     <span id="game-timer"></span>
   </div>
+  <div class="timer-bar"><i id="timer-fill"></i></div>
   <div id="game-intro" class="game-intro">
+    <div id="intro-icon" class="intro-icon"></div>
     <h2 id="intro-title"></h2>
     <p id="intro-desc"></p>
+    <p id="intro-best" class="intro-best"></p>
     <button class="big-btn primary" id="btn-go">시작</button>
   </div>
   <div id="game-area"></div>
@@ -71,10 +75,14 @@
   <button class="big-btn ghost" data-goto="home">← 돌아가기</button>
 </section>
 
+<script src="games/juice.js"></script>
 <script src="games/calc.js"></script>
 <script src="games/memory.js"></script>
 <script src="games/stroop.js"></script>
 <script src="games/trail.js"></script>
+<script src="games/pack-speed.js"></script>
+<script src="games/pack-memory.js"></script>
+<script src="games/sudoku.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -82,7 +82,7 @@ window.GAME_MEMORY = {
       alive = false;
       const picks = good + bad;
       const acc = picks ? good / picks : 0;
-      const score = Math.round(100 * acc * Math.min(1, rounds / 4));
+      const score = Math.round(100 * acc * Math.min(1, rounds / 2)); // 30초 기준
       api.finish(score, `성공 라운드 ${roundWins} · 시도 ${rounds}`);
     });
   }

@@ -5,8 +5,8 @@ window.GAME_CALC = {
   intro: "화면의 계산 문제를 보고\n네 개의 답 중 정답을 고르세요.",
 
   start(area, level, api) {
-    let correct = 0, wrong = 0;
-    const TARGET = 12; // 분량 보정 기준(문항 수)
+    let correct = 0, wrong = 0, streak = 0;
+    const TARGET = 7; // 분량 보정 기준(문항 수, 30초 기준)
 
     const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 
@@ -44,8 +44,9 @@ window.GAME_CALC = {
         b.className = "choice-btn";
         b.textContent = v;
         b.onclick = () => {
-          if (v === p.ans) { correct++; elFb.textContent = "정답!"; elFb.className = "feedback flash-good"; }
-          else { wrong++; elFb.textContent = `아쉬워요 (정답 ${p.ans})`; elFb.className = "feedback flash-bad"; }
+          if (v === p.ans) { correct++; streak++; elFb.textContent = "정답!" + BW_UTIL.comboText(streak); elFb.className = "feedback flash-good"; }
+          else { wrong++; streak = 0; elFb.textContent = `아쉬워요 (정답 ${p.ans})`; elFb.className = "feedback flash-bad"; }
+          FX.flash(v === p.ans);
           next();
         };
         elC.appendChild(b);

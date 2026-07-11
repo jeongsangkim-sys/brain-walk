@@ -56,7 +56,7 @@ window.GAME_TRAIL = {
       alive = false;
       const clicks = good + bad;
       const acc = clicks ? good / clicks : 0;
-      const expected = PAIRS * 2 * 2;   // 60초에 두 판 완주 기준
+      const expected = PAIRS * 2;   // 30초에 한 판 완주 기준
       const score = Math.round(100 * acc * Math.min(1, cleared / expected));
       api.finish(score, `지운 칸 ${cleared} · 실수 ${bad}`);
     });

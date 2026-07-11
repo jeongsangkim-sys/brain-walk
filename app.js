@@ -1,6 +1,35 @@
-// 두뇌 산책 — 공통 로직 (라우팅·타이머·점수·저장)
+// 두뇌 산책 — 공통 로직 (라우팅·타이머·점수·저장·연출)
 (function () {
-  const GAMES = [window.GAME_CALC, window.GAME_MEMORY, window.GAME_STROOP, window.GAME_TRAIL];
+  const U = window.BW_UTIL;
+
+  // 게임 등록부: daily=오늘의 훈련 후보, check=뇌 나이 체크 후보
+  const REG = [
+    { g: window.GAME_CALC, daily: true },
+    { g: window.GAME_MEMORY, daily: true },
+    { g: window.GAME_STROOP, daily: true },
+    { g: window.GAME_TRAIL, daily: true, check: true },
+    { g: window.GAME_RPS, daily: true },
+    { g: window.GAME_FLAGS, daily: true },
+    { g: window.GAME_CALC25, daily: true },
+    { g: window.GAME_CALC100 },
+    { g: window.GAME_SERIAL, check: true },
+    { g: window.GAME_HIGHEST, check: true },
+    { g: window.GAME_SPEEDCOUNT, check: true },
+    { g: window.GAME_PHOTO, daily: true },
+    { g: window.GAME_GRID55, check: true },
+    { g: window.GAME_NBACK, daily: true },
+    { g: window.GAME_PEOPLE, daily: true },
+    { g: window.GAME_BIRDS, daily: true },
+    { g: window.GAME_BOXES, daily: true },
+    { g: window.GAME_DUAL, daily: true },
+    { g: window.GAME_SUDOKU }
+  ].filter(r => r.g);
+  const ALL = REG.map(r => r.g);
+  const DAILY_POOL = REG.filter(r => r.daily).map(r => r.g);
+  const CHECK_POOL = REG.filter(r => r.check).map(r => r.g);
+
+  const ICONS = { calc: "➕", memory: "👀", stroop: "🎨", trail: "🔗" }; // v1 게임 아이콘 보강
+  const icon = g => g.icon || ICONS[g.id] || "🧠";
 
   // ---------- 저장 ----------
   const store = {
@@ -8,21 +37,31 @@
     set(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
   };
   const today = () => new Date().toISOString().slice(0, 10);
-  const levels = () => store.get("bw_levels", { calc: 1, memory: 1, stroop: 1, trail: 1 });
+  const levels = () => store.get("bw_levels", {});
   const best = () => store.get("bw_best", {});
   const history = () => store.get("bw_history", []);
+  const ageChecks = () => store.get("bw_agecheck", []);
   const settings = () => store.get("bw_settings", { relaxMode: false });
+  const levelOf = id => levels()[id] || 1;
 
   function adjustLevel(id, score) {
     const lv = levels();
-    if (score >= 75) lv[id] = Math.min(5, lv[id] + 1);
-    else if (score < 40) lv[id] = Math.max(1, lv[id] - 1);
+    const cur = lv[id] || 1;
+    if (score >= 75) lv[id] = Math.min(5, cur + 1);
+    else if (score < 40) lv[id] = Math.max(1, cur - 1);
+    else lv[id] = cur;
     store.set("bw_levels", lv);
   }
   function updateBest(id, score) {
     const b = best();
-    if (score > (b[id] || 0)) { b[id] = score; store.set("bw_best", b); }
+    const prev = b[id] || 0;
+    if (score > prev) { b[id] = score; store.set("bw_best", b); }
+    return prev;
   }
+
+  const medal = s => s >= 85 ? "🥇" : s >= 65 ? "🥈" : s >= 40 ? "🥉" : "";
+  // 뇌 나이(재미용 추정): 100점=20세 ~ 0점=80세 선형 매핑
+  const brainAge = s => Math.max(20, Math.round(80 - 0.6 * s));
 
   // ---------- 화면 전환 ----------
   const $ = s => document.querySelector(s);
@@ -37,14 +76,17 @@
     const dates = new Set(history().map(h => h.date));
     let n = 0;
     const d = new Date();
-    if (!dates.has(today())) d.setDate(d.getDate() - 1); // 오늘 안 했으면 어제부터 셈
+    if (!dates.has(today())) d.setDate(d.getDate() - 1);
     while (dates.has(d.toISOString().slice(0, 10))) { n++; d.setDate(d.getDate() - 1); }
     return n;
   }
   function renderHome() {
     $("#home-date").textContent = new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
     const s = streakDays();
-    $("#home-streak").textContent = s > 0 ? `🔥 ${s}일 연속 산책 중` : "";
+    const ac = ageChecks();
+    let line = s > 0 ? `🔥 ${s}일 연속 산책 중` : "";
+    if (ac.length) line += (line ? "  ·  " : "") + `🧠 최근 뇌 나이 ${ac[ac.length - 1].age}세`;
+    $("#home-streak").textContent = line;
     $("#chk-relax").checked = settings().relaxMode;
   }
   $("#chk-relax").onchange = e => store.set("bw_settings", { relaxMode: e.target.checked });
@@ -53,7 +95,7 @@
   let timerId = null, timeUpCb = null;
   function stopTimer() { clearInterval(timerId); timerId = null; }
 
-  let session = null; // { mode, queue, i, results }
+  let session = null; // { mode: daily|free|check, queue, i, results }
 
   function startSession(mode, queue) {
     session = { mode, queue, i: 0, results: {} };
@@ -62,45 +104,61 @@
 
   function runCurrent() {
     const game = session.queue[session.i];
-    const lv = levels()[game.id];
+    const lv = levelOf(game.id);
     show("game");
-    $("#game-name").textContent = `${game.name} (레벨 ${lv})`;
+    $("#game-name").textContent = `${icon(game)} ${game.name} (레벨 ${lv})`;
     $("#game-timer").textContent = "";
+    $("#timer-fill").style.width = "100%";
     $("#game-area").innerHTML = "";
     $("#game-intro").style.display = "flex";
+    $("#intro-icon").textContent = icon(game);
     $("#intro-title").textContent = game.name;
     $("#intro-desc").textContent = game.intro;
+    const b = best()[game.id];
+    $("#intro-best").textContent = b != null ? `내 최고 기록 ${b}점 ${medal(b)} — 넘어 보세요!` : "첫 도전이에요!";
 
     $("#btn-go").onclick = () => {
       $("#game-intro").style.display = "none";
-      // BW_TEST_SEC: 콘솔 테스트용 단축 타이머
-      const dur = Math.round((window.BW_TEST_SEC || 60) * (settings().relaxMode ? 1.5 : 1));
-      let left = dur;
       const elT = $("#game-timer");
-      elT.textContent = left + "초";
+      const fill = $("#timer-fill");
       elT.classList.remove("low");
       timeUpCb = null;
+      const t0 = Date.now();
 
+      const mySession = session, myIdx = session.i;
       const api = {
         onTimeUp(cb) { timeUpCb = cb; },
+        elapsedSec: () => Math.round((Date.now() - t0) / 100) / 10,
         finish(score, detail) {
+          // 세션이 바뀐 뒤 도착한 늦은 finish는 무시 (점수 오염 방지)
+          if (session !== mySession || session.i !== myIdx) return;
           stopTimer();
           onGameDone(game, score, detail);
         }
       };
-      game.start($("#game-area"), lv, api);
 
-      timerId = setInterval(() => {
-        left--;
+      if (game.mode === "count") {
+        // 분량제: 시간은 올라가기만, 게임이 스스로 끝냄
+        fill.style.width = "0%";
+        let t = 0;
+        elT.textContent = "0초";
+        timerId = setInterval(() => { t++; elT.textContent = t + "초"; }, 1000);
+      } else {
+        // BW_TEST_SEC: 콘솔 테스트용 단축 타이머
+        const dur = Math.round((window.BW_TEST_SEC || game.sec || 30) * (settings().relaxMode ? 1.5 : 1));
+        let left = dur;
         elT.textContent = left + "초";
-        if (left <= 10) elT.classList.add("low");
-        if (left <= 0) { stopTimer(); timeUpCb && timeUpCb(); }
-      }, 1000);
+        timerId = setInterval(() => {
+          left--;
+          elT.textContent = left + "초";
+          fill.style.width = (100 * left / dur) + "%";
+          if (left <= 10) elT.classList.add("low");
+          if (left <= 0) { stopTimer(); timeUpCb && timeUpCb(); }
+        }, 1000);
+      }
+      game.start($("#game-area"), lv, api);
     };
   }
-
-  // 뇌 나이(재미용 추정): 100점=20세 ~ 0점=80세 선형 매핑
-  const brainAge = s => Math.max(20, Math.round(80 - 0.6 * s));
 
   function comment(score) {
     if (score >= 85) return "훌륭해요! 오늘 두뇌가 아주 상쾌하네요.";
@@ -112,18 +170,23 @@
   function onGameDone(game, score, detail) {
     session.results[game.id] = score;
     adjustLevel(game.id, score);
-    updateBest(game.id, score);
+    const prevBest = updateBest(game.id, score);
+    const isRecord = score > prevBest && prevBest > 0;
 
     const last = session.i >= session.queue.length - 1;
     show("result");
-    $("#result-title").textContent = game.name + " 결과";
-    $("#result-score").textContent = score + "점";
-    $("#result-comment").textContent = comment(score);
+    $("#result-title").textContent = (isRecord ? "🏆 신기록! " : "") + game.name + " 결과";
+    $("#result-score").textContent = score + "점 " + medal(score);
+    $("#result-comment").textContent = isRecord ? `이전 최고 ${prevBest}점을 넘었어요!` : comment(score);
     $("#result-detail").textContent = detail;
-    $("#btn-next").textContent = last ? (session.mode === "daily" ? "종합 결과 보기" : "홈으로") : "다음 게임 →";
+    if (isRecord) FX.confetti();
+    $("#btn-next").textContent = last
+      ? (session.mode === "daily" ? "종합 결과 보기" : session.mode === "check" ? "뇌 나이 확인" : "홈으로")
+      : "다음 게임 →";
     $("#btn-next").onclick = () => {
       if (!last) { session.i++; runCurrent(); }
       else if (session.mode === "daily") finishDaily();
+      else if (session.mode === "check") finishCheck();
       else { renderHome(); show("home"); }
     };
   }
@@ -137,30 +200,62 @@
       h.push({ date: today(), score: total, games: session.results });
       store.set("bw_history", h);
     }
+    // 어제의 나와 대결
+    const yd = new Date(); yd.setDate(yd.getDate() - 1);
+    const yRec = h.find(r => r.date === yd.toISOString().slice(0, 10));
+    let vs = "";
+    if (yRec) {
+      const d = total - yRec.score;
+      vs = d > 0 ? `<br>⚔️ 어제의 나 ${yRec.score}점 → 오늘 ${total}점, <b>+${d}점 승리!</b>`
+        : d < 0 ? `<br>⚔️ 어제의 나 ${yRec.score}점 → 오늘 ${total}점. 내일 설욕전!`
+          : `<br>⚔️ 어제와 동점. 막상막하!`;
+      if (d > 0) FX.confetti();
+    }
     show("result");
     $("#result-title").textContent = "오늘의 두뇌 점수";
-    $("#result-score").textContent = total + "점";
+    $("#result-score").textContent = total + "점 " + medal(total);
     $("#result-comment").textContent = already ? "오늘 점수는 이미 기록되어 있어 연습으로만 남아요." : comment(total);
     $("#result-detail").innerHTML =
-      `<b>재미로 보는 뇌 나이: ${brainAge(total)}세</b><br>` +
-      session.queue.map(g => `${g.name}: ${session.results[g.id]}점`).join("<br>") +
-      `<br><span class="disclaimer">놀이용 추정치예요. 의료 검사가 아닙니다.</span>`;
+      session.queue.map(g => `${icon(g)} ${g.name}: ${session.results[g.id]}점 ${medal(session.results[g.id])}`).join("<br>") + vs;
     $("#btn-next").textContent = "기록 보기";
     $("#btn-next").onclick = () => { renderStats(); show("stats"); };
   }
 
+  function finishCheck() {
+    const scores = Object.values(session.results);
+    const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    const age = brainAge(avg);
+    const ac = ageChecks();
+    const prev = ac.length ? ac[ac.length - 1].age : null;
+    ac.push({ date: today(), age, avg });
+    store.set("bw_agecheck", ac);
+    if (prev != null && age < prev) FX.confetti();
+    show("result");
+    $("#result-title").textContent = "🧠 재미로 보는 뇌 나이";
+    $("#result-score").textContent = age + "세";
+    $("#result-comment").textContent =
+      prev == null ? "첫 측정이에요. 내일 또 재 보세요!"
+        : age < prev ? `지난번 ${prev}세보다 젊어졌어요!`
+          : age > prev ? `지난번 ${prev}세보다 살짝 높네요. 컨디션 탓일 거예요.`
+            : "지난번과 같아요. 안정적!";
+    $("#result-detail").innerHTML =
+      session.queue.map(g => `${icon(g)} ${g.name}: ${session.results[g.id]}점`).join("<br>") +
+      `<br><span class="disclaimer">놀이용 추정치예요. 의료 검사가 아닙니다.</span>`;
+    $("#btn-next").textContent = "홈으로";
+    $("#btn-next").onclick = () => { renderHome(); show("home"); };
+  }
+
   // ---------- 진입점 ----------
-  $("#btn-daily").onclick = () => {
-    const shuffled = [...GAMES].sort(() => Math.random() - 0.5).slice(0, 3);
-    startSession("daily", shuffled);
-  };
+  $("#btn-daily").onclick = () => startSession("daily", U.shuffle(DAILY_POOL).slice(0, 3));
+  $("#btn-check").onclick = () => startSession("check", U.shuffle(CHECK_POOL).slice(0, 3));
   $("#btn-free").onclick = () => {
     const list = $("#free-list");
     list.innerHTML = "";
-    GAMES.forEach(g => {
+    ALL.forEach(g => {
       const b = document.createElement("button");
-      b.className = "big-btn";
-      b.textContent = g.name;
+      b.className = "free-card";
+      const bs = best()[g.id];
+      b.innerHTML = `<span class="fc-icon">${icon(g)}</span><span class="fc-name">${g.name}</span><span class="fc-best">${bs != null ? bs + "점 " + medal(bs) : "미도전"}</span>`;
       b.onclick = () => startSession("free", [g]);
       list.appendChild(b);
     });
@@ -180,7 +275,6 @@
       ctx.fillText("아직 기록이 없어요. 오늘의 훈련을 시작해 보세요!", 90, 145);
     } else {
       const P = 40, W = cv.width - P * 2, H = cv.height - P * 2;
-      // 축
       ctx.strokeStyle = "#B9AC97";
       ctx.beginPath(); ctx.moveTo(P, P); ctx.lineTo(P, P + H); ctx.lineTo(P + W, P + H); ctx.stroke();
       [0, 50, 100].forEach(v => {
@@ -208,8 +302,8 @@
     }
     renderTrend();
     const b = best();
-    $("#best-table").innerHTML = "<h3>게임별 최고 기록</h3>" + GAMES.map(g =>
-      `<div class="best-row"><span>${g.name}</span><b>${b[g.id] != null ? b[g.id] + "점" : "—"}</b></div>`
+    $("#best-table").innerHTML = "<h3>게임별 최고 기록</h3>" + ALL.map(g =>
+      `<div class="best-row"><span>${icon(g)} ${g.name}</span><b>${b[g.id] != null ? b[g.id] + "점 " + medal(b[g.id]) : "—"}</b></div>`
     ).join("");
   }
 
@@ -221,7 +315,10 @@
     let body;
     if (h.length === 0) { box.innerHTML = ""; return; }
     const latest = h[h.length - 1];
-    const ageLine = `<div class="trend-age">재미로 보는 뇌 나이: <b>${brainAge(latest.score)}세</b> <small>(최근 기록 ${latest.score}점 기준)</small></div>`;
+    const ac = ageChecks();
+    const ageLine = ac.length
+      ? `<div class="trend-age">재미로 보는 뇌 나이: <b>${ac[ac.length - 1].age}세</b> <small>(${ac[ac.length - 1].date} 체크)</small></div>`
+      : `<div class="trend-age">재미로 보는 뇌 나이: <b>${brainAge(latest.score)}세</b> <small>(최근 훈련 ${latest.score}점 기준)</small></div>`;
     if (h.length < 6) {
       body = "기록이 6일 이상 쌓이면 점수 흐름 분석을 보여드려요.";
     } else {
@@ -239,7 +336,8 @@
   // ---------- 내보내기/가져오기 ----------
   $("#btn-export").onclick = () => {
     const data = {
-      bw_history: history(), bw_levels: levels(), bw_best: best(), bw_settings: settings()
+      bw_history: history(), bw_levels: levels(), bw_best: best(),
+      bw_settings: settings(), bw_agecheck: ageChecks()
     };
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
@@ -252,7 +350,7 @@
     if (!f) return;
     f.text().then(t => {
       const d = JSON.parse(t);
-      ["bw_history", "bw_levels", "bw_best", "bw_settings"].forEach(k => { if (d[k] != null) store.set(k, d[k]); });
+      ["bw_history", "bw_levels", "bw_best", "bw_settings", "bw_agecheck"].forEach(k => { if (d[k] != null) store.set(k, d[k]); });
       renderStats();
       alert("가져오기 완료!");
     }).catch(() => alert("파일을 읽을 수 없어요."));

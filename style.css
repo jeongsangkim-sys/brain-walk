@@ -57,6 +57,7 @@ h2 { font-size: 30px; }
 .big-btn:active { transform: translateY(2px); }
 .big-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .big-btn.ghost { background: transparent; border-color: #B9AC97; color: #6b6152; }
+.big-btn.accent { background: #2B3A55; border-color: #2B3A55; color: #fff; }
 .big-btn.small { font-size: 20px; min-height: 56px; padding: 12px 16px; }
 
 .relax-toggle { font-size: 20px; margin-top: 12px; user-select: none; }
@@ -73,14 +74,28 @@ h2 { font-size: 30px; }
 #game-timer { color: var(--accent); font-variant-numeric: tabular-nums; }
 #game-timer.low { color: var(--bad); }
 
-.game-intro { text-align: center; margin-top: 60px; display: flex; flex-direction: column; gap: 20px; align-items: center; }
+.game-intro { text-align: center; margin-top: 30px; display: flex; flex-direction: column; gap: 18px; align-items: center; }
 #intro-desc { font-size: 22px; line-height: 1.6; max-width: 480px; }
+.intro-icon { font-size: 72px; animation: bounce 1.2s ease infinite; }
+.intro-best { font-size: 20px; color: var(--accent); font-weight: 700; min-height: 26px; }
+@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+/* 타이머 바 */
+.timer-bar { width: 100%; height: 10px; background: #E8DCC8; border-radius: 5px; overflow: hidden; }
+.timer-bar i { display: block; height: 100%; background: var(--accent); border-radius: 5px; transition: width 1s linear; }
+
+/* 지시문 */
+.inst { font-size: 26px; font-weight: 700; min-height: 34px; }
+.inst.win { color: var(--good); }
+.inst.lose { color: var(--bad); }
+.inst.draw { color: #3A6EA5; }
 
 #game-area { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 24px; }
 
 /* 속산 / 스트룹 공용 */
 .problem { font-size: 56px; font-weight: 700; margin-top: 24px; min-height: 80px; }
 .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; max-width: 440px; }
+.choices.three { grid-template-columns: 1fr 1fr 1fr; max-width: 520px; }
 .choice-btn {
   font: inherit; font-size: 32px; font-weight: 700;
   min-height: 88px; border: 3px solid var(--ink); border-radius: 16px;
@@ -90,6 +105,7 @@ h2 { font-size: 30px; }
 
 /* 순간 기억 / 순서 잇기 보드 */
 .board { position: relative; width: 100%; max-width: 520px; height: 420px; }
+.board.short { height: 300px; overflow: hidden; }
 .tile {
   position: absolute; width: 76px; height: 76px;
   border: 3px solid var(--ink); border-radius: 14px;
@@ -104,8 +120,75 @@ h2 { font-size: 30px; }
 .flash-bad { color: var(--bad); }
 .feedback { font-size: 28px; font-weight: 700; min-height: 36px; }
 
+/* 게임 영역 정답/오답 연출 */
+#game-area.fx-good { animation: fxGood 0.35s ease; }
+#game-area.fx-bad { animation: fxBad 0.35s ease; }
+@keyframes fxGood { 0% { transform: scale(1); } 40% { transform: scale(1.015); } 100% { transform: scale(1); } }
+@keyframes fxBad { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+
+/* 축포 */
+.confetti {
+  position: fixed; top: -50px; z-index: 99; pointer-events: none;
+  animation: confettiFall 2.4s ease-in forwards;
+}
+@keyframes confettiFall {
+  to { transform: translateY(110vh) rotate(540deg); opacity: 0.4; }
+}
+
+/* 5×5 기억 */
+.grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: 100%; max-width: 420px; }
+.g5cell {
+  aspect-ratio: 1; border: 3px solid var(--ink); border-radius: 12px;
+  background: var(--card); cursor: pointer; transition: background 0.15s;
+}
+.g5cell.lit { background: var(--accent); border-color: var(--accent); }
+.g5cell.wrongcell { background: var(--bad); border-color: var(--bad); }
+
+/* N-back 3×3 */
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 320px; }
+.g3cell { aspect-ratio: 1; border: 3px solid #B9AC97; border-radius: 14px; background: var(--card); transition: background 0.1s; }
+.g3cell.on { background: var(--accent); border-color: var(--accent); }
+
+/* 새 세기 */
+.flyer {
+  position: absolute; left: -60px; font-size: 40px; pointer-events: none;
+  animation-name: flyAcross; animation-timing-function: linear; animation-fill-mode: forwards;
+}
+@keyframes flyAcross { to { transform: translateX(620px); } }
+
+/* 이중과제 별 */
+.star-zone { position: relative; width: 100%; height: 60px; }
+.star-pop { position: absolute; font-size: 44px; animation: starPop 0.7s ease; }
+@keyframes starPop { 0% { transform: scale(0); } 50% { transform: scale(1.3); } 100% { transform: scale(1); opacity: 0.2; } }
+
+/* 스도쿠 */
+.sudoku { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; width: 100%; max-width: 340px; background: var(--ink); padding: 6px; border-radius: 14px; }
+.sucell {
+  aspect-ratio: 1; border: none; border-radius: 8px; background: var(--card);
+  font: inherit; font-size: 32px; font-weight: 700; color: var(--ink); cursor: pointer;
+}
+.sucell.br { margin-right: 6px; }
+.sucell.bb { margin-bottom: 6px; }
+.sucell.hole { background: #F3E8D2; }
+.sucell.sel { outline: 4px solid var(--accent); }
+.sucell.solved { color: var(--accent); }
+.sucell.fixed { cursor: default; }
+
+/* 자유 플레이 그리드 */
+.free-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: 560px; }
+.free-card {
+  font: inherit; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 16px 10px; border: 3px solid var(--ink); border-radius: 16px;
+  background: var(--card); cursor: pointer;
+}
+.free-card:active { transform: translateY(2px); }
+.fc-icon { font-size: 40px; }
+.fc-name { font-size: 22px; font-weight: 700; color: var(--ink); }
+.fc-best { font-size: 17px; color: #8a7f6d; }
+
 /* 결과 */
-.score-big { font-size: 84px; font-weight: 800; color: var(--accent); }
+.score-big { font-size: 84px; font-weight: 800; color: var(--accent); animation: scorePop 0.5s ease; }
+@keyframes scorePop { 0% { transform: scale(0.3); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
 #result-comment { font-size: 24px; }
 #result-detail { font-size: 20px; line-height: 1.8; text-align: center; }
 

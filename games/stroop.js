@@ -11,8 +11,8 @@ window.GAME_STROOP = {
       { name: "초록", css: "#3E8E5A" },
       { name: "노랑", css: "#D9A422" }
     ];
-    let correct = 0, wrong = 0;
-    const TARGET = 12;
+    let correct = 0, wrong = 0, streak = 0;
+    const TARGET = 7; // 30초 기준
     // 레벨이 오를수록 뜻≠색 (간섭) 비율 증가
     const conflictP = Math.min(0.9, 0.4 + level * 0.1);
 
@@ -49,8 +49,10 @@ window.GAME_STROOP = {
 
     elC.querySelectorAll("button").forEach(b => {
       b.onclick = () => {
-        if (b.dataset.name === ink.name) { correct++; elFb.textContent = "정답!"; elFb.className = "feedback flash-good"; }
-        else { wrong++; elFb.textContent = "색을 보세요!"; elFb.className = "feedback flash-bad"; }
+        const good = b.dataset.name === ink.name;
+        if (good) { correct++; streak++; elFb.textContent = "정답!" + BW_UTIL.comboText(streak); elFb.className = "feedback flash-good"; }
+        else { wrong++; streak = 0; elFb.textContent = "색을 보세요!"; elFb.className = "feedback flash-bad"; }
+        FX.flash(good);
         next();
       };
     });
