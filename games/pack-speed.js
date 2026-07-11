@@ -9,13 +9,12 @@
     id: "rps", name: "가위바위보", icon: "✌️", sec: 30,
     intro: "상대 손을 보고 지시대로!\n\"이기세요\"면 이기는 손을 고르세요.",
     start(area, level, api) {
-      const HANDS = ["✊", "✌️", "✋"];               // 바위 가위 보
-      const BEATS = { 0: 1, 1: 2, 2: 0 };            // 0이 1을 이김
+      const BEATS = { 0: 1, 1: 2, 2: 0 };            // 바위0>가위1>보2>바위0
       let ok = 0, bad = 0, streak = 0;
       const TARGET = 12;
       area.innerHTML = `
         <div class="inst" id="rps-inst"></div>
-        <div class="problem" id="rps-hand"></div>
+        <div class="hand-view" id="rps-hand"></div>
         <div class="feedback" id="rps-fb"></div>
         <div class="choices three" id="rps-c"></div>`;
       const inst = area.querySelector("#rps-inst");
@@ -29,17 +28,26 @@
         goal = modes[U.rand(0, modes.length - 1)];
         inst.textContent = goal === "win" ? "이기세요!" : goal === "lose" ? "지세요!" : "비기세요!";
         inst.className = "inst " + goal;
-        hand.textContent = HANDS[comp];
+        hand.style.backgroundPosition = (comp * 50) + "% 50%"; // 스프라이트 3분할
       }
-      U.renderChoices(area.querySelector("#rps-c"), HANDS, v => {
-        const p = HANDS.indexOf(v);
+      const NAMES = ["바위", "가위", "보"];
+      const cWrap = area.querySelector("#rps-c");
+      cWrap.innerHTML = "";
+      NAMES.forEach((name, p) => {
+        const b = document.createElement("button");
+        b.className = "choice-btn hand-btn";
+        b.innerHTML = `<span class="hand-mini" style="background-position:${p * 50}% 50%"></span>${name}`;
+        b.onclick = () => pick(p);
+        cWrap.appendChild(b);
+      });
+      function pick(p) {
         const win = BEATS[p] === comp, draw = p === comp;
         const good = goal === "win" ? win : goal === "lose" ? (!win && !draw) : draw;
         if (good) { ok++; streak++; fb.textContent = "정답!" + U.comboText(streak); fb.className = "feedback flash-good"; }
         else { bad++; streak = 0; fb.textContent = "아까워요!"; fb.className = "feedback flash-bad"; }
         FX.flash(good);
         next();
-      });
+      }
       next();
       api.onTimeUp(() => {
         const n = ok + bad, acc = n ? ok / n : 0;
@@ -233,7 +241,7 @@
             const good = Number(t.textContent) === max;
             if (good) ok++;
             t.classList.remove("hidden-num");
-            t.classList.add(good ? "" : "wrong");
+            if (!good) t.classList.add("wrong");
             fb.textContent = good ? "정답!" : `가장 큰 수는 ${max}`;
             fb.className = "feedback " + (good ? "flash-good" : "flash-bad");
             FX.flash(good);

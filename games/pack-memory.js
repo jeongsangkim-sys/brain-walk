@@ -172,7 +172,7 @@
       const ROUNDS = 4, EVENTS = 4 + level, GAP = Math.max(800, 1400 - level * 120);
       let r = 0, ok = 0;
       area.innerHTML = `
-        <div class="problem" style="font-size:80px">🏠</div>
+        <img src="assets/house.png" class="game-img" alt="집">
         <div class="inst" id="pe-ev"></div>
         <div class="feedback" id="pe-fb"></div>
         <div class="choices" id="pe-c"></div>`;
@@ -246,11 +246,12 @@
         const birds = 4 + level + U.rand(0, 3);
         const moths = level >= 2 ? U.rand(2, 4) : 0;
         const total = birds + moths;
-        const items = U.shuffle([...Array(birds).fill("🐦"), ...Array(moths).fill("🦋")]);
-        items.forEach((emo, k) => {
-          const s = document.createElement("span");
+        const items = U.shuffle([...Array(birds).fill("bird"), ...Array(moths).fill("butterfly")]);
+        items.forEach((kind, k) => {
+          const s = document.createElement("img");
           s.className = "flyer";
-          s.textContent = emo;
+          s.src = `assets/${kind}.png`;
+          s.alt = kind === "bird" ? "새" : "나비";
           s.style.top = 10 + Math.random() * (sky.clientHeight - 60) + "px";
           s.style.animationDuration = (2.2 + Math.random() * 1.6) / (1 + level * 0.1) + "s";
           s.style.animationDelay = (k * (3800 / total)) / 1000 + "s";
@@ -404,8 +405,14 @@
         area.innerHTML = `
           <div class="problem">⭐가 몇 번 나왔나요?</div>
           <div class="choices" id="du-sc"></div>`;
+        // stars가 0에 가까우면 ±2 범위로는 보기 4개가 안 나옴 → 위쪽으로 넓힘
         const opts = new Set([stars]);
-        while (opts.size < 4) { const d = Math.max(0, stars + U.rand(-2, 2)); if (d !== stars) opts.add(d); }
+        let guard = 0;
+        while (opts.size < 4) {
+          const d = Math.max(0, stars + U.rand(-2, 3));
+          if (d !== stars) opts.add(d);
+          if (++guard > 60) { opts.add(stars + opts.size); } // 안전판
+        }
         U.renderChoices(area.querySelector("#du-sc"), U.shuffle([...opts]), v => {
           const starPart = v === stars ? 1 : Math.abs(v - stars) === 1 ? 0.5 : 0;
           const n = eqOk + eqBad, eqAcc = n ? eqOk / n : 0;

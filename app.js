@@ -41,7 +41,7 @@
   const best = () => store.get("bw_best", {});
   const history = () => store.get("bw_history", []);
   const ageChecks = () => store.get("bw_agecheck", []);
-  const settings = () => store.get("bw_settings", { relaxMode: false });
+  const settings = () => store.get("bw_settings", { relaxMode: false, sound: true });
   const levelOf = id => levels()[id] || 1;
 
   function adjustLevel(id, score) {
@@ -88,8 +88,14 @@
     if (ac.length) line += (line ? "  ·  " : "") + `🧠 최근 뇌 나이 ${ac[ac.length - 1].age}세`;
     $("#home-streak").textContent = line;
     $("#chk-relax").checked = settings().relaxMode;
+    $("#chk-sound").checked = settings().sound !== false;
   }
-  $("#chk-relax").onchange = e => store.set("bw_settings", { relaxMode: e.target.checked });
+  $("#chk-relax").onchange = e => store.set("bw_settings", { ...settings(), relaxMode: e.target.checked });
+  $("#chk-sound").onchange = e => {
+    store.set("bw_settings", { ...settings(), sound: e.target.checked });
+    SND.setEnabled(e.target.checked);
+  };
+  SND.setEnabled(settings().sound !== false);
 
   // ---------- 게임 실행 ----------
   let timerId = null, timeUpCb = null;
@@ -103,6 +109,7 @@
   }
 
   function runCurrent() {
+    stopTimer(); // 이전 게임 타이머 잔존 방지
     const game = session.queue[session.i];
     const lv = levelOf(game.id);
     show("game");
@@ -118,6 +125,7 @@
     $("#intro-best").textContent = b != null ? `내 최고 기록 ${b}점 ${medal(b)} — 넘어 보세요!` : "첫 도전이에요!";
 
     $("#btn-go").onclick = () => {
+      SND.start(); SND.bgmStart();
       $("#game-intro").style.display = "none";
       const elT = $("#game-timer");
       const fill = $("#timer-fill");
@@ -133,6 +141,7 @@
           // 세션이 바뀐 뒤 도착한 늦은 finish는 무시 (점수 오염 방지)
           if (session !== mySession || session.i !== myIdx) return;
           stopTimer();
+          SND.bgmStop();
           onGameDone(game, score, detail);
         }
       };
@@ -153,6 +162,7 @@
           elT.textContent = left + "초";
           fill.style.width = (100 * left / dur) + "%";
           if (left <= 10) elT.classList.add("low");
+          if (left <= 5 && left > 0) SND.tick();
           if (left <= 0) { stopTimer(); timeUpCb && timeUpCb(); }
         }, 1000);
       }

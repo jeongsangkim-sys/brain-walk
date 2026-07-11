@@ -1,6 +1,7 @@
 // 공통 연출(FX) + 유틸
 window.FX = {
   flash(ok) {
+    if (window.SND) SND[ok ? "good" : "bad"]();
     const el = document.getElementById("game-area");
     if (!el) return;
     el.classList.remove("fx-good", "fx-bad");
@@ -8,6 +9,7 @@ window.FX = {
     el.classList.add(ok ? "fx-good" : "fx-bad");
   },
   confetti() {
+    if (window.SND) SND.fanfare();
     const EMO = ["🎉", "✨", "⭐", "🎊"];
     for (let i = 0; i < 26; i++) {
       const s = document.createElement("span");
