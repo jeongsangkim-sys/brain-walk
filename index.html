@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>두뇌 산책</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 홈 -->
+<section id="screen-home" class="screen active">
+  <header class="home-head">
+    <img id="mascot" src="assets/mascot.png" alt="두뇌 산책 마스코트" onerror="this.style.display='none'">
+    <h1>두뇌 산책</h1>
+    <p id="home-date"></p>
+    <p id="home-streak" class="streak"></p>
+  </header>
+  <nav class="home-menu">
+    <button class="big-btn primary" id="btn-daily">오늘의 훈련</button>
+    <button class="big-btn" id="btn-free">자유 플레이</button>
+    <button class="big-btn" id="btn-stats">기록 보기</button>
+  </nav>
+  <label class="relax-toggle">
+    <input type="checkbox" id="chk-relax"> 여유 모드 (시간 1.5배)
+  </label>
+</section>
+
+<!-- 자유 플레이 게임 선택 -->
+<section id="screen-free" class="screen">
+  <h2>어떤 게임을 할까요?</h2>
+  <div id="free-list" class="home-menu"></div>
+  <button class="big-btn ghost" data-goto="home">← 돌아가기</button>
+</section>
+
+<!-- 게임 진행 -->
+<section id="screen-game" class="screen">
+  <div class="game-top">
+    <span id="game-name"></span>
+    <span id="game-timer"></span>
+  </div>
+  <div id="game-intro" class="game-intro">
+    <h2 id="intro-title"></h2>
+    <p id="intro-desc"></p>
+    <button class="big-btn primary" id="btn-go">시작</button>
+  </div>
+  <div id="game-area"></div>
+</section>
+
+<!-- 결과 -->
+<section id="screen-result" class="screen">
+  <h2 id="result-title"></h2>
+  <div id="result-score" class="score-big"></div>
+  <p id="result-comment"></p>
+  <div id="result-detail"></div>
+  <button class="big-btn primary" id="btn-next"></button>
+  <button class="big-btn ghost" data-goto="home">홈으로</button>
+</section>
+
+<!-- 기록 -->
+<section id="screen-stats" class="screen">
+  <h2>기록</h2>
+  <canvas id="chart" width="640" height="280"></canvas>
+  <div id="best-table"></div>
+  <div class="row">
+    <button class="big-btn ghost small" id="btn-export">데이터 내보내기</button>
+    <button class="big-btn ghost small" id="btn-import">가져오기</button>
+    <input type="file" id="file-import" accept=".json" hidden>
+  </div>
+  <button class="big-btn ghost" data-goto="home">← 돌아가기</button>
+</section>
+
+<script src="games/calc.js"></script>
+<script src="games/memory.js"></script>
+<script src="games/stroop.js"></script>
+<script src="games/trail.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
