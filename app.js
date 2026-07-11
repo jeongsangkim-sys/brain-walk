@@ -84,6 +84,15 @@
   }
 
   const medal = s => s >= 85 ? "🥇" : s >= 65 ? "🥈" : s >= 40 ? "🥉" : "";
+
+  // ---------- 게임 해금 (원작식: 훈련한 날이 쌓이면 새 게임이 열림) ----------
+  const UNLOCK_SEQ = ["calc", "memory", "stroop", "rps", "trail", "flags",
+    "calc25", "photo", "people", "birds", "highest", "grid55",
+    "boxes", "dual", "nback", "serial", "speedcount", "sudoku", "calc100"];
+  const stamps = () => new Set(history().map(r => r.date)).size; // 훈련한 날 수
+  const unlockLimit = () => 6 + stamps() * 3; // 시작 6종 + 하루 3종씩
+  const isUnlocked = g => UNLOCK_SEQ.indexOf(g.id) < unlockLimit();
+  const unlockDay = g => Math.ceil((UNLOCK_SEQ.indexOf(g.id) - 5) / 3); // 필요한 도장 수
   // 뇌 나이(재미용 추정): 100점=20세 ~ 0점=80세 선형 매핑
   const brainAge = s => Math.max(20, Math.round(80 - 0.6 * s));
 
@@ -113,6 +122,21 @@
     $("#home-streak").textContent = line;
     $("#home-player").textContent = player() ? `🙋 ${player()} (바꾸기)` : "🙋 이름 정하기";
     $("#home-player").onclick = () => askPlayer(true);
+    // 오늘의 한 마디 (박사 잡담 포지션 — 일반 상식만, 의료 조언 아님)
+    const TIPS = [
+      "가벼운 산책 뒤에 하면 머리가 더 잘 돌아가요.",
+      "어제보다 1점이면 충분한 성장이에요.",
+      "소리 내어 숫자를 읽으면 계산이 빨라져요.",
+      "잠을 푹 잔 날은 기억 게임이 잘 돼요.",
+      "새로운 게임에 도전하는 것 자체가 좋은 자극이에요.",
+      "손가락을 많이 쓰면 두뇌도 함께 깨어나요.",
+      "매일 같은 시간에 하면 습관이 되기 쉬워요.",
+      "가족과 점수 내기를 하면 두 배로 재미있어요.",
+      "물 한 잔 마시고 시작해 보세요.",
+      "틀려도 괜찮아요. 뇌는 실수에서 더 배워요."
+    ];
+    const dayIdx = Math.floor(Date.now() / 86400000) % TIPS.length; // 하루 하나 고정
+    $("#home-tip").textContent = `💬 ${TIPS[dayIdx]}`;
     $("#chk-relax").checked = settings().relaxMode;
     $("#chk-sound").checked = settings().sound !== false;
   }
@@ -281,8 +305,12 @@
     const age = brainAge(avg);
     const ac = ageChecks();
     const prev = ac.length ? ac[ac.length - 1].age : null;
-    ac.push({ date: today(), age, avg });
-    store.set("bw_agecheck", ac);
+    // 원작식: 뇌 나이 기록은 하루 1회. 추가 측정은 연습으로만
+    const measuredToday = ac.some(r => r.date === today());
+    if (!measuredToday) {
+      ac.push({ date: today(), age, avg });
+      store.set("bw_agecheck", ac);
+    }
     show("result");
     $("#result-title").textContent = "🧠 재미로 보는 뇌 나이";
     $("#result-comment").textContent = "";
@@ -291,10 +319,11 @@
     // 드럼롤 → 숫자 롤링 → 쾅 공개
     FX.reveal($("#result-score"), age, "세", () => {
       $("#result-comment").textContent =
-        prev == null ? "첫 측정이에요. 내일 또 재 보세요!"
-          : age < prev ? `지난번 ${prev}세보다 젊어졌어요!`
-            : age > prev ? `지난번 ${prev}세보다 살짝 높네요. 컨디션 탓일 거예요.`
-              : "지난번과 같아요. 안정적!";
+        measuredToday ? "오늘은 이미 측정했어요 — 이번 건 연습 기록이에요. 내일 다시 재 봐요!"
+          : prev == null ? "첫 측정이에요. 내일 또 재 보세요!"
+            : age < prev ? `지난번 ${prev}세보다 젊어졌어요!`
+              : age > prev ? `지난번 ${prev}세보다 살짝 높네요. 컨디션 탓일 거예요.`
+                : "지난번과 같아요. 안정적!";
       $("#result-detail").innerHTML =
         session.queue.map(g => `${icon(g)} ${g.name}: ${session.results[g.id]}점`).join("<br>") +
         `<br><span class="disclaimer">놀이용 추정치예요. 의료 검사가 아닙니다.</span>`;
@@ -318,7 +347,7 @@
   };
   $("#btn-daily").onclick = () => {
     const byCat = {};
-    DAILY_POOL.forEach(g => (byCat[CATS[g.id]] = byCat[CATS[g.id]] || []).push(g));
+    DAILY_POOL.filter(isUnlocked).forEach(g => (byCat[CATS[g.id]] = byCat[CATS[g.id]] || []).push(g));
     const cats = U.shuffle(Object.keys(byCat)).slice(0, 3);
     startSession("daily", cats.map(c => U.shuffle(byCat[c])[0]));
   };
@@ -328,10 +357,13 @@
     list.innerHTML = "";
     ALL.forEach(g => {
       const b = document.createElement("button");
-      b.className = "free-card";
+      const open = isUnlocked(g);
+      b.className = "free-card" + (open ? "" : " locked");
       const bs = best()[g.id];
-      b.innerHTML = `<img class="fc-img" src="${iconSrc(g)}" alt="" onerror="this.outerHTML='<span class=fc-icon>${icon(g)}</span>'"><span class="fc-name">${g.name}</span><span class="fc-best">${bs != null ? bs + "점 " + medal(bs) : "미도전"}</span>`;
-      b.onclick = () => startSession("free", [g]);
+      b.innerHTML = open
+        ? `<img class="fc-img" src="${iconSrc(g)}" alt="" onerror="this.outerHTML='<span class=fc-icon>${icon(g)}</span>'"><span class="fc-name">${g.name}</span><span class="fc-best">${bs != null ? bs + "점 " + medal(bs) : "미도전"}</span>`
+        : `<span class="fc-icon">🔒</span><span class="fc-name">${g.name}</span><span class="fc-best">🐾 도장 ${unlockDay(g)}개면 열려요</span>`;
+      if (open) b.onclick = () => startSession("free", [g]);
       list.appendChild(b);
     });
     show("free");
