@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#D31145">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="assets/icon-192.png">
-<link rel="stylesheet" href="style.css?v=19">
+<link rel="stylesheet" href="style.css?v=20">
 </head>
 <body>
 
@@ -16,7 +16,7 @@
 <section id="screen-home" class="screen active">
   <header class="home-head">
     <img class="brand-logo" src="assets/aia-logo.png" alt="AIA" onerror="this.style.display='none'">
-    <img id="mascot" src="assets/mascot.png?v=19" alt="두뇌 산책 마스코트" onerror="this.style.display='none'">
+    <img id="mascot" src="assets/mascot.png?v=20" alt="두뇌 산책 마스코트" onerror="this.style.display='none'">
     <h1>두뇌 산책</h1>
     <p class="tagline">하루 3분, 오늘도 가볍게 한 바퀴 🐾</p>
     <p id="home-date"></p>
@@ -57,6 +57,9 @@
     </label>
     <label class="relax-toggle">
       <input type="checkbox" id="chk-sound" checked><span class="tswitch"></span>소리
+    </label>
+    <label class="relax-toggle">
+      <input type="checkbox" id="chk-notify"><span class="tswitch"></span>훈련 알림 (설치된 앱)
     </label>
   </div>
   <footer class="credits">고객총괄본부 상품마케팅팀 제작 · Made by JeongSang</footer>
@@ -110,7 +113,7 @@
   <p id="result-comment"></p>
   <div id="result-detail"></div>
   <div class="coach">
-    <img src="assets/mascot.png?v=19" class="coach-img" alt="코치">
+    <img src="assets/mascot.png?v=20" class="coach-img" alt="코치">
     <div class="speech" id="coach-bubble"></div>
   </div>
   <button class="big-btn primary" id="btn-next"></button>
@@ -139,16 +142,16 @@
   <button class="big-btn ghost" data-goto="home">← 돌아가기</button>
 </section>
 
-<script src="games/sound.js?v=19"></script>
-<script src="games/cloud.js?v=19"></script>
-<script src="games/juice.js?v=19"></script>
-<script src="games/calc.js?v=19"></script>
-<script src="games/memory.js?v=19"></script>
-<script src="games/stroop.js?v=19"></script>
-<script src="games/trail.js?v=19"></script>
-<script src="games/pack-speed.js?v=19"></script>
-<script src="games/pack-memory.js?v=19"></script>
-<script src="games/sudoku.js?v=19"></script>
-<script src="app.js?v=19"></script>
+<script src="games/sound.js?v=20"></script>
+<script src="games/cloud.js?v=20"></script>
+<script src="games/juice.js?v=20"></script>
+<script src="games/calc.js?v=20"></script>
+<script src="games/memory.js?v=20"></script>
+<script src="games/stroop.js?v=20"></script>
+<script src="games/trail.js?v=20"></script>
+<script src="games/pack-speed.js?v=20"></script>
+<script src="games/pack-memory.js?v=20"></script>
+<script src="games/sudoku.js?v=20"></script>
+<script src="app.js?v=20"></script>
 </body>
 </html>

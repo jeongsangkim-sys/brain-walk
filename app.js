@@ -186,6 +186,7 @@
     $("#home-tip").textContent = doneToday ? `💬 ${TIPS[dayIdx]}` : `💬 ${GREET} 3분만 걷고 가요!`;
     $("#chk-relax").checked = settings().relaxMode;
     $("#chk-sound").checked = settings().sound !== false;
+    $("#chk-notify").checked = !!settings().notify;
   }
   $("#chk-relax").onchange = e => store.set("bw_settings", { ...settings(), relaxMode: e.target.checked });
   $("#chk-sound").onchange = e => {
@@ -193,6 +194,42 @@
     SND.setEnabled(e.target.checked);
   };
   SND.setEnabled(settings().sound !== false);
+
+  // ---------- 알림 (주말 이탈 방어) ----------
+  // 서비스워커(sw.js)가 Periodic Background Sync로 "오늘 훈련 안 한 날" 낮 시간에 알림.
+  // 서버 없는 정적 호스팅이라 진짜 푸시는 불가 — 설치된 PWA(안드로이드 크롬)에서만 동작.
+  // ponytail: iOS는 서버 푸시 필수라 미지원, 서버 생기면 Web Push로 승격
+  async function mirrorTrained() {
+    // SW는 localStorage를 못 읽음 → 마지막 훈련일을 Cache API로 미러
+    try {
+      const h = history();
+      const cache = await caches.open("bw-meta");
+      await cache.put("/bw-last-trained", new Response(h.length ? h[h.length - 1].date : ""));
+    } catch { }
+  }
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(() => { });
+    mirrorTrained();
+  }
+  $("#chk-notify").onchange = async e => {
+    const on = e.target.checked;
+    store.set("bw_settings", { ...settings(), notify: on });
+    if (!on) {
+      try { (await navigator.serviceWorker.ready).periodicSync.unregister("bw-reminder"); } catch { }
+      return;
+    }
+    try {
+      if ((await Notification.requestPermission()) !== "granted") throw 0;
+      const reg = await navigator.serviceWorker.ready;
+      if (!("periodicSync" in reg)) throw 0;
+      await reg.periodicSync.register("bw-reminder", { minInterval: 12 * 60 * 60 * 1000 });
+      await mirrorTrained();
+    } catch {
+      e.target.checked = false;
+      store.set("bw_settings", { ...settings(), notify: false });
+      alert("이 브라우저에서는 자동 알림을 지원하지 않아요.\n안드로이드 크롬에서 '홈 화면에 추가'로 설치하면 켤 수 있어요.");
+    }
+  };
 
   // ---------- 게임 실행 ----------
   let timerId = null, timeUpCb = null;
@@ -349,6 +386,7 @@
     if (!already) {
       h.push({ date: today(), score: total, games: session.results });
       store.set("bw_history", h);
+      mirrorTrained(); // 알림용 훈련일 미러 (SW가 읽음)
       CLOUD.submit("daily", player() || "게스트", total); // 온라인 기록판 (연결 시)
     }
     // 어제의 나와 대결
