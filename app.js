@@ -750,33 +750,42 @@
     { name: "보통", desc: "빈칸 40개 — 오늘의 본판", holes: 40, need: 3 },
     { name: "어려움", desc: "빈칸 50개 — 진짜 실력 시험", holes: 50, need: 7 }
   ];
-  $("#btn-sudoku").onclick = () => {
+  const CHEV = `<span class="mc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span>`;
+  const puzzleItem = (iconId, title, desc, onClick, locked) => {
+    const b = document.createElement("button");
+    b.className = "menu-btn" + (locked ? " locked-diff" : "");
+    b.innerHTML = `<span class="mi"><img class="pz-ico" src="assets/icons/${iconId}.png" alt="" onerror="this.remove()"></span>` +
+      `<span class="mt"><b>${title}</b><small>${desc}</small></span>` + (locked ? "" : CHEV);
+    if (!locked) b.onclick = onClick;
+    return b;
+  };
+  // 1단계: 퍼즐 3종 목록
+  function renderPuzzleMenu() {
     const box = $("#sudoku-diffs");
     box.innerHTML = "";
+    box.appendChild(puzzleItem("flow", "점 잇기", "같은 색 점끼리 길을 그어 연결", () => startSession("free", [window.GAME_FLOW])));
+    box.appendChild(puzzleItem("arrows", "화살표 탈출", "뚫린 화살표부터 차례로 내보내기", () => startSession("free", [window.GAME_ARROWS])));
+    box.appendChild(puzzleItem("sudoku", "스도쿠", "난이도 골라서 느긋하게 한 판", renderSudokuDiffs));
+  }
+  // 2단계: 스도쿠 난이도
+  function renderSudokuDiffs() {
+    const box = $("#sudoku-diffs");
+    box.innerHTML = "";
+    const back = document.createElement("button");
+    back.className = "big-btn ghost small";
+    back.textContent = "← 퍼즐 목록";
+    back.onclick = renderPuzzleMenu;
+    box.appendChild(back);
     const s = stamps();
-    // 퍼즐 미니게임 2종 (점잇기·화살표) — 스도쿠 난이도 위에 나란히
-    [window.GAME_FLOW, window.GAME_ARROWS].forEach(g => {
-      const b = document.createElement("button");
-      b.className = "menu-btn";
-      b.innerHTML = `<span class="mt"><b>${icon(g)} ${g.name}</b><small>${g.intro.split("\n")[0]}</small></span>` +
-        `<span class="mc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span>`;
-      b.onclick = () => startSession("free", [g]);
-      box.appendChild(b);
-    });
     SUDOKU_DIFFS.forEach(d => {
       const open = s >= d.need;
-      const b = document.createElement("button");
-      b.className = "menu-btn" + (open ? "" : " locked-diff");
-      b.innerHTML = `<span class="mt"><b>${open ? "" : "🔒 "}${d.name}</b><small>${open ? d.desc : `🐾 도장 ${d.need}개면 열려요`}</small></span>` +
-        (open ? `<span class="mc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span>` : "");
-      if (open) b.onclick = () => {
-        window.BW_SUDOKU_DIFF = d.holes;
-        startSession("free", [window.GAME_SUDOKU]);
-      };
+      const b = puzzleItem("sudoku", (open ? "" : "🔒 ") + d.name,
+        open ? d.desc : `🐾 도장 ${d.need}개면 열려요`,
+        () => { window.BW_SUDOKU_DIFF = d.holes; startSession("free", [window.GAME_SUDOKU]); }, !open);
       box.appendChild(b);
     });
-    show("sudoku");
-  };
+  }
+  $("#btn-sudoku").onclick = () => { renderPuzzleMenu(); show("sudoku"); };
 
   // ---------- 도장 달력 (훈련·체크한 날 = 발도장) ----------
   function renderCal() {
