@@ -211,7 +211,7 @@
         timerId = setInterval(() => { t++; elT.textContent = t + "초"; }, 1000);
       } else {
         // BW_TEST_SEC: 콘솔 테스트용 단축 타이머
-        const dur = Math.round((window.BW_TEST_SEC || game.sec || 30) * (settings().relaxMode ? 1.5 : 1));
+        const dur = Math.round((window.BW_TEST_SEC || game.sec || 25) * (settings().relaxMode ? 1.5 : 1));
         let left = dur;
         elT.textContent = left + "초";
         fill.classList.remove("low");

@@ -6,7 +6,7 @@
 
   // ---------- 가위바위보 (지시 따라 이기기/지기/비기기 — 억제력) ----------
   window.GAME_RPS = {
-    id: "rps", name: "가위바위보", icon: "✌️", sec: 30,
+    id: "rps", name: "가위바위보", icon: "✌️", sec: 25,
     intro: "상대 손을 보고 지시대로!\n\"이기세요\"면 이기는 손을 고르세요.",
     start(area, level, api) {
       const BEATS = { 0: 1, 1: 2, 2: 0 };            // 바위0>가위1>보2>바위0
@@ -24,7 +24,7 @@
 
       function next() {
         comp = U.rand(0, 2);
-        const modes = level <= 1 ? ["win"] : level <= 2 ? ["win", "lose"] : ["win", "lose", "draw"];
+        const modes = level <= 2 ? ["win", "lose"] : ["win", "lose", "draw"]; // 1레벨부터 지시 혼합 — 이기기만 있으면 밋밋함
         goal = modes[U.rand(0, modes.length - 1)];
         inst.textContent = goal === "win" ? "이기세요!" : goal === "lose" ? "지세요!" : "비기세요!";
         inst.className = "inst " + goal;
@@ -59,7 +59,7 @@
 
   // ---------- 깃발 들기 (청기백기식 지시·부정 지시 — 억제력) ----------
   window.GAME_FLAGS = {
-    id: "flags", name: "깃발 들기", icon: "🚩", sec: 30,
+    id: "flags", name: "깃발 들기", icon: "🚩", sec: 25,
     intro: "지시대로 깃발을 드세요.\n\"아니야!\"가 붙으면 반대 깃발!",
     start(area, level, api) {
       let ok = 0, bad = 0, streak = 0;
@@ -159,7 +159,7 @@
 
   // ---------- 부호 찾기 (a ? b = c 에서 +−× 고르기 — 역산 추론) ----------
   window.GAME_SIGN = {
-    id: "sign", name: "부호 찾기", icon: "❔", sec: 30,
+    id: "sign", name: "부호 찾기", icon: "❔", sec: 25,
     intro: "빈칸에 들어갈 부호를 고르세요.\n7 ❔ 3 = 21 이면 ×!",
     start(area, level, api) {
       const OPS = [["+", (a, b) => a + b], ["−", (a, b) => a - b], ["×", (a, b) => a * b]];
@@ -308,7 +308,7 @@
             fb.textContent = good ? "정답!" : `가장 큰 수는 ${max}`;
             fb.className = "feedback " + (good ? "flash-good" : "flash-bad");
             FX.flash(good);
-            setTimeout(round, 800);
+            setTimeout(round, 500);
           };
         });
       }

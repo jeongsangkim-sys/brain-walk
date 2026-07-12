@@ -6,7 +6,7 @@ window.GAME_MEMORY = {
 
   start(area, level, api) {
     const N = Math.min(9, 3 + level);   // 외울 개수 4~9 (보드 배치 한계)
-    const SHOW_MS = 1500 + level * 300;
+    const SHOW_MS = 1200 + level * 250;
     let good = 0, bad = 0, rounds = 0, roundWins = 0;
     let alive = true;
 
@@ -63,7 +63,7 @@ window.GAME_MEMORY = {
             t.classList.remove("hidden-num");
             t.classList.add("cleared");
             idx++;
-            if (idx >= N) { roundWins++; idx = -2; fb.textContent = "성공!"; fb.className = "feedback flash-good"; setTimeout(round, 700); }
+            if (idx >= N) { roundWins++; idx = -2; fb.textContent = "성공!"; fb.className = "feedback flash-good"; setTimeout(round, 450); }
           } else {
             bad++;
             t.classList.remove("hidden-num");
@@ -71,7 +71,7 @@ window.GAME_MEMORY = {
             fb.textContent = "순서가 달라요";
             fb.className = "feedback flash-bad";
             idx = -2; // 라운드 종료
-            setTimeout(round, 900);
+            setTimeout(round, 550);
           }
         };
       });

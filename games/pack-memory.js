@@ -28,7 +28,7 @@
         card.textContent = e;
         inst.textContent = "잘 보세요…";
         choices.innerHTML = "";
-        setTimeout(ask, 1100);
+        setTimeout(ask, 900);
       }
       function ask() {
         if (hist.length <= BACK) { showNext(); return; }
@@ -99,11 +99,11 @@
             if (targets.has(i)) {
               hit++; found++;
               c.classList.add("lit");
-              if (found >= K) { fb.textContent = "성공!"; fb.className = "feedback flash-good"; FX.flash(true); setTimeout(round, 700); }
+              if (found >= K) { fb.textContent = "성공!"; fb.className = "feedback flash-good"; FX.flash(true); setTimeout(round, 450); }
             } else {
               miss++; wrongs++;
               c.classList.add("wrongcell");
-              if (wrongs >= 3) { fb.textContent = "다음 판으로!"; fb.className = "feedback flash-bad"; FX.flash(false); setTimeout(round, 700); }
+              if (wrongs >= 3) { fb.textContent = "다음 판으로!"; fb.className = "feedback flash-bad"; FX.flash(false); setTimeout(round, 450); }
             }
           };
         });
@@ -222,7 +222,7 @@
               if (good) { ok++; fb.textContent = "정답!"; fb.className = "feedback flash-good"; }
               else { fb.textContent = `정답은 ${inside}명`; fb.className = "feedback flash-bad"; }
               FX.flash(good);
-              setTimeout(round, 800);
+              setTimeout(round, 500);
             });
             return;
           }
@@ -289,7 +289,7 @@
             if (good) { ok++; fb.textContent = "정답!"; fb.className = "feedback flash-good"; }
             else { fb.textContent = `정답은 ${birds}마리`; fb.className = "feedback flash-bad"; }
             FX.flash(good);
-            setTimeout(round, 800);
+            setTimeout(round, 500);
           });
         }, 4600 + total * 120);
       }
@@ -374,7 +374,7 @@
           if (good) { ok++; fb.textContent = "정답!"; fb.className = "feedback flash-good"; }
           else { fb.textContent = `정답은 ${total}개`; fb.className = "feedback flash-bad"; }
           FX.flash(good);
-          setTimeout(round, 800);
+          setTimeout(round, 500);
         });
       }
       round();
@@ -384,7 +384,7 @@
 
   // ---------- 이중과제 (계산 판단 + 별 세기 동시에) ----------
   window.GAME_DUAL = {
-    id: "dual", name: "이중과제", icon: "🎭", sec: 30,
+    id: "dual", name: "이중과제", icon: "🎭", sec: 25,
     intro: "계산이 맞는지 O/X로 답하면서\n⭐가 몇 번 나왔는지도 세세요!",
     start(area, level, api) {
       let eqOk = 0, eqBad = 0, stars = 0;

@@ -40,7 +40,7 @@ window.GAME_TRAIL = {
             t.classList.add("cleared");
             idx++;
             fb.textContent = "";
-            if (idx >= seq.length) { fb.textContent = "완료!"; fb.className = "feedback flash-good"; setTimeout(newBoard, 600); }
+            if (idx >= seq.length) { fb.textContent = "완료!"; fb.className = "feedback flash-good"; setTimeout(newBoard, 400); }
           } else {
             bad++;
             fb.textContent = `다음은 "${seq[idx]}" 차례예요`;
