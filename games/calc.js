@@ -32,37 +32,68 @@ window.GAME_CALC = {
       return { text: `${a} ${op} ${b} = ?`, ans };
     }
 
-    area.innerHTML = `
-      <div class="problem" id="calc-q"></div>
-      <div class="feedback" id="calc-fb"></div>
-      <div class="choices" id="calc-choices"></div>`;
-    const elQ = area.querySelector("#calc-q");
-    const elFb = area.querySelector("#calc-fb");
-    const elC = area.querySelector("#calc-choices");
+    // 필기 입력 모드 (설정 토글, 태블릿용) — 4지선다 대신 손글씨로 답 쓰기
+    let inkMode = false;
+    try { inkMode = !!JSON.parse(localStorage.getItem("bw_settings")).ink && !!window.INK; } catch { }
 
-    function next() {
-      const p = makeProblem();
-      elQ.textContent = p.text;
-      const opts = new Set([p.ans]);
-      while (opts.size < 4) {
-        const d = p.ans + rand(-10, 10);
-        if (d !== p.ans && d >= 0) opts.add(d);
-      }
-      elC.innerHTML = "";
-      [...opts].sort(() => Math.random() - 0.5).forEach(v => {
-        const b = document.createElement("button");
-        b.className = "choice-btn";
-        b.textContent = v;
-        b.onclick = () => {
-          const good = v === p.ans;
-          BW_UTIL.markBtn(b, good);
-          if (good) { correct++; streak++; elFb.textContent = "정답!" + BW_UTIL.comboText(streak); elFb.className = "feedback flash-good"; }
-          else { wrong++; streak = 0; elFb.textContent = `아쉬워요 (정답 ${p.ans})`; elFb.className = "feedback flash-bad"; }
-          FX.flash(good);
+    function judge(good, ans) {
+      if (good) { correct++; streak++; elFb().textContent = "정답!" + BW_UTIL.comboText(streak); elFb().className = "feedback flash-good"; }
+      else { wrong++; streak = 0; elFb().textContent = `아쉬워요 (정답 ${ans})`; elFb().className = "feedback flash-bad"; }
+      FX.flash(good);
+    }
+    const elFb = () => area.querySelector("#calc-fb");
+
+    let next;
+    if (inkMode) {
+      area.innerHTML = `
+        <div class="problem" id="calc-q"></div>
+        <div class="feedback" id="calc-fb"></div>
+        <div class="ink-ans" id="calc-ans">&nbsp;</div>
+        <div id="calc-pad-wrap"></div>
+        <button class="big-btn ghost small" id="calc-del">⌫ 한 글자 지우기</button>`;
+      const elQ = area.querySelector("#calc-q");
+      const elAns = area.querySelector("#calc-ans");
+      let p = null, digits = "";
+      const render = () => { elAns.textContent = digits || " "; };
+      INK.pad(area.querySelector("#calc-pad-wrap"), d => {
+        digits += d;
+        render();
+        if (digits.length >= String(p.ans).length) { // 자릿수 차면 자동 제출 (원작 방식)
+          judge(Number(digits) === p.ans, p.ans);
           next();
-        };
-        elC.appendChild(b);
+        }
       });
+      area.querySelector("#calc-del").onclick = () => { digits = digits.slice(0, -1); render(); };
+      next = () => { p = makeProblem(); digits = ""; render(); elQ.textContent = p.text; };
+    } else {
+      area.innerHTML = `
+        <div class="problem" id="calc-q"></div>
+        <div class="feedback" id="calc-fb"></div>
+        <div class="choices" id="calc-choices"></div>`;
+      const elQ = area.querySelector("#calc-q");
+      const elC = area.querySelector("#calc-choices");
+      next = () => {
+        const p = makeProblem();
+        elQ.textContent = p.text;
+        const opts = new Set([p.ans]);
+        while (opts.size < 4) {
+          const d = p.ans + rand(-10, 10);
+          if (d !== p.ans && d >= 0) opts.add(d);
+        }
+        elC.innerHTML = "";
+        [...opts].sort(() => Math.random() - 0.5).forEach(v => {
+          const b = document.createElement("button");
+          b.className = "choice-btn";
+          b.textContent = v;
+          b.onclick = () => {
+            const good = v === p.ans;
+            BW_UTIL.markBtn(b, good);
+            judge(good, p.ans);
+            next();
+          };
+          elC.appendChild(b);
+        });
+      };
     }
     next();
 

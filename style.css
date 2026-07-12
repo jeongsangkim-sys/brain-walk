@@ -343,6 +343,20 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   55% { transform: scale(1.22); opacity: 0.9; }
   100% { transform: scale(0); opacity: 0; }
 }
+/* 필기 입력 패드 */
+.ink-pad {
+  display: block; width: 100%; max-width: 340px; height: 240px;
+  margin: 0 auto; touch-action: none;
+  border: 2px dashed var(--border-default); border-radius: var(--radius-lg);
+  background: var(--surface); cursor: crosshair;
+}
+.ink-ans {
+  text-align: center; font-family: "Manrope", var(--font-kr);
+  font-size: 44px; font-weight: var(--fw-bold); min-height: 56px;
+  letter-spacing: 0.06em;
+}
+#calc-del { display: block; margin: var(--sp-2) auto 0; }
+
 /* 정답 탭 위치 미니 스파크 */
 .spark {
   position: fixed; width: 8px; height: 8px; border-radius: 50%;

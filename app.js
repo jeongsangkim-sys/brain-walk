@@ -187,8 +187,10 @@
     $("#chk-relax").checked = settings().relaxMode;
     $("#chk-sound").checked = settings().sound !== false;
     $("#chk-notify").checked = !!settings().notify;
+    $("#chk-ink").checked = !!settings().ink;
   }
   $("#chk-relax").onchange = e => store.set("bw_settings", { ...settings(), relaxMode: e.target.checked });
+  $("#chk-ink").onchange = e => store.set("bw_settings", { ...settings(), ink: e.target.checked });
   $("#chk-sound").onchange = e => {
     store.set("bw_settings", { ...settings(), sound: e.target.checked });
     SND.setEnabled(e.target.checked);
