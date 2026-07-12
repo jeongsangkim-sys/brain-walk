@@ -52,6 +52,7 @@ window.SND = (function () {
       for (let i = 0; i < n; i++) tone(90 + Math.random() * 50, 0.05, "square", 0.18, i * 0.07);
     },
     crash() { tone(1568, 0.5, "triangle", 0.55); tone(784, 0.5, "triangle", 0.45, 0.02); tone(2093, 0.6, "triangle", 0.35, 0.05); },
+    bark() { tone(520, 0.07, "sawtooth", 0.4); tone(300, 0.1, "sawtooth", 0.35, 0.05); tone(560, 0.07, "sawtooth", 0.4, 0.22); tone(320, 0.1, "sawtooth", 0.35, 0.27); },
     // 잔잔한 마림바풍 배경 루프 (게임 중에만)
     bgmStart() {
       if (!enabled || bgmTimer) return;

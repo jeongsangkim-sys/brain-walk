@@ -124,6 +124,13 @@
     $("#home-streak").textContent = line;
     $("#home-player").textContent = player() ? `🙋 ${player()} (바꾸기)` : "🙋 이름 정하기";
     $("#home-player").onclick = () => askPlayer(true);
+    // 오늘의 훈련 완료 여부에 따른 습관 유도 카피
+    const doneToday = history().some(r => r.date === today());
+    const hh = new Date().getHours();
+    const GREET = hh < 5 ? "늦은 밤에도 반가워요!" : hh < 11 ? "좋은 아침이에요!" : hh < 17 ? "오후 머리 깨우기 딱 좋은 시간!" : hh < 22 ? "오늘 하루 마무리 산책 어때요?" : "자기 전 가볍게 한 판!";
+    $("#daily-sub").textContent = doneToday ? "오늘 완료 ✓ 내일 새 훈련이 기다려요" : "아직 안 했어요 — 3분이면 끝!";
+    $("#btn-daily").classList.toggle("todo", !doneToday);
+
     // 오늘의 한 마디 (박사 잡담 포지션 — 일반 상식만, 의료 조언 아님)
     const TIPS = [
       "가벼운 산책 뒤에 하면 머리가 더 잘 돌아가요.",
@@ -138,7 +145,8 @@
       "틀려도 괜찮아요. 뇌는 실수에서 더 배워요."
     ];
     const dayIdx = Math.floor(Date.now() / 86400000) % TIPS.length; // 하루 하나 고정
-    $("#home-tip").textContent = `💬 ${TIPS[dayIdx]}`;
+    // 미완료: 시간대 인사로 유도 / 완료: 오늘의 팁
+    $("#home-tip").textContent = doneToday ? `💬 ${TIPS[dayIdx]}` : `💬 ${GREET} 3분만 걷고 가요!`;
     $("#chk-relax").checked = settings().relaxMode;
     $("#chk-sound").checked = settings().sound !== false;
   }
@@ -245,6 +253,12 @@
   function coachSay(score, isRecord) {
     const pool = isRecord ? COACH.record : score >= 80 ? COACH.high : score >= 50 ? COACH.mid : COACH.low;
     $("#coach-bubble").textContent = pool[Math.floor(Math.random() * pool.length)];
+    setCoachFace(isRecord || score >= 80 ? "happy" : score < 40 ? "sad" : "base");
+  }
+  // 코치 표정 스왑 — 점수 따라 기뻐하고 시무룩해짐 (원작 교수 얼굴 포지션)
+  function setCoachFace(kind) {
+    const img = document.querySelector("#screen-result .coach-img");
+    if (img) img.src = kind === "happy" ? "assets/mascot-happy.png" : kind === "sad" ? "assets/mascot-sad.png" : "assets/mascot.png";
   }
 
   function onGameDone(game, score, detail) {
@@ -337,6 +351,7 @@
         prev != null && age < prev ? "젊어졌어요! 훈련 효과 제대로네요! 🐾"
           : age <= 35 ? "이 두뇌, 팔팔한데요?"
             : "내일 또 재면 더 젊어질 거예요!";
+      setCoachFace((prev != null && age < prev) || age <= 35 ? "happy" : prev != null && age > prev ? "sad" : "base");
       if (prev != null && age < prev) FX.confetti();
     });
     $("#btn-next").textContent = "기록 보기";
@@ -387,15 +402,24 @@
     ].filter(d => d.startsWith(`${y}-${pad2(m + 1)}`)));
     const first = new Date(y, m, 1).getDay();
     const days = new Date(y, m + 1, 0).getDate();
-    let html = `<h3>${m + 1}월 산책 도장 <small>(${trained.size}일)</small></h3><div class="cal-grid">`;
+    const stamp = settings().stamp || "🐾";
+    let html = `<h3>${m + 1}월 산책 도장 <small>(${trained.size}일)</small>` +
+      `<button class="stamp-pick" id="stamp-pick" title="도장 모양 바꾸기">${stamp} 바꾸기</button></h3><div class="cal-grid">`;
     "일월화수목금토".split("").forEach(d => html += `<div class="cal-head">${d}</div>`);
     for (let i = 0; i < first; i++) html += `<div></div>`;
     for (let d = 1; d <= days; d++) {
       const key = `${y}-${pad2(m + 1)}-${pad2(d)}`;
       const today_ = d === now.getDate();
-      html += `<div class="cal-day${today_ ? " today" : ""}">${trained.has(key) ? `<span class="stamp">🐾</span>` : d}</div>`;
+      html += `<div class="cal-day${today_ ? " today" : ""}">${trained.has(key) ? `<span class="stamp">${stamp}</span>` : d}</div>`;
     }
     $("#stamp-cal").innerHTML = html + "</div>";
+    // 도장 모양 고르기 (원작 스탬프 커스텀 오마주)
+    $("#stamp-pick").onclick = () => {
+      const STAMPS = ["🐾", "🌸", "⭐", "❤️", "😀", "🏆"];
+      const next = STAMPS[(STAMPS.indexOf(stamp) + 1) % STAMPS.length];
+      store.set("bw_settings", { ...settings(), stamp: next });
+      renderCal();
+    };
   }
 
   // ---------- 기록 ----------
@@ -536,6 +560,20 @@
       renderStats();
       alert("가져오기 완료!");
     }).catch(() => alert("파일을 읽을 수 없어요."));
+  };
+
+  // ---------- 마스코트 이스터에그 (원작 교수 얼굴 찌르기 오마주) ----------
+  let petCount = 0, petTimer = null;
+  $("#mascot").onclick = () => {
+    SND.bark();
+    const m = $("#mascot");
+    m.classList.remove("mascot-jump"); void m.offsetWidth; m.classList.add("mascot-jump");
+    petCount++;
+    clearTimeout(petTimer);
+    petTimer = setTimeout(() => petCount = 0, 2500);
+    const tip = $("#home-tip");
+    if (petCount >= 5) { tip.textContent = "💬 알았어요, 알았어! 산책 가고 싶은 거죠? 😆"; FX.confetti(); petCount = 0; }
+    else tip.textContent = ["💬 멍멍! 🐾", "💬 헤헤, 간지러워요!", "💬 오늘도 같이 훈련해요!", "💬 멍! (쓰다듬 +1)"][petCount % 4];
   };
 
   // 자동 연결 링크: ?board=<웹앱URL> 로 열면 온라인 순위 URL 자동 저장 (폰 설정 원클릭)

@@ -143,7 +143,7 @@
     if (hole || $(".sucell.sel")) {
       if (!$(".sucell.sel") && hole) { hole.click(); return; }
       const pads = $$("#su-pad .choice-btn");
-      if (pads.length) { pads[S.suPad++ % 4].click(); return; }
+      if (pads.length) { pads[S.suPad++ % pads.length].click(); return; }
     }
     // 이중과제 별 질문 / 상자 세기 / 기타: 아무 보기나
     const any = $$("#game-area .choice-btn");
