@@ -342,6 +342,7 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   font-family: "Manrope", var(--font-kr); padding: 0;
 }
 .acell.live { background: var(--surface); color: var(--fg-primary); border-color: var(--border-default); box-shadow: var(--shadow-1); cursor: pointer; }
+.arrows-grid.dense .acell { font-size: 18px; border-radius: 5px; }
 .ashake { animation: aShake 0.3s ease; }
 @keyframes aShake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 
@@ -368,6 +369,8 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   position: relative;
 }
 .fcell .fdot { width: 62%; height: 62%; border-radius: 50%; pointer-events: none; box-shadow: var(--shadow-1); }
+.flow-grid.dense { gap: 2px; }
+.flow-grid.dense .fcell { border-radius: 4px; }
 .fcell.fon { box-shadow: none; }
 
 /* 짝 맞추기 카드 */

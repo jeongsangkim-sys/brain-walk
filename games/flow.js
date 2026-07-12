@@ -40,7 +40,25 @@
       }
       if (ok && free === 0) return paths;
     }
-    return null;
+    // 폴백: S자 뱀길 완전 경로를 랜덤 절단 — 항상 성공 (4방향 회전으로 변화)
+    const snake = [];
+    const flip = Math.random() < 0.5, rev = Math.random() < 0.5;
+    for (let r = 0; r < N; r++)
+      for (let c = 0; c < N; c++) {
+        const cc = r % 2 ? N - 1 - c : c;
+        snake.push(flip ? cc * N + r : r * N + cc);
+      }
+    if (rev) snake.reverse();
+    const cuts = new Set();
+    let guard = 0;
+    while (cuts.size < pairs - 1 && guard++ < 2000) {
+      const x = 3 + U.rand(0, N * N - 7);
+      if ([...cuts].every(c => Math.abs(c - x) >= 3)) cuts.add(x);
+    }
+    const sorted = [0, ...[...cuts].sort((a, b) => a - b), N * N];
+    const out = [];
+    for (let i = 0; i < sorted.length - 1; i++) out.push(snake.slice(sorted[i], sorted[i + 1]));
+    return out;
   }
 
   window.GAME_FLOW = {
@@ -49,8 +67,10 @@
     start(area, level, api) {
       // 캠페인 모드: 레벨 1~1000 곡선 (한 판) / 일반: 빠른 2판
       const camp = window.BW_CAMPAIGN && window.BW_CAMPAIGN.id === "flow" ? window.BW_CAMPAIGN.level : 0;
-      const N = camp ? Math.min(9, 5 + Math.floor((camp - 1) / 60)) : (level <= 3 ? 5 : level <= 6 ? 6 : 7);
-      const PAIRS = camp ? Math.min(N + 3, 12, 4 + Math.floor((camp - 1) / 25)) : (level <= 3 ? 4 : level <= 6 ? 5 : 6);
+      // 캠페인 곡선: 격자 4레벨마다 +1 (5→10), 난이도 축은 '평균 길 길이' (길수록 꼬여서 어려움)
+      const N = camp ? Math.min(10, 5 + Math.floor((camp - 1) / 4)) : (level <= 3 ? 5 : level <= 6 ? 6 : 7);
+      const avgLen = 6 + Math.min(9, (camp - 1) * 0.2); // 6 → 15
+      const PAIRS = camp ? Math.max(3, Math.min(12, Math.round(N * N / avgLen))) : (level <= 3 ? 4 : level <= 6 ? 5 : 6);
       const BOARDS = camp ? 1 : 2;
       let board = 0, resets = 0, alive = true;
 
@@ -69,11 +89,13 @@
         board++;
         prog.textContent = camp ? `레벨 ${camp}` : `판 ${board} / ${BOARDS}`;
         sol = carve(N, PAIRS);
+        for (let extra = 1; !sol && PAIRS + extra <= 12; extra++) sol = carve(N, PAIRS + extra); // 긴 길 분할 실패 시 쌍 수 완화
         if (!sol) { api.finish(0, "퍼즐 생성 실패"); return; } // 사실상 도달 불가
         window.__flowSol = sol; // 시뮬 하네스 훅
         endsOf = sol.map(p => [p[0], p[p.length - 1]]);
         paths = COLORS.slice(0, PAIRS).map(() => []);
         grid.style.gridTemplateColumns = `repeat(${N}, 1fr)`;
+        grid.classList.toggle("dense", N >= 8);
         grid.innerHTML = "";
         cells = [];
         for (let i = 0; i < N * N; i++) {

@@ -39,8 +39,10 @@
     start(area, level, api) {
       // 캠페인 모드: 레벨 1~1000 곡선 (한 판, 밀도 점증) / 일반: 빠른 2판
       const camp = window.BW_CAMPAIGN && window.BW_CAMPAIGN.id === "arrows" ? window.BW_CAMPAIGN.level : 0;
-      const N = camp ? Math.min(9, 5 + Math.floor((camp - 1) / 70)) : (level <= 3 ? 5 : level <= 6 ? 6 : 7);
-      const COUNT = camp ? Math.min(N * N - 4, 10 + Math.floor((camp - 1) / 6)) : (level <= 3 ? 10 : level <= 6 ? 15 : 20);
+      // 캠페인 곡선: 격자 5레벨마다 +1 (5→10), 난이도 축은 밀도 (빽빽할수록 순서 읽기 어려움)
+      const N = camp ? Math.min(10, 5 + Math.floor((camp - 1) / 5)) : (level <= 3 ? 5 : level <= 6 ? 6 : 7);
+      const ratio = Math.min(0.85, 0.4 + (camp - 1) * 0.012);
+      const COUNT = camp ? Math.max(8, Math.round(N * N * ratio)) : (level <= 3 ? 10 : level <= 6 ? 15 : 20);
       const BOARDS = camp ? 1 : 2;
       let board = 0, blocked = 0, cleared = 0, alive = true;
 
@@ -61,6 +63,7 @@
         remain = grid.filter(Boolean).length;
         window.__arrowsGrid = { grid, N }; // 시뮬 하네스 훅
         wrap.style.gridTemplateColumns = `repeat(${N}, 1fr)`;
+        wrap.classList.toggle("dense", N >= 8);
         wrap.innerHTML = "";
         for (let i = 0; i < N * N; i++) {
           const b = document.createElement("button");
