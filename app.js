@@ -128,7 +128,8 @@
     "change", "pairs", "compare"];
   const stamps = () => new Set(history().map(r => r.date)).size; // 훈련한 날 수
   const unlockLimit = () => 6 + stamps() * 3; // 시작 6종 + 하루 3종씩
-  const isUnlocked = g => UNLOCK_SEQ.indexOf(g.id) < unlockLimit();
+  const UNLOCK_COST = 300; // 🐾 마일로 조기 해금 (도장 대안)
+  const isUnlocked = g => UNLOCK_SEQ.indexOf(g.id) < unlockLimit() || (wallet().games || []).includes(g.id);
   const unlockDay = g => Math.ceil((UNLOCK_SEQ.indexOf(g.id) - 5) / 3); // 필요한 도장 수
   // 뇌 나이(재미용 추정): 비선형 곡선 — 20세는 평균 100점(만점)에서만.
   // 90점=26세, 80점=35세, 65점=48세, 50점=66세, 30점~=80세
@@ -363,9 +364,10 @@
     if (!w) {
       // 소급 적립: 기존 기록 전부 마일리지로 인정 (그랜드파더링)
       const earned = history().reduce((a, r) => a + (r.score || 0), 0) + ageChecks().reduce((a, r) => a + (r.avg || 0), 0);
-      w = { earned, spent: 0, owned: ["basic"] };
+      w = { earned, spent: 0, owned: ["basic"], games: [] };
       store.set("bw_wallet", w);
     }
+    if (!w.games) w.games = []; // 구버전 지갑 마이그레이션 (마일 게임해금)
     return w;
   }
   const miles = () => wallet().earned - wallet().spent;
@@ -672,8 +674,18 @@
       const bs = best()[g.id];
       b.innerHTML = open
         ? `<img class="fc-img" src="${iconSrc(g)}" alt="" onerror="this.outerHTML='<span class=fc-icon>${icon(g)}</span>'"><span class="fc-name">${g.name}</span><span class="fc-best">${bs != null ? bs + "점 " + medal(bs) : "미도전"}</span>`
-        : `<span class="fc-icon">🔒</span><span class="fc-name">${g.name}</span><span class="fc-best">🐾 도장 ${unlockDay(g)}개면 열려요</span>`;
+        : `<span class="fc-icon">🔒</span><span class="fc-name">${g.name}</span><span class="fc-best">도장 ${unlockDay(g)}개 · 또는 🐾 ${UNLOCK_COST}마일</span>`;
       if (open) b.onclick = () => startSession("free", [g]);
+      else b.onclick = () => { // 🐾 마일 조기 해금
+        if (miles() < UNLOCK_COST) { alert(`🐾 마일이 부족해요. (보유 ${miles()} / 필요 ${UNLOCK_COST})\n오늘의 훈련으로 마일을 모아 보세요!`); return; }
+        if (!confirm(`'${g.name}' 게임을 🐾 ${UNLOCK_COST}마일로 바로 열까요?\n(보유 ${miles().toLocaleString()}마일)`)) return;
+        const w = wallet();
+        w.spent += UNLOCK_COST; w.games.push(g.id);
+        store.set("bw_wallet", w);
+        renderShopBtn();
+        FX.confetti();
+        $("#btn-free").click(); // 목록 새로고침
+      };
       list.appendChild(b);
     });
     show("free");
