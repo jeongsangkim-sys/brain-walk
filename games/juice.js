@@ -33,11 +33,30 @@ window.RT = {
 // 공통 연출(FX) + 유틸
 window.FX = {
   _combo: 0, _lastGood: 0, _px: 0, _py: 0, _maxCombo: 0,
-  // 게임 시작 시 호출 — 콤보·배지 초기화
+  // 게임 시작 시 호출 — 콤보·배지·피버 초기화
   comboReset() {
     this._combo = 0; this._maxCombo = 0; this._lastGood = 0;
     const b = document.getElementById("combo-badge");
     if (b) { b.hidden = true; b.className = ""; }
+    const g = document.getElementById("screen-game");
+    if (g) g.classList.remove("fever1", "fever2", "combo-break");
+  },
+  // 🔥 피버 오라 — 콤보가 살아있는 동안 지속 (PUMP식), 미스 시 잿빛 브레이크
+  fever(ok) {
+    const g = document.getElementById("screen-game");
+    if (!g) return;
+    const n = this._combo + 1;
+    const hadFever = g.classList.contains("fever1") || g.classList.contains("fever2");
+    if (!ok) {
+      g.classList.remove("fever1", "fever2");
+      if (hadFever) { // 피버 중 미스만 브레이크 연출
+        g.classList.remove("combo-break"); void g.offsetWidth; g.classList.add("combo-break");
+        setTimeout(() => g.classList.remove("combo-break"), 500);
+      }
+      return;
+    }
+    g.classList.toggle("fever2", n >= 10);
+    g.classList.toggle("fever1", n >= 5 && n < 10);
   },
   // 격투게임식 실시간 콤보 배지 (2연속부터, 단계별 뜨거워짐)
   comboBadge() {
@@ -60,6 +79,7 @@ window.FX = {
     }
     else this._combo = 0;
     this.comboBadge();
+    this.fever(ok);
     if (window.RT) RT.note(ok);
     if (window.SND) ok ? SND.good(this._combo) : SND.bad();
     // 햅틱: 콤보 쌓일수록 진동이 살짝 길어짐 (손끝 에스컬레이션)
