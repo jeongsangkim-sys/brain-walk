@@ -89,7 +89,8 @@ a:hover { text-decoration: underline; }
   100% { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .screen.active, .intro-icon { animation: none; }
+  .screen.active, .intro-icon, .spark { animation: none; }
+  .tile.cleared { animation: none; visibility: hidden; }
 }
 
 h1 { font-size: 38px; font-weight: var(--fw-bold); line-height: var(--lh-display); }
@@ -336,7 +337,22 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 .tile:hover { border-color: var(--charcoal-700); }
 .tile:active { transform: scale(0.97); }
 .tile.hidden-num { color: transparent; background: var(--charcoal-800); border-color: var(--charcoal-800); }
-.tile.cleared { visibility: hidden; }
+.tile.cleared { animation: tilePop 0.28s ease-out forwards; pointer-events: none; }
+@keyframes tilePop {
+  0% { transform: scale(1); opacity: 1; }
+  55% { transform: scale(1.22); opacity: 0.9; }
+  100% { transform: scale(0); opacity: 0; }
+}
+/* 정답 탭 위치 미니 스파크 */
+.spark {
+  position: fixed; width: 8px; height: 8px; border-radius: 50%;
+  background: #FFD34D; pointer-events: none; z-index: 999;
+  animation: sparkFly 0.45s ease-out forwards;
+}
+@keyframes sparkFly {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
 .tile.wrong { background: var(--error-500); border-color: var(--error-500); color: #fff; }
 
 .flash-good { color: var(--success-500); }

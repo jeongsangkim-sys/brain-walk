@@ -677,30 +677,6 @@
     renderCloud();
   };
 
-  // ---------- 내보내기/가져오기 ----------
-  $("#btn-export").onclick = () => {
-    const data = {
-      bw_history: history(), bw_levels: levels(), bw_best: best(),
-      bw_settings: settings(), bw_agecheck: ageChecks(),
-      bw_player: player(), bw_champs: champs()
-    };
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
-    a.download = `brain-walk-${today()}.json`;
-    a.click();
-  };
-  $("#btn-import").onclick = () => $("#file-import").click();
-  $("#file-import").onchange = e => {
-    const f = e.target.files[0];
-    if (!f) return;
-    f.text().then(t => {
-      const d = JSON.parse(t);
-      ["bw_history", "bw_levels", "bw_best", "bw_settings", "bw_agecheck", "bw_player", "bw_champs"].forEach(k => { if (d[k] != null) store.set(k, d[k]); });
-      renderStats();
-      alert("가져오기 완료!");
-    }).catch(() => alert("파일을 읽을 수 없어요."));
-  };
-
   // ---------- 마스코트 이스터에그 (원작 교수 얼굴 찌르기 오마주) ----------
   let petCount = 0, petTimer = null;
   $("#mascot").onclick = () => {

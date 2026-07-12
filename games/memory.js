@@ -63,12 +63,14 @@ window.GAME_MEMORY = {
           const v = Number(t.textContent);
           if (v === sorted[idx]) {
             good++;
+            FX.flash(true); // 정답 손맛 (음·진동·판정·스파크·콤보)
             t.classList.remove("hidden-num");
             t.classList.add("cleared");
             idx++;
             if (idx >= N) { roundWins++; idx = -2; fb.textContent = "성공!"; fb.className = "feedback flash-good"; setTimeout(round, 450); }
           } else {
             bad++;
+            FX.flash(false);
             t.classList.remove("hidden-num");
             t.classList.add("wrong");
             fb.textContent = "순서가 달라요";

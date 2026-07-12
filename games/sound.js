@@ -41,6 +41,8 @@ window.SND = (function () {
     },
     bad() { tone(160, 0.18, "sawtooth", 0.35); tone(120, 0.2, "sawtooth", 0.25, 0.05); },
     tick() { tone(1000, 0.05, "square", 0.15); },
+    // 모든 버튼 공통 탭 사운드 — 짧고 조용한 팝 (정답/오답음 방해 금지 볼륨)
+    pop() { tone(740, 0.04, "sine", 0.18); tone(1180, 0.05, "sine", 0.1, 0.015); },
     start() { tone(523, 0.1, "triangle", 0.4); tone(659, 0.1, "triangle", 0.4, 0.1); tone(784, 0.16, "triangle", 0.45, 0.2); },
     fanfare() {
       [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.22, "triangle", 0.5, i * 0.13));

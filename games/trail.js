@@ -23,15 +23,18 @@ window.GAME_TRAIL = {
       const PAIRS = PAIRS_(); // 이번 판 쌍 수 (boards는 newBoard 진입 시 이미 +1됨)
       for (let i = 0; i < PAIRS; i++) { seq.push(String(i + 1)); seq.push(HANGUL[i]); }
       board.innerHTML = "";
-      const W = board.clientWidth - 80, H = board.clientHeight - 80;
-      const placed = [];
+      // 격자 배치 — 겹침 원천 차단 (구 거부샘플링은 밀집 시 200회 소진 후 겹쳐 놓는 버그)
+      const bw = board.clientWidth, bh = board.clientHeight;
+      const ts = bw <= 400 ? 64 : 76; // .tile 크기 (style.css 480px 브레이크포인트와 동일)
+      const cols = Math.max(2, Math.floor(bw / (ts + 8)));
+      const rows = Math.max(2, Math.floor(bh / (ts + 8)));
+      const cellW = bw / cols, cellH = bh / rows;
+      const cells = BW_UTIL.shuffle([...Array(cols * rows).keys()]).slice(0, seq.length);
       let idx = 0;
-      seq.forEach(label => {
-        let x, y, tries = 0;
-        do {
-          x = Math.random() * W; y = Math.random() * H; tries++;
-        } while (tries < 200 && placed.some(p => Math.hypot(p.x - x, p.y - y) < 90));
-        placed.push({ x, y });
+      seq.forEach((label, i) => {
+        const c = cells[i % cells.length]; // 셀 부족(초소형 화면)이면 재사용 — 그래도 구버전보단 덜 겹침
+        const x = (c % cols) * cellW + Math.random() * Math.max(0, cellW - ts);
+        const y = Math.floor(c / cols) * cellH + Math.random() * Math.max(0, cellH - ts);
         const t = document.createElement("button");
         t.className = "tile";
         t.style.left = x + "px"; t.style.top = y + "px";
@@ -40,12 +43,14 @@ window.GAME_TRAIL = {
           if (!alive) return;
           if (label === seq[idx]) {
             good++; cleared++;
+            FX.flash(true); // 정답 손맛 (음·진동·판정·스파크·콤보)
             t.classList.add("cleared");
             idx++;
             fb.textContent = "";
             if (idx >= seq.length) { fb.textContent = "완료!"; fb.className = "feedback flash-good"; setTimeout(newBoard, 400); }
           } else {
             bad++;
+            FX.flash(false);
             fb.textContent = `다음은 "${seq[idx]}" 차례예요`;
             fb.className = "feedback flash-bad";
           }

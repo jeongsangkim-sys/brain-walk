@@ -32,7 +32,7 @@ window.RT = {
 
 // 공통 연출(FX) + 유틸
 window.FX = {
-  _combo: 0, _lastGood: 0,
+  _combo: 0, _lastGood: 0, _px: 0, _py: 0,
   flash(ok) {
     // 자체 콤보 추적: 2.5초 내 연속 정답이면 효과음 피치 상승
     const now = Date.now();
@@ -42,6 +42,7 @@ window.FX = {
     if (window.SND) ok ? SND.good(this._combo) : SND.bad();
     if (navigator.vibrate) navigator.vibrate(ok ? 15 : [50, 40, 50]); // 햅틱 손맛
     this.judge(ok);
+    if (ok) this.spark(this._px, this._py); // 탭한 자리에서 스파크 — 손끝 보상
     if (ok && this._combo > 0 && this._combo % 5 === 0) this.comboBurst(this._combo + 1);
     const el = document.getElementById("game-area");
     if (!el) return;
@@ -56,6 +57,20 @@ window.FX = {
     j.textContent = ok ? "◯" : "✕";
     document.body.appendChild(j);
     setTimeout(() => j.remove(), 420);
+  },
+  // 정답 순간 탭 위치에서 터지는 미니 스파크 (5개 방사)
+  spark(x, y) {
+    if (!x && !y) return;
+    for (let i = 0; i < 5; i++) {
+      const s = document.createElement("span");
+      s.className = "spark";
+      const ang = Math.random() * Math.PI * 2, d = 26 + Math.random() * 30;
+      s.style.left = x + "px"; s.style.top = y + "px";
+      s.style.setProperty("--dx", Math.cos(ang) * d + "px");
+      s.style.setProperty("--dy", Math.sin(ang) * d + "px");
+      document.body.appendChild(s);
+      setTimeout(() => s.remove(), 500);
+    }
   },
   // 콤보 마일스톤(5·10·15…) — 미니 축포 + 문구 팝
   comboBurst(n) {
@@ -119,6 +134,15 @@ window.FX = {
     }
   }
 };
+
+// 전역 손맛: 탭 좌표 추적 + 모든 버튼에 팝 사운드·미세 진동
+document.addEventListener("pointerdown", e => {
+  FX._px = e.clientX; FX._py = e.clientY;
+  if (e.target.closest("button, .relax-toggle")) {
+    if (window.SND) SND.pop();
+    if (navigator.vibrate) navigator.vibrate(6);
+  }
+}, { passive: true });
 
 window.BW_UTIL = {
   rand: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
