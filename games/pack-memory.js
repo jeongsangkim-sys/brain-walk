@@ -128,7 +128,7 @@
     start(area, level, api) {
       const N = level >= 8 ? 3 : level >= 4 ? 2 : 1;
       const STIM = 18, GAP = Math.max(1100, 1700 - level * 120);
-      let i = 0, hits = 0, fa = 0, targets = 0;
+      let i = 0, hits = 0, fa = 0, miss = 0, targets = 0;
       const seq = [];
       for (let k = 0; k < STIM; k++) {
         if (k >= N && Math.random() < 0.35) { seq.push(seq[k - N]); }
@@ -141,33 +141,48 @@
 
       area.innerHTML = `
         <div class="inst" id="nb-inst"></div>
+        <div class="feedback" id="nb-fb"></div>
         <div class="grid3" id="nb"></div>
-        <button class="big-btn primary" id="nb-btn" style="max-width:320px">같은 자리! 🔔</button>`;
-      area.querySelector("#nb-inst").textContent = N === 1 ? "직전과 같은 자리에 나오면 누르세요" : "2번 전과 같은 자리면 누르세요";
+        <button class="big-btn primary" id="nb-btn" style="max-width:320px">🔔 같은 자리!</button>
+        <div class="inst" id="nb-prog" style="font-size:18px;color:var(--fg-tertiary)"></div>`;
+      area.querySelector("#nb-inst").textContent = N === 1 ? "네모가 직전과 같은 자리에 또 나오면 버튼!" : `${N}번 전과 같은 자리면 버튼!`;
+      const fb = area.querySelector("#nb-fb");
+      const prog = area.querySelector("#nb-prog");
       const grid = area.querySelector("#nb");
       for (let k = 0; k < 9; k++) grid.appendChild(document.createElement("div")).className = "g3cell";
       const cells = grid.querySelectorAll(".g3cell");
       let pressed = false;
 
+      const isTargetAt = k => k >= N && seq[k] === seq[k - N];
+
       area.querySelector("#nb-btn").onclick = () => {
-        if (pressed || i === 0) return;
+        if (i === 0) { fb.textContent = "아직이에요 — 잘 보세요!"; fb.className = "feedback"; return; }
+        if (pressed) return;
         pressed = true;
-        const isT = i - 1 >= N && seq[i - 1] === seq[i - 1 - N];
-        if (isT) hits++; else fa++;
+        const isT = isTargetAt(i - 1);
+        if (isT) { hits++; fb.textContent = "잘 잡았어요!"; fb.className = "feedback flash-good"; }
+        else { fa++; fb.textContent = "지금은 아니에요"; fb.className = "feedback flash-bad"; }
         FX.flash(isT);
       };
 
       const iv = setInterval(() => {
+        // 직전 자극이 타깃이었는데 안 눌렀으면 '놓침' 피드백
+        if (i > 0 && isTargetAt(i - 1) && !pressed) {
+          miss++;
+          fb.textContent = "앗, 같은 자리였어요!";
+          fb.className = "feedback flash-bad";
+        }
         cells.forEach(c => c.classList.remove("on"));
         if (i >= STIM) {
           clearInterval(iv);
           const score = Math.max(0, Math.round(100 * (hits - fa) / Math.max(1, targets)));
-          api.finish(score, `잡음 ${hits}/${targets} · 헛누름 ${fa}`);
+          api.finish(score, `잡음 ${hits}/${targets} · 놓침 ${miss} · 헛누름 ${fa}`);
           return;
         }
         cells[seq[i]].classList.add("on");
         pressed = false;
         i++;
+        prog.textContent = `${i} / ${STIM}`;
       }, GAP);
       api.onTimeUp(() => { clearInterval(iv); });
     }
@@ -187,7 +202,7 @@
         <div class="pe-stage" id="pe-stage">
           <img src="assets/house.png" class="pe-house" alt="집">
         </div>
-        <div class="inst" id="pe-ev"></div>
+        <div class="inst sr-only" id="pe-ev"></div>
         <div class="feedback" id="pe-fb"></div>
         <div class="choices" id="pe-c"></div>`;
       const stage = area.querySelector("#pe-stage");
@@ -219,8 +234,21 @@
         fb.className = "feedback";
         let inside = U.rand(1, 3), e = 0;
         const EVENTS = EVENTS_(), GAP = GAP_(); // 이번 라운드 난이도
-        ev.textContent = `처음에 ${inside}명 있어요`;
-        const iv = setInterval(() => {
+        ev.textContent = `처음에 ${inside}명 있어요`; // 스크린리더·시뮬용 (화면엔 숨김)
+        // 시작 인원을 그림으로: 집 앞에 서 있다가 안으로 들어감
+        for (let k = 0; k < inside; k++) {
+          const w = document.createElement("span");
+          w.className = "walker init";
+          w.textContent = "🧍";
+          w.style.left = `calc(50% + ${(k - (inside - 1) / 2) * 34 - 14}px)`;
+          w.style.bottom = "6px";
+          w.style.animationDelay = 1000 + k * 150 + "ms";
+          stage.appendChild(w);
+          setTimeout(() => w.remove(), 2100 + k * 150);
+        }
+        let iv = null;
+        setTimeout(() => { iv = setInterval(tick, GAP); }, 2300); // 시작 인원 보여준 뒤 이벤트 시작
+        function tick() {
           if (e >= EVENTS) {
             clearInterval(iv);
             ev.textContent = "지금 몇 명일까요?";
@@ -243,7 +271,7 @@
           const n = U.rand(1, 2);
           if (enter) { inside += n; walk(n, true); ev.textContent = `${n}명 들어갔어요`; }
           else { const out = Math.min(n, inside); inside -= out; walk(out, false); ev.textContent = `${out}명 나왔어요`; }
-        }, GAP);
+        }
       }
       round();
       api.onTimeUp(() => {});
