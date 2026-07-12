@@ -1,3 +1,35 @@
+// 반응시간 수집 — FX.flash(모든 정답/오답이 지나는 길목)에서 중앙 기록
+window.RT = {
+  _t0: 0, _game: null, _sess: null,
+  start(gameId) { this._game = gameId; this._t0 = performance.now(); this._sess = { n: 0, sum: 0 }; },
+  stop() { this._game = null; },
+  note(ok) {
+    if (!this._game) return;
+    const now = performance.now();
+    const dt = now - this._t0;
+    this._t0 = now;
+    if (dt < 200 || dt > 15000) return; // 대기·이탈 노이즈 컷
+    this._sess.n++; this._sess.sum += dt;
+    try {
+      const all = JSON.parse(localStorage.getItem("bw_rt") || "{}");
+      const a = all[this._game] = all[this._game] || { n: 0, ok: 0, ms: [] };
+      a.n++; if (ok) a.ok++;
+      a.ms.push(Math.round(dt));
+      if (a.ms.length > 100) a.ms.shift(); // 최근 100개만 (중앙값용)
+      localStorage.setItem("bw_rt", JSON.stringify(all));
+    } catch {}
+  },
+  sessAvg() { return this._sess && this._sess.n >= 3 ? this._sess.sum / this._sess.n / 1000 : null; },
+  median(gameId) {
+    try {
+      const a = JSON.parse(localStorage.getItem("bw_rt") || "{}")[gameId];
+      if (!a || a.ms.length < 30) return null;
+      const s = [...a.ms].sort((x, y) => x - y);
+      return s[Math.floor(s.length / 2)];
+    } catch { return null; }
+  }
+};
+
 // 공통 연출(FX) + 유틸
 window.FX = {
   _combo: 0, _lastGood: 0,
@@ -6,6 +38,7 @@ window.FX = {
     const now = Date.now();
     if (ok) { this._combo = (now - this._lastGood < 2500) ? this._combo + 1 : 0; this._lastGood = now; }
     else this._combo = 0;
+    if (window.RT) RT.note(ok);
     if (window.SND) ok ? SND.good(this._combo) : SND.bad();
     const el = document.getElementById("game-area");
     if (!el) return;
@@ -85,5 +118,19 @@ window.BW_UTIL = {
   // 속도 등급 (목표시간/실제시간 비율)
   speedGrade(r) {
     return r >= 1 ? "🚀 로켓급!" : r >= 0.8 ? "🚄 고속열차급" : r >= 0.6 ? "🚗 자동차급" : r >= 0.4 ? "🚲 자전거급" : "🚶 산책급";
+  },
+  // 목표 문항 수 자동 교정: 실측 반응시간 중앙값(표본 30+)이 있으면 그걸로, 없으면 기본값
+  targetFor(gameId, fallback, durationSec) {
+    const med = window.RT ? RT.median(gameId) : null;
+    if (!med) return fallback;
+    const t = Math.round((durationSec * 1000 / med) * 0.9); // 중앙값 속도의 90%를 만점 기준으로
+    return Math.max(Math.round(fallback * 0.7), Math.min(fallback * 2, t));
+  },
+  // 답 버튼 정답/오답 플래시
+  markBtn(b, ok) {
+    if (!b || !b.classList) return;
+    b.classList.remove("btn-good", "btn-bad");
+    void b.offsetWidth;
+    b.classList.add(ok ? "btn-good" : "btn-bad");
   }
 };

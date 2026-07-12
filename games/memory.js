@@ -5,7 +5,7 @@ window.GAME_MEMORY = {
   intro: "숫자가 잠깐 나타났다가 가려집니다.\n작은 수부터 순서대로 눌러 주세요.",
 
   start(area, level, api) {
-    const N = 3 + level;          // 외울 개수 4~8
+    const N = Math.min(9, 3 + level);   // 외울 개수 4~9 (보드 배치 한계)
     const SHOW_MS = 1500 + level * 300;
     let good = 0, bad = 0, rounds = 0, roundWins = 0;
     let alive = true;

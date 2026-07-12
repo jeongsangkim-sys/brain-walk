@@ -50,7 +50,7 @@
   function adjustLevel(id, score) {
     const lv = levels();
     const cur = lv[id] || 1;
-    if (score >= 75) lv[id] = Math.min(5, cur + 1);
+    if (score >= 75) lv[id] = Math.min(9, cur + 1);
     else if (score < 40) lv[id] = Math.max(1, cur - 1);
     else lv[id] = cur;
     store.set("bw_levels", lv);
@@ -179,6 +179,7 @@
 
     $("#btn-go").onclick = () => {
       SND.start(); SND.bgmStart();
+      RT.start(game.id); // 반응시간 수집 시작
       $("#game-intro").style.display = "none";
       const elT = $("#game-timer");
       const fill = $("#timer-fill");
@@ -195,6 +196,7 @@
           if (session !== mySession || session.i !== myIdx) return;
           stopTimer();
           SND.bgmStop();
+          RT.stop();
           onGameDone(game, score, detail);
         }
       };
@@ -210,12 +212,13 @@
         const dur = Math.round((window.BW_TEST_SEC || game.sec || 30) * (settings().relaxMode ? 1.5 : 1));
         let left = dur;
         elT.textContent = left + "초";
+        fill.classList.remove("low");
         timerId = setInterval(() => {
           left--;
           elT.textContent = left + "초";
           fill.style.width = (100 * left / dur) + "%";
           if (left <= 10) elT.classList.add("low");
-          if (left <= 5 && left > 0) SND.tick();
+          if (left <= 5 && left > 0) { SND.tick(); fill.classList.add("low"); }
           if (left <= 0) { stopTimer(); timeUpCb && timeUpCb(); }
         }, 1000);
       }
@@ -253,7 +256,8 @@
     $("#result-title").textContent = (isRecord ? "🏆 신기록! " : "") + game.name + " 결과";
     FX.countUp($("#result-score"), score, "점 " + medal(score));
     $("#result-comment").textContent = isRecord ? `이전 최고 ${prevBest}점을 넘었어요!` : comment(score);
-    $("#result-detail").textContent = detail;
+    const rtAvg = RT.sessAvg();
+    $("#result-detail").textContent = detail + (rtAvg ? ` · 평균 반응 ${rtAvg.toFixed(1)}초` : "");
     coachSay(score, isRecord);
     if (isRecord) FX.confetti();
     $("#btn-next").textContent = last

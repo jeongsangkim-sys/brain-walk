@@ -11,7 +11,7 @@
     start(area, level, api) {
       const BEATS = { 0: 1, 1: 2, 2: 0 };            // 바위0>가위1>보2>바위0
       let ok = 0, bad = 0, streak = 0;
-      const TARGET = 12;
+      const TARGET = U.targetFor("rps", 12, 30);
       area.innerHTML = `
         <div class="inst" id="rps-inst"></div>
         <div class="hand-view" id="rps-hand"></div>
@@ -43,6 +43,7 @@
       function pick(p) {
         const win = BEATS[p] === comp, draw = p === comp;
         const good = goal === "win" ? win : goal === "lose" ? (!win && !draw) : draw;
+        U.markBtn(cWrap.children[p], good);
         if (good) { ok++; streak++; fb.textContent = "정답!" + U.comboText(streak); fb.className = "feedback flash-good"; }
         else { bad++; streak = 0; fb.textContent = "아까워요!"; fb.className = "feedback flash-bad"; }
         FX.flash(good);
@@ -62,7 +63,7 @@
     intro: "지시대로 깃발을 드세요.\n\"아니야!\"가 붙으면 반대 깃발!",
     start(area, level, api) {
       let ok = 0, bad = 0, streak = 0;
-      const TARGET = 12;
+      const TARGET = U.targetFor("flags", 12, 30);
       area.innerHTML = `
         <div class="problem" id="fl-inst" style="font-size:40px"></div>
         <div class="feedback" id="fl-fb"></div>
@@ -87,6 +88,7 @@
         b.style.color = css; b.style.borderColor = css;
         b.onclick = () => {
           const good = i === answer;
+          U.markBtn(b, good);
           if (good) { ok++; streak++; fb.textContent = "정답!" + U.comboText(streak); fb.className = "feedback flash-good"; }
           else { bad++; streak = 0; fb.textContent = "반대예요!"; fb.className = "feedback flash-bad"; }
           FX.flash(good);
@@ -136,12 +138,14 @@
           prog.textContent = `${done + 1} / ${COUNT}`;
           const p = problem();
           q.textContent = p.t + " = ?";
-          U.renderChoices(area.querySelector("#cm-c"), U.choicesAround(p.ans, 8), v => {
+          U.renderChoices(area.querySelector("#cm-c"), U.choicesAround(p.ans, 8), (v, btn) => {
             if (done >= COUNT) return;
             done++;
-            if (v === p.ans) { ok++; streak++; fb.textContent = "정답!" + U.comboText(streak); fb.className = "feedback flash-good"; }
+            const good = v === p.ans;
+            U.markBtn(btn, good);
+            if (good) { ok++; streak++; fb.textContent = "정답!" + U.comboText(streak); fb.className = "feedback flash-good"; }
             else { streak = 0; fb.textContent = `정답은 ${p.ans}`; fb.className = "feedback flash-bad"; }
-            FX.flash(v === p.ans);
+            FX.flash(good);
             next();
           });
         }
@@ -158,7 +162,7 @@
     id: "serial", name: "연속 뺄셈", icon: "➖", mode: "count", check: true,
     intro: "시작 숫자에서 같은 수를\n계속 빼 나가세요.",
     start(area, level, api) {
-      const SUB = [3, 7, 9, 13, 17][level - 1] || 7;
+      const SUB = [3, 7, 9, 13, 17, 19, 23, 27, 33][level - 1] || 7;
       const STEPS = 8;
       let cur = U.rand(90, 120), step = 0, ok = 0;
       area.innerHTML = `
@@ -179,10 +183,11 @@
         }
         const ans = cur - SUB;
         q.textContent = `${cur} − ${SUB} = ?`;
-        U.renderChoices(area.querySelector("#se-c"), U.choicesAround(ans, 6), v => {
+        U.renderChoices(area.querySelector("#se-c"), U.choicesAround(ans, 6), (v, btn) => {
           if (step >= STEPS) return;
           step++;
           const good = v === ans;
+          U.markBtn(btn, good);
           if (good) { ok++; fb.textContent = "정답!"; fb.className = "feedback flash-good"; }
           else { fb.textContent = `정답은 ${ans}`; fb.className = "feedback flash-bad"; }
           FX.flash(good);

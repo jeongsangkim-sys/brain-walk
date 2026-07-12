@@ -6,7 +6,7 @@ window.GAME_CALC = {
 
   start(area, level, api) {
     let correct = 0, wrong = 0, streak = 0;
-    const TARGET = 7; // 분량 보정 기준(문항 수, 30초 기준)
+    const TARGET = BW_UTIL.targetFor("calc", 7, 30); // 실측 반응시간 있으면 자동 교정
 
     const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 
@@ -16,7 +16,8 @@ window.GAME_CALC = {
       else if (level === 2) { a = rand(2, 9); b = rand(2, 9); op = ["+", "-", "×"][rand(0, 2)]; }
       else if (level === 3) { a = rand(10, 50); b = rand(10, 50); op = Math.random() < 0.5 ? "+" : "-"; }
       else if (level === 4) { a = rand(10, 99); b = rand(2, 9); op = ["+", "-", "×"][rand(0, 2)]; }
-      else { a = rand(11, 99); b = rand(11, 99); op = ["+", "-", "×"][rand(0, 2)]; if (op === "×") b = rand(2, 12); }
+      else if (level <= 6) { a = rand(11, 99); b = rand(11, 99); op = ["+", "-", "×"][rand(0, 2)]; if (op === "×") b = rand(2, 12); }
+      else { a = rand(101, 999); b = rand(11, 99); op = ["+", "-", "×"][rand(0, 2)]; if (op === "×") { a = rand(12, 29); b = rand(11, 19); } }
       if (op === "-" && b > a) [a, b] = [b, a];
       const ans = op === "+" ? a + b : op === "-" ? a - b : a * b;
       return { text: `${a} ${op} ${b} = ?`, ans };
@@ -44,9 +45,11 @@ window.GAME_CALC = {
         b.className = "choice-btn";
         b.textContent = v;
         b.onclick = () => {
-          if (v === p.ans) { correct++; streak++; elFb.textContent = "정답!" + BW_UTIL.comboText(streak); elFb.className = "feedback flash-good"; }
+          const good = v === p.ans;
+          BW_UTIL.markBtn(b, good);
+          if (good) { correct++; streak++; elFb.textContent = "정답!" + BW_UTIL.comboText(streak); elFb.className = "feedback flash-good"; }
           else { wrong++; streak = 0; elFb.textContent = `아쉬워요 (정답 ${p.ans})`; elFb.className = "feedback flash-bad"; }
-          FX.flash(v === p.ans);
+          FX.flash(good);
           next();
         };
         elC.appendChild(b);

@@ -8,7 +8,7 @@
     id: "photo", name: "직전 그림", icon: "🖼️", mode: "count",
     intro: "그림이 한 장씩 지나가요.\n\"직전에 본 그림\"을 골라내세요.",
     start(area, level, api) {
-      const BACK = level >= 4 ? 2 : 1;
+      const BACK = level >= 8 ? 3 : level >= 4 ? 2 : 1;
       const ROUNDS = 8;
       let r = 0, ok = 0;
       const hist = [];
@@ -42,8 +42,9 @@
         const ans = hist[hist.length - 1 - BACK];
         const opts = new Set([ans]);
         while (opts.size < 4) opts.add(EMOJI[U.rand(0, EMOJI.length - 1)]);
-        U.renderChoices(choices, U.shuffle([...opts]), v => {
+        U.renderChoices(choices, U.shuffle([...opts]), (v, btn) => {
           const good = v === ans;
+          U.markBtn(btn, good);
           if (good) { ok++; fb.textContent = "정답!"; fb.className = "feedback flash-good"; }
           else { fb.textContent = `정답은 ${ans}`; fb.className = "feedback flash-bad"; }
           FX.flash(good);
@@ -117,7 +118,7 @@
     id: "nback", name: "같은 위치", icon: "📍", mode: "count",
     intro: "네모가 차례로 나타나요.\n직전과 같은 자리면 버튼을 누르세요!",
     start(area, level, api) {
-      const N = level >= 4 ? 2 : 1;
+      const N = level >= 8 ? 3 : level >= 4 ? 2 : 1;
       const STIM = 18, GAP = Math.max(1100, 1700 - level * 120);
       let i = 0, hits = 0, fa = 0, targets = 0;
       const seq = [];
@@ -198,9 +199,10 @@
             const opts = new Set([inside]);
             while (opts.size < 4) { const d = Math.max(0, inside + U.rand(-3, 3)); if (d !== inside) opts.add(d); }
             let answered = false; // 라운드 전환 대기 중 연타 방지
-            U.renderChoices(choices, U.shuffle([...opts]), v => {
+            U.renderChoices(choices, U.shuffle([...opts]), (v, btn) => {
               if (answered) return; answered = true;
               const good = v === inside;
+              U.markBtn(btn, good);
               if (good) { ok++; fb.textContent = "정답!"; fb.className = "feedback flash-good"; }
               else { fb.textContent = `정답은 ${inside}명`; fb.className = "feedback flash-bad"; }
               FX.flash(good);
@@ -264,9 +266,10 @@
           const opts = new Set([birds]);
           while (opts.size < 4) { const d = Math.max(1, birds + U.rand(-3, 3)); if (d !== birds) opts.add(d); }
           let answered = false; // 연타 방지
-          U.renderChoices(choices, U.shuffle([...opts]), v => {
+          U.renderChoices(choices, U.shuffle([...opts]), (v, btn) => {
             if (answered) return; answered = true;
             const good = v === birds;
+            U.markBtn(btn, good);
             if (good) { ok++; fb.textContent = "정답!"; fb.className = "feedback flash-good"; }
             else { fb.textContent = `정답은 ${birds}마리`; fb.className = "feedback flash-bad"; }
             FX.flash(good);
@@ -348,9 +351,10 @@
         const opts = new Set([total]);
         while (opts.size < 4) { const d = Math.max(1, total + U.rand(-3, 3)); if (d !== total) opts.add(d); }
         let answered = false; // 연타 방지
-        U.renderChoices(choices, U.shuffle([...opts]), v => {
+        U.renderChoices(choices, U.shuffle([...opts]), (v, btn) => {
           if (answered) return; answered = true;
           const good = v === total;
+          U.markBtn(btn, good);
           if (good) { ok++; fb.textContent = "정답!"; fb.className = "feedback flash-good"; }
           else { fb.textContent = `정답은 ${total}개`; fb.className = "feedback flash-bad"; }
           FX.flash(good);
@@ -384,11 +388,13 @@
         const shown = truth ? a + b : a + b + (Math.random() < 0.5 ? 1 : -1) * U.rand(1, 3);
         q.textContent = `${a} + ${b} = ${shown}`;
       }
-      U.renderChoices(area.querySelector("#du-c"), ["⭕ 맞다", "❌ 틀리다"], v => {
+      U.renderChoices(area.querySelector("#du-c"), ["⭕ 맞다", "❌ 틀리다"], (v, btn) => {
         const saidTrue = v.startsWith("⭕");
         const good = saidTrue === truth;
+        U.markBtn(btn, good);
         if (good) { eqOk++; fb.textContent = "정답!"; fb.className = "feedback flash-good"; }
         else { eqBad++; fb.textContent = "앗!"; fb.className = "feedback flash-bad"; }
+        FX.flash(good);
         next();
       });
       next();

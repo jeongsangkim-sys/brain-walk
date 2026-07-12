@@ -183,7 +183,7 @@
   // ----- 드라이버 -----
   window.__runAll = async function () {
     // 스냅샷
-    const KEYS = ["bw_history", "bw_levels", "bw_best", "bw_settings", "bw_agecheck", "bw_player", "bw_champs"];
+    const KEYS = ["bw_history", "bw_levels", "bw_best", "bw_settings", "bw_agecheck", "bw_player", "bw_champs", "bw_rt"];
     const snap = {};
     KEYS.forEach(k => snap[k] = localStorage.getItem(k));
     // 시뮬 중 사용자가 실플레이하면 종료 복원이 그 기록을 덮어씀 → 영구 백업 남김 (수동 복구용)

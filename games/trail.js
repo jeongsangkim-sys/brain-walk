@@ -6,7 +6,7 @@ window.GAME_TRAIL = {
 
   start(area, level, api) {
     const HANGUL = ["가", "나", "다", "라", "마", "바", "사", "아"];
-    const PAIRS = 2 + level;            // 3~7쌍 = 6~14개
+    const PAIRS = Math.min(7, 2 + level);  // 최대 7쌍 = 14개 (보드 한계)
     let good = 0, bad = 0, cleared = 0, boards = 0;
     let alive = true;
 
