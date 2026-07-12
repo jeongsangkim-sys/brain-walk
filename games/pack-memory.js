@@ -27,9 +27,11 @@
         const e = EMOJI[U.rand(0, EMOJI.length - 1)];
         hist.push(e);
         card.textContent = e;
+        card.classList.remove("card-pop"); void card.offsetWidth; card.classList.add("card-pop");
         inst.textContent = "잘 보세요…";
+        fb.textContent = "";
         choices.innerHTML = "";
-        setTimeout(ask, 900);
+        setTimeout(ask, 1200);
       }
       function ask() {
         if (hist.length <= BACK) { showNext(); return; }
@@ -49,7 +51,9 @@
           if (good) { ok++; fb.textContent = "정답!"; fb.className = "feedback flash-good"; }
           else { fb.textContent = `정답은 ${ans}`; fb.className = "feedback flash-bad"; }
           FX.flash(good);
-          showNext();
+          card.textContent = "";
+          choices.innerHTML = "";
+          setTimeout(showNext, 650); // 피드백 볼 틈 준 뒤 다음 그림 등장
         });
       }
       showNext();
