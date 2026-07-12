@@ -112,7 +112,7 @@ a:hover { text-decoration: underline; }
 
 h1 { font-size: 38px; font-weight: var(--fw-bold); line-height: var(--lh-display); }
 .logo-h1 { line-height: 0; }
-.logo-img { width: 300px; max-width: 84vw; height: auto; }
+.logo-img { width: 340px; max-width: 88vw; height: auto; }
 h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading); }
 
 /* ---------- 홈 ---------- */
@@ -327,7 +327,7 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 .choice-btn:active { transform: scale(0.98); box-shadow: var(--shadow-0); }
 
 /* 뇌나이 결과 일러스트 */
-.age-img { display: block; width: 150px; height: auto; margin: 0 auto var(--sp-2); background: var(--icon-chip); border-radius: var(--radius-xl); padding: 8px; }
+.age-img { display: block; width: 180px; height: auto; margin: 0 auto var(--sp-2); background: var(--icon-chip); border-radius: var(--radius-xl); padding: 8px; }
 
 /* 짝 맞추기 카드 */
 .pairs-grid { display: grid; gap: var(--sp-2); width: 100%; max-width: 420px; }
@@ -826,7 +826,7 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   h1 { font-size: 32px; }
   .screen { padding: var(--sp-5) var(--sp-4) var(--sp-12); gap: var(--sp-4); }
   .topbar { width: calc(100% + 32px); margin: 0 -16px; padding: var(--sp-2) var(--sp-4); }
-  #mascot { width: 120px; height: 120px; }
+
   .problem { font-size: 44px; }
   .choice-btn { font-size: 26px; min-height: 76px; }
   .board { height: 360px; }
