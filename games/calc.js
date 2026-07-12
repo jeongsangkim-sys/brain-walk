@@ -10,7 +10,7 @@ window.GAME_CALC = {
 
     const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
     // 인-세션 램프: 정답 4개마다 한 단계 어려워짐 (원작 감각)
-    const eff = () => Math.min(9, level + Math.floor(correct / 4));
+    const eff = () => Math.min(9, level + Math.floor(correct / 3)); // 원작 감각: 잘하면 빨리 벅차짐
 
     function makeProblem() {
       let a, b, op;

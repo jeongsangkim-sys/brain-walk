@@ -320,8 +320,32 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   cursor: pointer;
   transition: border-color var(--t), box-shadow var(--t), transform var(--t);
 }
-.choice-btn:hover { border-color: var(--charcoal-700); box-shadow: var(--shadow-2); }
+@media (hover: hover) { .choice-btn:hover { border-color: var(--charcoal-700); box-shadow: var(--shadow-2); } }
 .choice-btn:active { transform: scale(0.98); box-shadow: var(--shadow-0); }
+
+/* 짝 맞추기 카드 */
+.pairs-grid { display: grid; gap: var(--sp-2); width: 100%; max-width: 420px; }
+.pcard {
+  aspect-ratio: 1; font-size: 34px; cursor: pointer;
+  border: 1px solid var(--border-default); border-radius: var(--radius-lg);
+  background: var(--charcoal-50); box-shadow: var(--shadow-1);
+  transition: transform var(--t), background var(--t);
+}
+.pcard.open { background: var(--surface); transform: scale(1.05); }
+.pcard.done { background: var(--salmon-50); border-color: var(--aia-red); cursor: default; }
+
+/* 어느 쪽이 많을까 */
+.compare-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); width: 100%; max-width: 480px; }
+.cmp-box {
+  min-height: 240px; padding: var(--sp-3); cursor: pointer;
+  display: flex; flex-wrap: wrap; align-content: flex-start; justify-content: center; gap: 2px;
+  border: 2px solid var(--border-default); border-radius: var(--radius-lg);
+  background: var(--surface); box-shadow: var(--shadow-1); font-size: 26px;
+}
+.cmp-box:active { transform: scale(0.98); }
+
+/* 부호 찾기: 연산 기호 크고 굵게 (가독) */
+.sign-choices .choice-btn { font-size: 48px; font-weight: 800; color: var(--aia-red); }
 
 /* 답 버튼 정답/오답 플래시 (애니메이션만 — 끝나면 원상복귀) */
 .btn-good { animation: btnGood 0.45s ease; }
@@ -350,7 +374,7 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   font-size: 30px; font-weight: var(--fw-bold); cursor: pointer;
   transition: border-color var(--t), transform var(--t);
 }
-.tile:hover { border-color: var(--charcoal-700); }
+@media (hover: hover) { .tile:hover { border-color: var(--charcoal-700); } }
 .tile:active { transform: scale(0.97); }
 .tile.hidden-num { color: transparent; background: var(--charcoal-800); border-color: var(--charcoal-800); }
 .tile.cleared { animation: tilePop 0.28s ease-out forwards; pointer-events: none; }
@@ -500,7 +524,7 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   background: var(--surface); box-shadow: var(--shadow-1);
   cursor: pointer; transition: background 0.15s, border-color 0.15s;
 }
-.g5cell:hover { border-color: var(--charcoal-700); }
+@media (hover: hover) { .g5cell:hover { border-color: var(--charcoal-700); } }
 .g5cell.lit { background: var(--aia-red); border-color: var(--aia-red); }
 .g5cell.wrongcell { background: var(--error-500); border-color: var(--error-500); }
 
@@ -595,6 +619,12 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 .sucell.hole { background: var(--warmgrey-100); }
 .sucell.sel { outline: 3px solid var(--aia-red); outline-offset: -3px; }
 .sucell.solved { color: var(--aia-red); }
+.sucell.hl { background: var(--salmon-50); }          /* 선택 셀의 행/열/박스 */
+.sucell.hole.hl { background: var(--salmon-100, #FBDAD0); }
+.sucell.same { background: var(--salmon-200, #F6B7A6); } /* 같은 숫자 */
+.su-key { position: relative; }
+.su-key small { position: absolute; right: 6px; bottom: 3px; font-size: 12px; color: var(--fg-tertiary); }
+.su-key:disabled { opacity: 0.35; cursor: default; }
 .sucell.fixed { cursor: default; }
 
 /* 자유 플레이 그리드 */

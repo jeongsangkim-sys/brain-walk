@@ -175,7 +175,7 @@
       area.innerHTML = `
         <div class="problem" id="sg-q"></div>
         <div class="feedback" id="sg-fb"></div>
-        <div class="choices" id="sg-c"></div>`;
+        <div class="choices sign-choices" id="sg-c"></div>`;
       const q = area.querySelector("#sg-q");
       const fb = area.querySelector("#sg-fb");
       let answer = 0;
@@ -183,7 +183,7 @@
       function next() {
         // 정답 부호가 유일해질 때까지 생성 (예: 2+2=2×2 모호성 배제)
         for (let guard = 0; guard < 50; guard++) {
-          const lv = level + Math.floor(ok / 4); // 인-세션 램프
+          const lv = level + Math.floor(ok / 3); // 인-세션 램프 (원작 감각)
           const hi = lv <= 2 ? 9 : lv <= 5 ? 12 : 19;
           const pick = U.rand(0, 3);
           let a, b;
@@ -208,6 +208,7 @@
         b.onclick = () => {
           const good = i === answer;
           U.markBtn(b, good);
+          b.blur(); // 버튼 재사용 게임: 포커스·활성 잔상 제거 (모바일 스티키)
           if (good) { ok++; streak++; fb.textContent = "정답!" + U.comboText(streak); fb.className = "feedback flash-good"; }
           else { bad++; streak = 0; fb.textContent = `정답은 ${OPS[answer][0]}`; fb.className = "feedback flash-bad"; }
           FX.flash(good);

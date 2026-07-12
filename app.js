@@ -23,7 +23,10 @@
     { g: window.GAME_BIRDS, daily: true },
     { g: window.GAME_BOXES, daily: true },
     { g: window.GAME_DUAL, daily: true },
-    { g: window.GAME_SUDOKU }
+    { g: window.GAME_SUDOKU },
+    { g: window.GAME_CHANGE, daily: true },
+    { g: window.GAME_PAIRS, daily: true },
+    { g: window.GAME_COMPARE, daily: true }
   ].filter(r => r.g);
   const ALL = REG.map(r => r.g);
   const DAILY_POOL = REG.filter(r => r.daily).map(r => r.g);
@@ -50,7 +53,10 @@
     birds: "나비는 빼고, 새만 세세요",
     boxes: "뒤에 가려진 상자까지 세야 해요",
     dual: "계산 O/X 하면서 ⭐ 횟수도 세기",
-    sudoku: "가로·세로·3×3에 1~9가 한 번씩"
+    sudoku: "가로·세로·3×3에 1~9가 한 번씩 · ❤️ 3개",
+    change: "낸 돈 − 물건값 = 거스름돈",
+    pairs: "같은 그림 두 장을 찾아 뒤집으세요",
+    compare: "개수가 더 많은 쪽을 빠르게!"
   };
 
   const ICONS = { calc: "➕", memory: "👀", stroop: "🎨", trail: "🔗" }; // v1 게임 아이콘 보강
@@ -73,13 +79,15 @@
   const mine = (r, who) => !who || !r.name || r.name === who;
   const myHist = who => history().filter(r => mine(r, who));
   const settings = () => store.get("bw_settings", { relaxMode: false, sound: true });
-  const levelOf = id => levels()[id] || 1;
+  // 시작 레벨 2 — L1은 몸풀기용(원작도 첫 판부터 두 자리 연산). 못 따라오면 DDA가 1로 내려줌
+  const levelOf = id => levels()[id] || 2;
 
   function adjustLevel(id, score) {
     const lv = levels();
-    const cur = lv[id] || 1;
-    if (score >= 75) lv[id] = Math.min(9, cur + 1);
-    else if (score < 40) lv[id] = Math.max(1, cur - 1);
+    const cur = lv[id] || 2;
+    // 70↑ 승급 / 35↓ 강등 — 원작처럼 '살짝 벅찬' 중간대(50~70)에 오래 머물게
+    if (score >= 70) lv[id] = Math.min(9, cur + 1);
+    else if (score < 35) lv[id] = Math.max(1, cur - 1);
     else lv[id] = cur;
     store.set("bw_levels", lv);
   }
@@ -116,7 +124,8 @@
   // ---------- 게임 해금 (원작식: 훈련한 날이 쌓이면 새 게임이 열림) ----------
   const UNLOCK_SEQ = ["calc", "memory", "stroop", "rps", "trail", "flags",
     "calc25", "sign", "photo", "people", "birds", "highest", "grid55",
-    "boxes", "dual", "nback", "serial", "speedcount", "sudoku", "calc100"];
+    "boxes", "dual", "nback", "serial", "speedcount", "sudoku", "calc100",
+    "change", "pairs", "compare"];
   const stamps = () => new Set(history().map(r => r.date)).size; // 훈련한 날 수
   const unlockLimit = () => 6 + stamps() * 3; // 시작 6종 + 하루 3종씩
   const isUnlocked = g => UNLOCK_SEQ.indexOf(g.id) < unlockLimit();
@@ -629,10 +638,10 @@
   // ---------- 진입점 ----------
   // 데일리: 인지 영역별 1개씩 (계산·기억·반응·관찰 중 3영역) — 완전 랜덤이면 같은 계열 3개가 걸릴 수 있음
   const CATS = {
-    calc: "수", calc25: "수", sign: "수",
-    memory: "기억", photo: "기억", nback: "기억",
+    calc: "수", calc25: "수", sign: "수", change: "수",
+    memory: "기억", photo: "기억", nback: "기억", pairs: "기억",
     stroop: "반응", rps: "반응", flags: "반응", dual: "반응",
-    trail: "관찰", people: "관찰", birds: "관찰", boxes: "관찰"
+    trail: "관찰", people: "관찰", birds: "관찰", boxes: "관찰", compare: "관찰"
   };
   // 날짜 시드 결정적 랜덤 — 오늘 라인업을 어제 미리 알 수 있음 (내일 예고용)
   function dailyLineup(dateStr) {
@@ -870,7 +879,7 @@
   }
 
   $("#btn-cloud").onclick = () => {
-    // 이미 연결됨 → 상태 안내 + 해제 여부만 (URL 재입력 요구 금지)
+    // URL 수동 붙여넣기 제거 — 연결은 ?board= 자동 링크로만 (폰 UX)
     if (CLOUD.enabled()) {
       if (confirm("🌐 온라인 순위가 이미 연결되어 있어요.\n\n[확인] = 연결 해제\n[취소] = 그대로 두기")) {
         CLOUD.setUrl("");
@@ -878,15 +887,7 @@
       }
       return;
     }
-    const u = window.prompt("구글 시트 기록판 URL을 붙여넣으세요.\n(자동 연결 링크로 열면 이 과정이 필요 없어요)", "");
-    if (u === null) return; // 취소
-    const t = (u || "").trim();
-    if (t && !/^https:\/\/script\.google\.com\/macros\//.test(t)) {
-      alert("URL 형식이 아니에요.\nhttps://script.google.com/macros/… 로 시작하는 웹 앱 URL을 붙여넣어 주세요.");
-      return;
-    }
-    CLOUD.setUrl(t);
-    renderCloud();
+    alert("🌐 온라인 순위는 '자동 연결 링크'로 접속하면 켜져요.\n\n가족 공유방에 있는 두뇌 산책 링크(?board=…)로 한 번만 열어 주세요.");
   };
 
   // ---------- 마스코트 이스터에그 (원작 교수 얼굴 찌르기 오마주) ----------
