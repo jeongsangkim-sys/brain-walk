@@ -127,8 +127,9 @@
           let a, b, op;
           if (level <= 2) { a = U.rand(1, 9); b = U.rand(1, 9); op = ["+", "-"][U.rand(0, 1)]; }
           else { a = U.rand(2, 12); b = U.rand(2, 12); op = ["+", "-", "×"][U.rand(0, 2)]; }
+          if (level >= 3 && Math.random() < 0.25) { b = U.rand(2, 9); a = b * U.rand(2, 9); op = "÷"; } // 나눗셈
           if (op === "-" && b > a) [a, b] = [b, a];
-          return { t: `${a} ${op} ${b}`, ans: op === "+" ? a + b : op === "-" ? a - b : a * b };
+          return { t: `${a} ${op} ${b}`, ans: op === "+" ? a + b : op === "-" ? a - b : op === "÷" ? a / b : a * b };
         }
         function next() {
           if (done >= COUNT) {
@@ -165,13 +166,16 @@
     id: "sign", name: "부호 찾기", icon: "❔", sec: 25,
     intro: "빈칸에 들어갈 부호를 고르세요.\n7 ❔ 3 = 21 이면 ×!",
     start(area, level, api) {
-      const OPS = [["+", (a, b) => a + b], ["−", (a, b) => a - b], ["×", (a, b) => a * b]];
+      const OPS = [
+        ["+", (a, b) => a + b], ["−", (a, b) => a - b], ["×", (a, b) => a * b],
+        ["÷", (a, b) => (b !== 0 && a % b === 0) ? a / b : NaN]
+      ];
       let ok = 0, bad = 0, streak = 0;
       const TARGET = U.targetFor("sign", 9, 30);
       area.innerHTML = `
         <div class="problem" id="sg-q"></div>
         <div class="feedback" id="sg-fb"></div>
-        <div class="choices three" id="sg-c"></div>`;
+        <div class="choices" id="sg-c"></div>`;
       const q = area.querySelector("#sg-q");
       const fb = area.querySelector("#sg-fb");
       let answer = 0;
@@ -181,10 +185,12 @@
         for (let guard = 0; guard < 50; guard++) {
           const lv = level + Math.floor(ok / 4); // 인-세션 램프
           const hi = lv <= 2 ? 9 : lv <= 5 ? 12 : 19;
-          const a = U.rand(2, hi), b = U.rand(2, Math.min(9, hi));
-          const pick = U.rand(0, 2);
+          const pick = U.rand(0, 3);
+          let a, b;
+          if (pick === 3) { b = U.rand(2, 9); a = b * U.rand(2, 9); } // ÷는 나누어떨어지게
+          else { a = U.rand(2, hi); b = U.rand(2, Math.min(9, hi)); }
           const c = OPS[pick][1](a, b);
-          if (c < 0) continue;
+          if (!Number.isFinite(c) || c < 0) continue;
           const matches = OPS.filter(([, f]) => f(a, b) === c).length;
           if (matches !== 1) continue;
           answer = pick;

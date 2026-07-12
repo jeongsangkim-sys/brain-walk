@@ -29,6 +29,30 @@
   const DAILY_POOL = REG.filter(r => r.daily).map(r => r.g);
   const CHECK_POOL = REG.filter(r => r.check).map(r => r.g);
 
+  // 인플레이 힌트 — 플레이 중 타이머 아래 상시 표시 (규칙 헷갈릴 때 즉시 확인)
+  const HINTS = {
+    calc: "정답을 고르세요 — 빠를수록 점수 ↑",
+    memory: "가려진 칸을 작은 수부터 순서대로!",
+    stroop: "글자 뜻 말고, 글자의 '색'을 고르세요",
+    trail: "1→가→2→나… 숫자·글자 번갈아 누르기",
+    rps: "'지세요'면 지는 손을 골라야 해요",
+    flags: "'아니야!'가 붙으면 반대 깃발!",
+    calc25: "25문제 완주 — 빠를수록 점수 ↑",
+    calc100: "50문제 완주 — 페이스 유지!",
+    sign: "계산이 맞아지는 부호를 고르세요",
+    serial: "앞 결과에서 같은 수를 계속 빼세요",
+    highest: "가장 컸던 숫자의 자리를 누르세요",
+    speedcount: "왼쪽·오른쪽 번갈아 눌러야 올라가요",
+    photo: "방금 사라진 그림을 고르세요",
+    grid55: "불 켜졌던 칸을 그대로 다시 누르세요",
+    nback: "직전과 같은 자리에 또 나오면 버튼!",
+    people: "들어가고 나간 사람을 계속 셈하세요",
+    birds: "나비는 빼고, 새만 세세요",
+    boxes: "뒤에 가려진 상자까지 세야 해요",
+    dual: "계산 O/X 하면서 ⭐ 횟수도 세기",
+    sudoku: "가로·세로·3×3에 1~9가 한 번씩"
+  };
+
   const ICONS = { calc: "➕", memory: "👀", stroop: "🎨", trail: "🔗" }; // v1 게임 아이콘 보강
   const icon = g => g.icon || ICONS[g.id] || "🧠";
   const iconSrc = g => `assets/icons/${g.id}.png`; // 게임별 일러스트 아이콘
@@ -187,9 +211,11 @@
     const b = best()[game.id];
     $("#intro-best").textContent = b != null ? `내 최고 기록 ${b}점 ${medal(b)} — 넘어 보세요!` : "첫 도전이에요!";
 
+    $("#game-hint").textContent = "";
     $("#btn-go").onclick = () => {
       SND.start(); SND.bgmStart();
       RT.start(game.id); // 반응시간 수집 시작
+      $("#game-hint").textContent = HINTS[game.id] ? `💡 ${HINTS[game.id]}` : "";
       $("#game-intro").style.display = "none";
       const elT = $("#game-timer");
       const fill = $("#timer-fill");
@@ -391,6 +417,31 @@
     show("free");
   };
   $("#btn-stats").onclick = () => { renderStats(); show("stats"); };
+
+  // ---------- 스도쿠 전용 모드 (보상: 도장으로 난이도 해금) ----------
+  const SUDOKU_DIFFS = [
+    { name: "쉬움", desc: "빈칸 30개 — 가볍게 몸풀기", holes: 30, need: 0 },
+    { name: "보통", desc: "빈칸 40개 — 오늘의 본판", holes: 40, need: 3 },
+    { name: "어려움", desc: "빈칸 50개 — 진짜 실력 시험", holes: 50, need: 7 }
+  ];
+  $("#btn-sudoku").onclick = () => {
+    const box = $("#sudoku-diffs");
+    box.innerHTML = "";
+    const s = stamps();
+    SUDOKU_DIFFS.forEach(d => {
+      const open = s >= d.need;
+      const b = document.createElement("button");
+      b.className = "menu-btn" + (open ? "" : " locked-diff");
+      b.innerHTML = `<span class="mt"><b>${open ? "" : "🔒 "}${d.name}</b><small>${open ? d.desc : `🐾 도장 ${d.need}개면 열려요`}</small></span>` +
+        (open ? `<span class="mc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span>` : "");
+      if (open) b.onclick = () => {
+        window.BW_SUDOKU_DIFF = d.holes;
+        startSession("free", [window.GAME_SUDOKU]);
+      };
+      box.appendChild(b);
+    });
+    show("sudoku");
+  };
 
   // ---------- 도장 달력 (훈련·체크한 날 = 발도장) ----------
   function renderCal() {

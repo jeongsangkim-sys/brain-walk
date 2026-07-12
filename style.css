@@ -220,6 +220,10 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 .player-chip:hover { color: var(--aia-red); text-decoration: underline; }
 .home-tip { font-size: 15px; color: var(--fg-tertiary); margin-top: 2px; }
 
+/* 스도쿠 난이도 잠금 */
+.menu-btn.locked-diff { opacity: 0.55; cursor: default; box-shadow: none; background: var(--charcoal-50); }
+.menu-btn.locked-diff:hover { border-color: var(--border-hairline); transform: none; box-shadow: none; }
+
 /* 잠긴 게임 카드 */
 .free-card.locked { opacity: 0.55; cursor: default; box-shadow: none; background: var(--charcoal-50); }
 .free-card.locked:hover { border-color: var(--border-hairline); transform: none; box-shadow: none; }
@@ -272,6 +276,9 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 .timer-bar i { display: block; height: 100%; background: var(--aia-red); border-radius: var(--radius-pill); transition: width 1s linear; }
 .timer-bar i.low { background: var(--error-500); animation: timerPulse 0.8s ease infinite; }
 @keyframes timerPulse { 50% { opacity: 0.45; } }
+
+/* 인플레이 힌트 */
+.game-hint { width: 100%; text-align: center; font-size: 15px; color: var(--fg-tertiary); min-height: 20px; margin-top: -8px; }
 
 /* 지시문 */
 .inst { font-size: 25px; font-weight: var(--fw-bold); min-height: 34px; }

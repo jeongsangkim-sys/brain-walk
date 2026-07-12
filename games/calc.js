@@ -21,8 +21,14 @@ window.GAME_CALC = {
       else if (lv === 4) { a = rand(10, 99); b = rand(2, 9); op = ["+", "-", "×"][rand(0, 2)]; }
       else if (lv <= 6) { a = rand(11, 99); b = rand(11, 99); op = ["+", "-", "×"][rand(0, 2)]; if (op === "×") b = rand(2, 12); }
       else { a = rand(101, 999); b = rand(11, 99); op = ["+", "-", "×"][rand(0, 2)]; if (op === "×") { a = rand(12, 29); b = rand(11, 19); } }
+      // 4레벨부터 나눗셈 섞임 (나누어떨어지게 역산 생성)
+      if (lv >= 4 && Math.random() < 0.25) {
+        b = rand(2, 9);
+        a = b * rand(2, lv >= 7 ? 19 : 9);
+        op = "÷";
+      }
       if (op === "-" && b > a) [a, b] = [b, a];
-      const ans = op === "+" ? a + b : op === "-" ? a - b : a * b;
+      const ans = op === "+" ? a + b : op === "-" ? a - b : op === "÷" ? a / b : a * b;
       return { text: `${a} ${op} ${b} = ?`, ans };
     }
 

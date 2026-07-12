@@ -18,7 +18,9 @@
       const sol = rows.map(r => cols.map(c => digits[pattern(r, c)]));
       window.__sudokuSol = sol; // 디버그/검증 훅
 
-      const HOLES = Math.min(50, 26 + level * 3); // L1=29 ~ L8+=50
+      // 전용 모드에서 난이도 지정 시 우선, 아니면 레벨 기반 (L1=29 ~ L8+=50)
+      const HOLES = window.BW_SUDOKU_DIFF || Math.min(50, 26 + level * 3);
+      window.BW_SUDOKU_DIFF = 0;
       const holes = new Set();
       while (holes.size < HOLES) holes.add(U.rand(0, 80));
 

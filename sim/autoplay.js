@@ -15,10 +15,10 @@
   const S = { g5cap: [], phHist: [], phLast: "", peCount: null, peLast: "", suPad: 0 };
 
   function calcAnswer(txt) {
-    const m = txt.match(/(\d+)\s*([+\-×−])\s*(\d+)/);
+    const m = txt.match(/(\d+)\s*([+\-×−÷])\s*(\d+)/);
     if (!m) return null;
     const a = +m[1], b = +m[3], op = m[2];
-    return op === "+" ? a + b : op === "×" ? a * b : a - b;
+    return op === "+" ? a + b : op === "×" ? a * b : op === "÷" ? a / b : a - b;
   }
   function clickChoice(sel, val) {
     const b = $$(sel).find(x => x.textContent == val);
