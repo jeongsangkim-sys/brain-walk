@@ -11,6 +11,7 @@
     { g: window.GAME_RPS, daily: true },
     { g: window.GAME_FLAGS, daily: true },
     { g: window.GAME_CALC25, daily: true },
+    { g: window.GAME_SIGN, daily: true },
     { g: window.GAME_CALC100 },
     { g: window.GAME_SERIAL, check: true },
     { g: window.GAME_HIGHEST, check: true },
@@ -87,14 +88,15 @@
 
   // ---------- 게임 해금 (원작식: 훈련한 날이 쌓이면 새 게임이 열림) ----------
   const UNLOCK_SEQ = ["calc", "memory", "stroop", "rps", "trail", "flags",
-    "calc25", "photo", "people", "birds", "highest", "grid55",
+    "calc25", "sign", "photo", "people", "birds", "highest", "grid55",
     "boxes", "dual", "nback", "serial", "speedcount", "sudoku", "calc100"];
   const stamps = () => new Set(history().map(r => r.date)).size; // 훈련한 날 수
   const unlockLimit = () => 6 + stamps() * 3; // 시작 6종 + 하루 3종씩
   const isUnlocked = g => UNLOCK_SEQ.indexOf(g.id) < unlockLimit();
   const unlockDay = g => Math.ceil((UNLOCK_SEQ.indexOf(g.id) - 5) / 3); // 필요한 도장 수
-  // 뇌 나이(재미용 추정): 100점=20세 ~ 0점=80세 선형 매핑
-  const brainAge = s => Math.max(20, Math.round(80 - 0.6 * s));
+  // 뇌 나이(재미용 추정): 비선형 곡선 — 20세는 평균 100점(만점)에서만.
+  // 90점=26세, 80점=35세, 65점=48세, 50점=66세, 30점~=80세
+  const brainAge = s => Math.min(80, 20 + Math.round(0.35 * Math.pow(Math.max(0, 100 - s), 1.25)));
 
   // ---------- 화면 전환 ----------
   const $ = s => document.querySelector(s);
@@ -337,14 +339,14 @@
             : "내일 또 재면 더 젊어질 거예요!";
       if (prev != null && age < prev) FX.confetti();
     });
-    $("#btn-next").textContent = "홈으로";
-    $("#btn-next").onclick = () => { renderHome(); show("home"); };
+    $("#btn-next").textContent = "기록 보기";
+    $("#btn-next").onclick = () => { renderStats(); show("stats"); };
   }
 
   // ---------- 진입점 ----------
   // 데일리: 인지 영역별 1개씩 (계산·기억·반응·관찰 중 3영역) — 완전 랜덤이면 같은 계열 3개가 걸릴 수 있음
   const CATS = {
-    calc: "수", calc25: "수",
+    calc: "수", calc25: "수", sign: "수",
     memory: "기억", photo: "기억", nback: "기억",
     stroop: "반응", rps: "반응", flags: "반응", dual: "반응",
     trail: "관찰", people: "관찰", birds: "관찰", boxes: "관찰"
@@ -359,10 +361,11 @@
   $("#btn-free").onclick = () => {
     const list = $("#free-list");
     list.innerHTML = "";
-    ALL.forEach(g => {
+    ALL.forEach((g, gi) => {
       const b = document.createElement("button");
       const open = isUnlocked(g);
       b.className = "free-card" + (open ? "" : " locked");
+      b.style.setProperty("--i", gi); // 등장 스태거
       const bs = best()[g.id];
       b.innerHTML = open
         ? `<img class="fc-img" src="${iconSrc(g)}" alt="" onerror="this.outerHTML='<span class=fc-icon>${icon(g)}</span>'"><span class="fc-name">${g.name}</span><span class="fc-best">${bs != null ? bs + "점 " + medal(bs) : "미도전"}</span>`

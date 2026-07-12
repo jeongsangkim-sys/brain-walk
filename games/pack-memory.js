@@ -170,16 +170,32 @@
     id: "people", name: "인원 세기", icon: "🏠", mode: "count",
     intro: "집에 사람이 드나들어요.\n지금 안에 몇 명인지 기억하세요!",
     start(area, level, api) {
-      const ROUNDS = 4, EVENTS = 4 + level, GAP = Math.max(800, 1400 - level * 120);
+      const ROUNDS = 4, EVENTS = 4 + level, GAP = Math.max(1150, 1600 - level * 100);
       let r = 0, ok = 0;
       area.innerHTML = `
-        <img src="assets/house.png" class="game-img" alt="집">
+        <div class="pe-stage" id="pe-stage">
+          <img src="assets/house.png" class="pe-house" alt="집">
+        </div>
         <div class="inst" id="pe-ev"></div>
         <div class="feedback" id="pe-fb"></div>
         <div class="choices" id="pe-c"></div>`;
+      const stage = area.querySelector("#pe-stage");
       const ev = area.querySelector("#pe-ev");
       const fb = area.querySelector("#pe-fb");
       const choices = area.querySelector("#pe-c");
+
+      // 사람이 실제로 걸어 들어가고 나오는 연출
+      function walk(n, entering) {
+        for (let i = 0; i < n; i++) {
+          const w = document.createElement("span");
+          w.className = "walker " + (entering ? "in" : "out");
+          w.textContent = entering ? "🚶" : "🏃";
+          w.style.animationDelay = i * 0.18 + "s";
+          w.style.bottom = 8 + i * 6 + "px";
+          stage.appendChild(w);
+          setTimeout(() => w.remove(), 1100 + i * 180);
+        }
+      }
 
       function round() {
         if (r >= ROUNDS) {
@@ -213,8 +229,8 @@
           e++;
           const enter = inside <= 0 ? true : Math.random() < 0.55;
           const n = U.rand(1, 2);
-          if (enter) { inside += n; ev.textContent = `🚶 ${n}명 들어갔어요`; }
-          else { const out = Math.min(n, inside); inside -= out; ev.textContent = `🏃 ${out}명 나왔어요`; }
+          if (enter) { inside += n; walk(n, true); ev.textContent = `${n}명 들어갔어요`; }
+          else { const out = Math.min(n, inside); inside -= out; walk(out, false); ev.textContent = `${out}명 나왔어요`; }
         }, GAP);
       }
       round();

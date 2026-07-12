@@ -155,7 +155,63 @@
     };
   }
   window.GAME_CALC25 = calcMarathon("calc25", "계산 25", "⚡", 25, 50);
-  window.GAME_CALC100 = calcMarathon("calc100", "계산 100", "💯", 100, 210);
+  window.GAME_CALC100 = calcMarathon("calc100", "계산 50", "💯", 50, 105); // 100은 웹+시니어에 과함 → 50 (id는 기록 연속성 위해 유지)
+
+  // ---------- 부호 찾기 (a ? b = c 에서 +−× 고르기 — 역산 추론) ----------
+  window.GAME_SIGN = {
+    id: "sign", name: "부호 찾기", icon: "❔", sec: 30,
+    intro: "빈칸에 들어갈 부호를 고르세요.\n7 ❔ 3 = 21 이면 ×!",
+    start(area, level, api) {
+      const OPS = [["+", (a, b) => a + b], ["−", (a, b) => a - b], ["×", (a, b) => a * b]];
+      let ok = 0, bad = 0, streak = 0;
+      const TARGET = U.targetFor("sign", 9, 30);
+      area.innerHTML = `
+        <div class="problem" id="sg-q"></div>
+        <div class="feedback" id="sg-fb"></div>
+        <div class="choices three" id="sg-c"></div>`;
+      const q = area.querySelector("#sg-q");
+      const fb = area.querySelector("#sg-fb");
+      let answer = 0;
+
+      function next() {
+        // 정답 부호가 유일해질 때까지 생성 (예: 2+2=2×2 모호성 배제)
+        for (let guard = 0; guard < 50; guard++) {
+          const hi = level <= 2 ? 9 : level <= 5 ? 12 : 19;
+          const a = U.rand(2, hi), b = U.rand(2, Math.min(9, hi));
+          const pick = U.rand(0, 2);
+          const c = OPS[pick][1](a, b);
+          if (c < 0) continue;
+          const matches = OPS.filter(([, f]) => f(a, b) === c).length;
+          if (matches !== 1) continue;
+          answer = pick;
+          q.innerHTML = `${a} <span style="color:var(--aia-red)">❔</span> ${b} = ${c}`;
+          return;
+        }
+        q.textContent = "3 ❔ 3 = 9"; answer = 2; // 폴백
+      }
+      const c = area.querySelector("#sg-c");
+      c.innerHTML = "";
+      OPS.forEach(([sym], i) => {
+        const b = document.createElement("button");
+        b.className = "choice-btn";
+        b.textContent = sym;
+        b.onclick = () => {
+          const good = i === answer;
+          U.markBtn(b, good);
+          if (good) { ok++; streak++; fb.textContent = "정답!" + U.comboText(streak); fb.className = "feedback flash-good"; }
+          else { bad++; streak = 0; fb.textContent = `정답은 ${OPS[answer][0]}`; fb.className = "feedback flash-bad"; }
+          FX.flash(good);
+          next();
+        };
+        c.appendChild(b);
+      });
+      next();
+      api.onTimeUp(() => {
+        const n = ok + bad, acc = n ? ok / n : 0;
+        api.finish(Math.round(100 * acc * Math.min(1, n / TARGET)), `정답 ${ok} · 오답 ${bad}`);
+      });
+    }
+  };
 
   // ---------- 연속 뺄셈 (serial subtraction — 신경심리 표준 과제) ----------
   window.GAME_SERIAL = {
