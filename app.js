@@ -6,19 +6,19 @@
   const REG = [
     { g: window.GAME_CALC, daily: true },
     { g: window.GAME_MEMORY, daily: true },
-    { g: window.GAME_STROOP, daily: true },
+    { g: window.GAME_STROOP, daily: true, check: true },
     { g: window.GAME_TRAIL, daily: true, check: true },
     { g: window.GAME_RPS, daily: true },
     { g: window.GAME_FLAGS, daily: true },
     { g: window.GAME_CALC25, daily: true },
-    { g: window.GAME_SIGN, daily: true },
+    { g: window.GAME_SIGN, daily: true, check: true },
     { g: window.GAME_CALC100 },
     { g: window.GAME_SERIAL, check: true },
     { g: window.GAME_HIGHEST, check: true },
     { g: window.GAME_SPEEDCOUNT, check: true },
     { g: window.GAME_PHOTO, daily: true },
     { g: window.GAME_GRID55, check: true },
-    { g: window.GAME_NBACK, daily: true },
+    { g: window.GAME_NBACK, daily: true, check: true },
     { g: window.GAME_PEOPLE, daily: true },
     { g: window.GAME_BIRDS, daily: true },
     { g: window.GAME_BOXES, daily: true },
@@ -26,8 +26,9 @@
     { g: window.GAME_SUDOKU },
     { g: window.GAME_CHANGE, daily: true },
     { g: window.GAME_PAIRS, daily: true },
-    { g: window.GAME_COMPARE, daily: true },
-    { g: window.GAME_FLOW, daily: true }
+    { g: window.GAME_COMPARE, daily: true, check: true },
+    { g: window.GAME_FLOW, daily: true },
+    { g: window.GAME_ARROWS, daily: true }
   ].filter(r => r.g);
   const ALL = REG.map(r => r.g);
   const DAILY_POOL = REG.filter(r => r.daily).map(r => r.g);
@@ -58,7 +59,8 @@
     change: "낸 돈 − 물건값 = 거스름돈",
     pairs: "같은 그림 두 장을 찾아 뒤집으세요",
     compare: "개수가 더 많은 쪽을 빠르게!",
-    flow: "같은 색 점끼리 — 길이 겹치면 안 돼요"
+    flow: "같은 색 점끼리 — 길이 겹치면 안 돼요",
+    arrows: "길이 뚫린 화살표부터 차례로 내보내요"
   };
 
   const ICONS = { calc: "➕", memory: "👀", stroop: "🎨", trail: "🔗" }; // v1 게임 아이콘 보강
@@ -127,7 +129,7 @@
   const UNLOCK_SEQ = ["calc", "memory", "stroop", "rps", "trail", "flags",
     "calc25", "sign", "photo", "people", "birds", "highest", "grid55",
     "boxes", "dual", "nback", "serial", "speedcount", "sudoku", "calc100",
-    "change", "pairs", "compare", "flow"];
+    "change", "pairs", "compare", "flow", "arrows"];
   const stamps = () => new Set(history().map(r => r.date)).size; // 훈련한 날 수
   const unlockLimit = () => 6 + stamps() * 3; // 시작 6종 + 하루 3종씩
   const UNLOCK_COST = 300; // 🐾 마일로 조기 해금 (도장 대안)
@@ -278,14 +280,27 @@
     const ii = $("#intro-icon");
     ii.style.visibility = "visible";
     ii.src = iconSrc(game);
-    $("#intro-title").textContent = game.name;
+    $("#intro-title").textContent = (session.mode === "check" ? `과제 ${session.i + 1}/3 · ` : "") + game.name;
     $("#intro-desc").textContent = game.intro;
     const b = best()[game.id];
     $("#intro-best").textContent = (session.golden ? "⚡ 황금 산책! 이 판 점수 +10 · " : "") +
       (b != null ? `내 최고 기록 ${b}점 ${medal(b)} — 넘어 보세요!` : "첫 도전이에요!");
 
     $("#game-hint").textContent = "";
-    $("#btn-go").onclick = () => {
+    $("#btn-go").onclick = async () => {
+      // 체크 모드: 3-2-1 카운트다운 (검사 긴장감)
+      if (session.mode === "check") {
+        const ov = document.createElement("div");
+        ov.className = "count-ov";
+        document.body.appendChild(ov);
+        for (const n of [3, 2, 1]) {
+          ov.textContent = n;
+          ov.classList.remove("pop"); void ov.offsetWidth; ov.classList.add("pop");
+          SND.tick();
+          await new Promise(r => setTimeout(r, 650));
+        }
+        ov.remove();
+      }
       SND.start(); SND.bgmStart();
       RT.start(game.id); // 반응시간 수집 시작
       FX.comboReset(); // 콤보 배지·최고 연속 초기화
@@ -659,7 +674,7 @@
     calc: "수", calc25: "수", sign: "수", change: "수",
     memory: "기억", photo: "기억", nback: "기억", pairs: "기억",
     stroop: "반응", rps: "반응", flags: "반응", dual: "반응",
-    trail: "관찰", people: "관찰", birds: "관찰", boxes: "관찰", compare: "관찰", flow: "관찰"
+    trail: "관찰", people: "관찰", birds: "관찰", boxes: "관찰", compare: "관찰", flow: "관찰", arrows: "관찰"
   };
   // 날짜 시드 결정적 랜덤 — 오늘 라인업을 어제 미리 알 수 있음 (내일 예고용)
   function dailyLineup(dateStr) {
@@ -739,6 +754,15 @@
     const box = $("#sudoku-diffs");
     box.innerHTML = "";
     const s = stamps();
+    // 퍼즐 미니게임 2종 (점잇기·화살표) — 스도쿠 난이도 위에 나란히
+    [window.GAME_FLOW, window.GAME_ARROWS].forEach(g => {
+      const b = document.createElement("button");
+      b.className = "menu-btn";
+      b.innerHTML = `<span class="mt"><b>${icon(g)} ${g.name}</b><small>${g.intro.split("\n")[0]}</small></span>` +
+        `<span class="mc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span>`;
+      b.onclick = () => startSession("free", [g]);
+      box.appendChild(b);
+    });
     SUDOKU_DIFFS.forEach(d => {
       const open = s >= d.need;
       const b = document.createElement("button");

@@ -152,6 +152,9 @@
       }
       return;
     }
+    // 화살표 탈출: 해답 훅
+    if ($(".arrows-grid") && window.__arrowsSolve) { window.__arrowsSolve(); return; }
+
     // 점 잇기: 해답 훅 호출
     if ($(".flow-grid") && window.__flowSolve) { window.__flowSolve(); return; }
 

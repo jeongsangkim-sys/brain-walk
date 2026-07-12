@@ -329,6 +329,30 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 /* 뇌나이 결과 일러스트 */
 .age-img { display: block; width: 180px; height: auto; margin: 0 auto var(--sp-2); background: var(--icon-chip); border-radius: var(--radius-xl); padding: 8px; }
 
+/* 화살표 탈출 */
+.arrows-grid { display: grid; gap: 4px; width: 100%; max-width: 400px; }
+.acell {
+  aspect-ratio: 1; font-size: 26px; font-weight: 800;
+  border: 1px solid var(--border-hairline); border-radius: 8px;
+  background: transparent; color: transparent; cursor: default;
+  display: flex; align-items: center; justify-content: center;
+  font-family: "Manrope", var(--font-kr); padding: 0;
+}
+.acell.live { background: var(--surface); color: var(--fg-primary); border-color: var(--border-default); box-shadow: var(--shadow-1); cursor: pointer; }
+.ashake { animation: aShake 0.3s ease; }
+@keyframes aShake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+/* 뇌나이 체크 3-2-1 카운트다운 */
+.count-ov {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  font-family: "Manrope", var(--font-kr); font-size: 130px; font-weight: 800;
+  color: var(--aia-red); background: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+.count-ov.pop { animation: countPop 0.6s ease; }
+@keyframes countPop { 0% { transform: scale(1.6); opacity: 0.4; } 100% { transform: scale(1); opacity: 1; } }
+
 /* 점 잇기 (넘버링크) */
 .flow-grid {
   display: grid; gap: 3px; width: 100%; max-width: 400px;
