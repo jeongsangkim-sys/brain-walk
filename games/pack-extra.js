@@ -65,7 +65,7 @@
     id: "pairs", name: "짝 맞추기", icon: "🃏", mode: "count",
     intro: "카드를 뒤집어\n같은 그림 짝을 찾으세요.",
     start(area, level, api) {
-      const EMO = ["🍎", "🍌", "🍇", "🍓", "🥕", "🌽", "🐟", "🍞", "☂️", "🧦", "🌻", "🐕"];
+      const EMO = ["o1","o2","o3","o4","o5","o6","o7","o8","o9","o10","o11","o12"]; // assets/emo 일러스트
       const PAIRS = level <= 3 ? 6 : 8; // 4×3 또는 4×4
       const cards = U.shuffle(U.shuffle(EMO).slice(0, PAIRS).flatMap(e => [e, e]));
       let open = null, lock = false, matched = 0, flips = 0;
@@ -86,7 +86,7 @@
         b.onclick = () => {
           if (lock || b.classList.contains("open") || b.classList.contains("done")) return;
           flips++;
-          b.textContent = emo; b.classList.add("open");
+          b.innerHTML = `<img src="assets/emo/${emo}.png" alt="" data-e="${emo}">`; b.classList.add("open");
           if (!open) { open = { b, emo }; upd(); return; }
           if (open.emo === emo) {
             open.b.classList.add("done"); b.classList.add("done");
@@ -133,7 +133,7 @@
         </div>`;
       const fb = area.querySelector("#cp-fb");
       const L = area.querySelector("#cp-l"), R = area.querySelector("#cp-r");
-      const EMO = ["🍎", "🐤", "⭐", "🎈", "🐟", "🌸"];
+      const EMO = ["o1", "o4", "o5", "o7", "o11", "o12"]; // assets/emo 일러스트
       let more = null; // "L" | "R"
 
       function next() {
@@ -145,8 +145,9 @@
         const b = a + diff * (Math.random() < 0.5 ? 1 : -1);
         const emo = EMO[U.rand(0, EMO.length - 1)];
         more = a > b ? "L" : "R";
-        L.innerHTML = Array(a).fill(`<span>${emo}</span>`).join("");
-        R.innerHTML = Array(Math.max(1, b)).fill(`<span>${emo}</span>`).join("");
+        const tag = `<span><img src="assets/emo/${emo}.png" alt=""></span>`;
+        L.innerHTML = Array(a).fill(tag).join("");
+        R.innerHTML = Array(Math.max(1, b)).fill(tag).join("");
       }
       const pick = side => {
         const good = side === more;

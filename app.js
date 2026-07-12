@@ -635,7 +635,9 @@
             : age < prev ? `지난번 ${prev}세보다 젊어졌어요!`
               : age > prev ? `지난번 ${prev}세보다 살짝 높네요. 컨디션 탓일 거예요.`
                 : "지난번과 같아요. 안정적!";
+      const tier = age <= 32 ? 1 : age <= 45 ? 2 : age <= 62 ? 3 : 4; // 로켓/파워워킹/산책/여유
       $("#result-detail").innerHTML =
+        `<img class="age-img" src="assets/age${tier}.png" alt="" onerror="this.remove()">` +
         session.queue.map(g => `${icon(g)} ${g.name}: ${session.results[g.id]}점`).join("<br>") +
         `<br><span class="disclaimer">놀이용 추정치예요. 의료 검사가 아닙니다.</span>`;
       $("#coach-bubble").textContent =

@@ -169,14 +169,15 @@
       (l > r ? $("#cp-l") : $("#cp-r")).click();
       return;
     }
-    // 짝 맞추기: 본 카드 기억 → 아는 짝 우선, 없으면 새 카드
+    // 짝 맞추기: 본 카드 기억 → 아는 짝 우선, 없으면 새 카드 (앞면=이미지)
     const pcards = $$(".pcard");
+    const pface = c => { const im = c.querySelector("img"); return im ? im.dataset.e || im.src : (c.textContent !== "🐾" ? c.textContent : null); };
     if (pcards.length) {
       if ($$(".pcard.open").length >= 2) return; // 미스매치 복귀 대기
-      pcards.forEach((c, i) => { if (c.textContent !== "🐾" && !c.classList.contains("done")) S.prSeen[i] = c.textContent; });
+      pcards.forEach((c, i) => { const f = pface(c); if (f && !c.classList.contains("done")) S.prSeen[i] = f; });
       const openIdx = pcards.findIndex(c => c.classList.contains("open"));
       if (openIdx >= 0) {
-        const emo = pcards[openIdx].textContent;
+        const emo = pface(pcards[openIdx]);
         const mate = Object.entries(S.prSeen).find(([i, e]) => +i !== openIdx && e === emo && !pcards[+i].classList.contains("done"));
         if (mate) { pcards[+mate[0]].click(); return; }
         const fresh = pcards.findIndex((c, i) => c.textContent === "🐾" && S.prSeen[i] == null);

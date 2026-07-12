@@ -112,13 +112,13 @@ a:hover { text-decoration: underline; }
 
 h1 { font-size: 38px; font-weight: var(--fw-bold); line-height: var(--lh-display); }
 .logo-h1 { line-height: 0; }
-.logo-img { width: 250px; max-width: 78vw; height: auto; }
+.logo-img { width: 300px; max-width: 84vw; height: auto; }
 h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading); }
 
 /* ---------- 홈 ---------- */
 .home-head { text-align: center; margin-top: var(--sp-2); display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); }
 .brand-logo { height: 28px; width: auto; margin-bottom: var(--sp-3); }
-#mascot { width: 148px; height: 148px; object-fit: contain; cursor: pointer; }
+#mascot { cursor: pointer; } /* 로고 겸 마스코트 — 크기는 .logo-img가 결정 */
 .mascot-jump { animation: mascotJump 0.5s cubic-bezier(0.3, 1.8, 0.5, 1); }
 @keyframes mascotJump {
   0% { transform: translateY(0); }
@@ -326,6 +326,9 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 @media (hover: hover) { .choice-btn:hover { border-color: var(--charcoal-700); box-shadow: var(--shadow-2); } }
 .choice-btn:active { transform: scale(0.98); box-shadow: var(--shadow-0); }
 
+/* 뇌나이 결과 일러스트 */
+.age-img { display: block; width: 150px; height: auto; margin: 0 auto var(--sp-2); background: var(--icon-chip); border-radius: var(--radius-xl); padding: 8px; }
+
 /* 짝 맞추기 카드 */
 .pairs-grid { display: grid; gap: var(--sp-2); width: 100%; max-width: 420px; }
 .pcard {
@@ -335,6 +338,7 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   transition: transform var(--t), background var(--t);
 }
 .pcard.open { background: var(--surface); transform: scale(1.05); }
+.pcard img { width: 74%; height: 74%; object-fit: contain; }
 .pcard.done { background: var(--salmon-50); border-color: var(--aia-red); cursor: default; }
 
 /* 어느 쪽이 많을까 */
@@ -346,6 +350,7 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   background: var(--surface); box-shadow: var(--shadow-1); font-size: 26px;
 }
 .cmp-box:active { transform: scale(0.98); }
+.cmp-box span img { width: 28px; height: 28px; vertical-align: middle; }
 
 /* 부호 찾기: 연산 기호 크고 굵게 (가독) */
 .sign-choices .choice-btn { font-size: 48px; font-weight: 800; color: var(--aia-red); }
@@ -392,7 +397,7 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 #shop-list { margin-top: var(--sp-2); padding: var(--sp-3); border: 1px solid var(--border-hairline); border-radius: var(--radius-lg); background: var(--surface); }
 .shop-row { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-2) 0; }
 .shop-name { flex: 1; font-weight: var(--fw-semibold); }
-.swatch { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border-hairline); flex-shrink: 0; }
+.swatch { width: 40px; height: 24px; border-radius: 8px; border: 1px solid var(--border-hairline); flex-shrink: 0; box-shadow: var(--shadow-1); } /* 미니 버튼 프리뷰 */
 .shop-on { color: var(--aia-red); font-size: 15px; }
 .shop-locked { color: var(--fg-tertiary); font-size: 15px; }
 
