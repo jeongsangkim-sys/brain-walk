@@ -100,7 +100,7 @@ window.GAME_CALC = {
     api.onTimeUp(() => {
       const attempts = correct + wrong;
       const acc = attempts ? correct / attempts : 0;
-      const score = Math.round(100 * acc * Math.min(1, attempts / TARGET));
+      const score = Math.round(100 * acc * Math.min(1, correct / TARGET)); // 분량은 정답만 — 오답이 채워주던 구멍 제거
       api.finish(score, `정답 ${correct} · 오답 ${wrong}`);
     });
   }

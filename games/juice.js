@@ -32,15 +32,38 @@ window.RT = {
 
 // 공통 연출(FX) + 유틸
 window.FX = {
-  _combo: 0, _lastGood: 0, _px: 0, _py: 0,
+  _combo: 0, _lastGood: 0, _px: 0, _py: 0, _maxCombo: 0,
+  // 게임 시작 시 호출 — 콤보·배지 초기화
+  comboReset() {
+    this._combo = 0; this._maxCombo = 0; this._lastGood = 0;
+    const b = document.getElementById("combo-badge");
+    if (b) { b.hidden = true; b.className = ""; }
+  },
+  // 격투게임식 실시간 콤보 배지 (2연속부터, 단계별 뜨거워짐)
+  comboBadge() {
+    const b = document.getElementById("combo-badge");
+    if (!b) return;
+    const n = this._combo + 1; // _combo는 0부터
+    if (n < 2) { b.hidden = true; return; }
+    b.hidden = false;
+    b.textContent = `🔥 ${n}연속`;
+    b.className = n >= 10 ? "blaze" : n >= 5 ? "hot" : "";
+    b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop"); // 매 히트 팝 재생
+  },
   flash(ok) {
     // 자체 콤보 추적: 2.5초 내 연속 정답이면 효과음 피치 상승
     const now = Date.now();
-    if (ok) { this._combo = (now - this._lastGood < 2500) ? this._combo + 1 : 0; this._lastGood = now; }
+    if (ok) {
+      this._combo = (now - this._lastGood < 2500) ? this._combo + 1 : 0;
+      this._lastGood = now;
+      this._maxCombo = Math.max(this._maxCombo, this._combo + 1);
+    }
     else this._combo = 0;
+    this.comboBadge();
     if (window.RT) RT.note(ok);
     if (window.SND) ok ? SND.good(this._combo) : SND.bad();
-    if (navigator.vibrate) navigator.vibrate(ok ? 15 : [50, 40, 50]); // 햅틱 손맛
+    // 햅틱: 콤보 쌓일수록 진동이 살짝 길어짐 (손끝 에스컬레이션)
+    if (navigator.vibrate) navigator.vibrate(ok ? Math.min(35, 15 + this._combo * 2) : [50, 40, 50]);
     this.judge(ok);
     if (ok) this.spark(this._px, this._py); // 탭한 자리에서 스파크 — 손끝 보상
     if (ok && this._combo > 0 && this._combo % 5 === 0) this.comboBurst(this._combo + 1);

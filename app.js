@@ -285,6 +285,7 @@
     $("#btn-go").onclick = () => {
       SND.start(); SND.bgmStart();
       RT.start(game.id); // 반응시간 수집 시작
+      FX.comboReset(); // 콤보 배지·최고 연속 초기화
       $("#game-hint").textContent = HINTS[game.id] ? `💡 ${HINTS[game.id]}` : "";
       $("#game-intro").style.display = "none";
       const elT = $("#game-timer");
@@ -476,7 +477,8 @@
     $("#result-comment").textContent = isRecord ? `이전 최고 ${prevBest}점을 넘었어요!`
       : near ? `아깝다! ${near[0] - score}점만 더 하면 ${near[1]}이었어요!` : comment(score);
     const rtAvg = RT.sessAvg();
-    $("#result-detail").textContent = detail + (rtAvg ? ` · 평균 반응 ${rtAvg.toFixed(1)}초` : "");
+    const mc = FX._maxCombo >= 5 ? ` · 🔥 최고 ${FX._maxCombo}연속` : "";
+    $("#result-detail").textContent = detail + (rtAvg ? ` · 평균 반응 ${rtAvg.toFixed(1)}초` : "") + mc;
     coachSay(score, isRecord);
     if (isRecord) FX.confetti();
     $("#btn-next").textContent = last

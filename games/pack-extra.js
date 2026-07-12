@@ -55,7 +55,7 @@
       next();
       api.onTimeUp(() => {
         const n = ok + bad, acc = n ? ok / n : 0;
-        api.finish(Math.round(100 * acc * Math.min(1, n / TARGET)), `정답 ${ok} · 오답 ${bad}`);
+        api.finish(Math.round(100 * acc * Math.min(1, ok / TARGET)), `정답 ${ok} · 오답 ${bad}`);
       });
     }
   };
@@ -160,7 +160,7 @@
       next();
       api.onTimeUp(() => {
         const n = ok + bad, acc = n ? ok / n : 0;
-        api.finish(Math.round(100 * acc * Math.min(1, n / TARGET)), `정답 ${ok} · 오답 ${bad}`);
+        api.finish(Math.round(100 * acc * Math.min(1, ok / TARGET)), `정답 ${ok} · 오답 ${bad}`);
       });
     }
   };

@@ -413,6 +413,32 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   filter: blur(4px) grayscale(0.6); border-radius: 8px;
 }
 
+/* 🔥 콤보 배지 — 격투게임식 연속 카운터 (타이머 아래 우측 고정) */
+#screen-game { position: relative; } /* 배지 앵커 */
+#combo-badge {
+  position: absolute; top: 74px; right: var(--sp-5); z-index: 15;
+  font-family: "Manrope", var(--font-kr);
+  font-size: 17px; font-weight: 800; pointer-events: none;
+  padding: 4px 12px; border-radius: 999px;
+  background: #FFF3D6; color: #9A6A00; border: 1px solid #FFD34D;
+}
+#combo-badge.hot { background: #FFE0B8; color: #B4530A; border-color: #FF9A3D; font-size: 19px; }
+#combo-badge.blaze {
+  background: var(--aia-red); color: #fff; border-color: var(--aia-red);
+  font-size: 21px; box-shadow: 0 0 14px rgba(211, 17, 69, 0.55);
+}
+#combo-badge.pop { animation: comboPop 0.28s cubic-bezier(0.3, 1.6, 0.5, 1); }
+@keyframes comboPop {
+  0% { transform: scale(1.45) rotate(-4deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+#combo-badge[hidden] { display: none; }
+@media (prefers-color-scheme: dark) {
+  #combo-badge { background: #3A2F14; color: #FFD34D; border-color: #6B5518; }
+  #combo-badge.hot { background: #4A2C10; color: #FFB067; border-color: #8A5220; }
+}
+@media (prefers-reduced-motion: reduce) { #combo-badge.pop { animation: none; } }
+
 /* 👻 고스트 대결 페이스 바 */
 #ghost-race {
   width: 100%; display: flex; align-items: center; gap: var(--sp-2);

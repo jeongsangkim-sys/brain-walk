@@ -62,7 +62,7 @@ window.GAME_STROOP = {
     api.onTimeUp(() => {
       const attempts = correct + wrong;
       const acc = attempts ? correct / attempts : 0;
-      const score = Math.round(100 * acc * Math.min(1, attempts / TARGET));
+      const score = Math.round(100 * acc * Math.min(1, correct / TARGET)); // 분량은 정답만
       api.finish(score, `정답 ${correct} · 오답 ${wrong}`);
     });
   }
