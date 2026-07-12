@@ -1,0 +1,13 @@
+{
+  "name": "두뇌 산책",
+  "short_name": "두뇌 산책",
+  "description": "매일 3분, 두뇌 트레이닝 게임",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#D31145",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

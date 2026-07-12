@@ -28,6 +28,15 @@ body {
   display: flex;
   justify-content: center;
   -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: contain; /* 게임 중 당겨서 새로고침 방지 */
+}
+
+/* 터치: 더블탭 줌 지연 제거 (연타 게임 필수), 길게 눌러 선택 방지 */
+button, .tile, .g5cell, .sucell, label {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* 한글 헤드라인: Manrope(숫자·라틴) + Noto Sans KR */
@@ -351,7 +360,7 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   position: absolute; left: -70px; width: 60px; height: 60px; object-fit: contain; pointer-events: none;
   animation-name: flyAcross; animation-timing-function: linear; animation-fill-mode: forwards;
 }
-@keyframes flyAcross { to { transform: translateX(650px); } }
+@keyframes flyAcross { to { transform: translateX(min(680px, 110vw)); } } /* 좁은 화면 대응 */
 
 /* 가위바위보 손 스프라이트 (hands.png 3분할) */
 .hand-view {
@@ -378,12 +387,12 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 @keyframes walkIn {
   0% { opacity: 1; transform: translateX(0); }
   80% { opacity: 1; }
-  100% { transform: translateX(calc(50vw - 40px)); transform: translateX(230px); opacity: 0; }
+  100% { transform: translateX(min(230px, 55vw)); opacity: 0; }
 }
 @keyframes walkOut {
   0% { opacity: 0; transform: scaleX(-1) translateX(0); }
   15% { opacity: 1; }
-  100% { transform: scaleX(-1) translateX(-230px); opacity: 1; }
+  100% { transform: scaleX(-1) translateX(max(-230px, -55vw)); opacity: 1; }
 }
 
 /* 이중과제 별 */
@@ -508,4 +517,26 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 #best-table h3 { font-size: 19px; margin-bottom: var(--sp-2); }
 #best-table .best-row { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-hairline); padding: 2px 0; }
 #best-table .best-row b { font-variant-numeric: tabular-nums; }
-.row { display: flex; gap: var(--sp-3); width: 100%; max-width: 460px; }
+.row { display: flex; gap: var(--sp-3); width: 100%; max-width: 460px; flex-wrap: wrap; }
+
+/* ---------- 좁은 화면 (폰) ---------- */
+@media (max-width: 480px) {
+  body { font-size: 18px; }
+  h1 { font-size: 32px; }
+  .screen { padding: var(--sp-5) var(--sp-4) var(--sp-12); gap: var(--sp-4); }
+  .topbar { width: calc(100% + 32px); margin: 0 -16px; padding: var(--sp-2) var(--sp-4); }
+  #mascot { width: 120px; height: 120px; }
+  .problem { font-size: 44px; }
+  .choice-btn { font-size: 26px; min-height: 76px; }
+  .board { height: 360px; }
+  .board.short { height: 250px; }
+  .tile { width: 64px; height: 64px; font-size: 26px; }
+  .score-big { font-size: 64px; }
+  .menu-btn { min-height: 76px; }
+  .menu-btn .mt b { font-size: 20px; }
+  .free-grid { gap: var(--sp-2); }
+  .fc-img { width: 60px; height: 60px; }
+  .fc-name { font-size: 18px; }
+  .coach-img { width: 68px; height: 68px; }
+  .hand-view { width: 180px; height: 130px; }
+}
