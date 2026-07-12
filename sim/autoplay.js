@@ -152,6 +152,9 @@
       }
       return;
     }
+    // 점 잇기: 해답 훅 호출
+    if ($(".flow-grid") && window.__flowSolve) { window.__flowSolve(); return; }
+
     // 잔돈 계산: 낸 돈 − 물건값
     const ch = $("#ch-q");
     if (ch && ch.textContent) {

@@ -26,7 +26,8 @@
     { g: window.GAME_SUDOKU },
     { g: window.GAME_CHANGE, daily: true },
     { g: window.GAME_PAIRS, daily: true },
-    { g: window.GAME_COMPARE, daily: true }
+    { g: window.GAME_COMPARE, daily: true },
+    { g: window.GAME_FLOW, daily: true }
   ].filter(r => r.g);
   const ALL = REG.map(r => r.g);
   const DAILY_POOL = REG.filter(r => r.daily).map(r => r.g);
@@ -56,7 +57,8 @@
     sudoku: "가로·세로·3×3에 1~9가 한 번씩 · ❤️ 3개",
     change: "낸 돈 − 물건값 = 거스름돈",
     pairs: "같은 그림 두 장을 찾아 뒤집으세요",
-    compare: "개수가 더 많은 쪽을 빠르게!"
+    compare: "개수가 더 많은 쪽을 빠르게!",
+    flow: "같은 색 점끼리 — 길이 겹치면 안 돼요"
   };
 
   const ICONS = { calc: "➕", memory: "👀", stroop: "🎨", trail: "🔗" }; // v1 게임 아이콘 보강
@@ -125,7 +127,7 @@
   const UNLOCK_SEQ = ["calc", "memory", "stroop", "rps", "trail", "flags",
     "calc25", "sign", "photo", "people", "birds", "highest", "grid55",
     "boxes", "dual", "nback", "serial", "speedcount", "sudoku", "calc100",
-    "change", "pairs", "compare"];
+    "change", "pairs", "compare", "flow"];
   const stamps = () => new Set(history().map(r => r.date)).size; // 훈련한 날 수
   const unlockLimit = () => 6 + stamps() * 3; // 시작 6종 + 하루 3종씩
   const UNLOCK_COST = 300; // 🐾 마일로 조기 해금 (도장 대안)
@@ -657,7 +659,7 @@
     calc: "수", calc25: "수", sign: "수", change: "수",
     memory: "기억", photo: "기억", nback: "기억", pairs: "기억",
     stroop: "반응", rps: "반응", flags: "반응", dual: "반응",
-    trail: "관찰", people: "관찰", birds: "관찰", boxes: "관찰", compare: "관찰"
+    trail: "관찰", people: "관찰", birds: "관찰", boxes: "관찰", compare: "관찰", flow: "관찰"
   };
   // 날짜 시드 결정적 랜덤 — 오늘 라인업을 어제 미리 알 수 있음 (내일 예고용)
   function dailyLineup(dateStr) {

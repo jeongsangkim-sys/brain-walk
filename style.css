@@ -329,6 +329,20 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 /* 뇌나이 결과 일러스트 */
 .age-img { display: block; width: 180px; height: auto; margin: 0 auto var(--sp-2); background: var(--icon-chip); border-radius: var(--radius-xl); padding: 8px; }
 
+/* 점 잇기 (넘버링크) */
+.flow-grid {
+  display: grid; gap: 3px; width: 100%; max-width: 400px;
+  background: var(--charcoal-100); padding: 4px; border-radius: var(--radius-lg);
+  touch-action: none;
+}
+.fcell {
+  aspect-ratio: 1; border-radius: 6px; background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.fcell .fdot { width: 62%; height: 62%; border-radius: 50%; pointer-events: none; box-shadow: var(--shadow-1); }
+.fcell.fon { box-shadow: none; }
+
 /* 짝 맞추기 카드 */
 .pairs-grid { display: grid; gap: var(--sp-2); width: 100%; max-width: 420px; }
 .pcard {
