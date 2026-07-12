@@ -1,4 +1,4 @@
-// 시뮬레이션 하네스 — 19종 전 게임 자동 완주 + 데일리/뇌나이체크 E2E
+// 시뮬레이션 하네스 — 전 게임(현 23종) 자동 완주 + 데일리/뇌나이체크 E2E
 // 사용: 콘솔에서 <script src="sim/autoplay.js"> 주입. 결과는 window.__sim
 // 주의: 실행 전 localStorage 스냅샷, 종료 후 복원 (실기록 오염 방지)
 (function () {
@@ -12,7 +12,7 @@
   window.addEventListener("error", e => __sim.errs.push(e.message));
 
   // ----- 게임별 스마트 클릭 (매 틱 호출) -----
-  const S = { g5cap: [], phHist: [], phLast: "", peCount: null, peLast: "", suPad: 0 };
+  const S = { g5cap: [], phHist: [], phLast: "", peCount: null, peLast: "", suPad: 0, prSeen: {} };
 
   function calcAnswer(txt) {
     const m = txt.match(/(\d+)\s*([+\-×−÷])\s*(\d+)/);
@@ -138,12 +138,63 @@
       }
       return;
     }
-    // 스도쿠: 빈칸 선택 → 패드 순회
+    // 스도쿠: 빈칸 선택 → 해답 훅으로 정답 패드 (하트 시스템이라 오답 순회 금지)
     const hole = $(".sucell.hole");
     if (hole || $(".sucell.sel")) {
-      if (!$(".sucell.sel") && hole) { hole.click(); return; }
-      const pads = $$("#su-pad .choice-btn");
-      if (pads.length) { pads[S.suPad++ % pads.length].click(); return; }
+      const sel = $(".sucell.sel.hole") || $(".sucell.sel");
+      if ((!sel || !sel.classList.contains("hole")) && hole) { hole.click(); return; }
+      if (sel && window.__sudokuSol) {
+        const cells = $$(".sucell");
+        const idx = cells.indexOf(sel);
+        const ans = window.__sudokuSol[Math.floor(idx / 9)][idx % 9];
+        const pad = $$("#su-pad .choice-btn").find(b => +(b.textContent.match(/\d/) || [0])[0] === ans);
+        if (pad) { pad.click(); return; }
+      }
+      return;
+    }
+    // 잔돈 계산: 낸 돈 − 물건값
+    const ch = $("#ch-q");
+    if (ch && ch.textContent) {
+      const m = ch.textContent.match(/([\d,]+)원 물건.*?([\d,]+)원을/);
+      if (m) {
+        const ans = +m[2].replace(/,/g, "") - +m[1].replace(/,/g, "");
+        const b = $$("#ch-c .choice-btn").find(x => +x.textContent.replace(/[,원]/g, "") === ans);
+        if (b) { b.click(); return; }
+      }
+      return;
+    }
+    // 어느 쪽이 많을까: span 수 비교
+    if ($("#cp-l")) {
+      const l = $$("#cp-l span").length, r = $$("#cp-r span").length;
+      (l > r ? $("#cp-l") : $("#cp-r")).click();
+      return;
+    }
+    // 짝 맞추기: 본 카드 기억 → 아는 짝 우선, 없으면 새 카드
+    const pcards = $$(".pcard");
+    if (pcards.length) {
+      if ($$(".pcard.open").length >= 2) return; // 미스매치 복귀 대기
+      pcards.forEach((c, i) => { if (c.textContent !== "🐾" && !c.classList.contains("done")) S.prSeen[i] = c.textContent; });
+      const openIdx = pcards.findIndex(c => c.classList.contains("open"));
+      if (openIdx >= 0) {
+        const emo = pcards[openIdx].textContent;
+        const mate = Object.entries(S.prSeen).find(([i, e]) => +i !== openIdx && e === emo && !pcards[+i].classList.contains("done"));
+        if (mate) { pcards[+mate[0]].click(); return; }
+        const fresh = pcards.findIndex((c, i) => c.textContent === "🐾" && S.prSeen[i] == null);
+        pcards[fresh >= 0 ? fresh : pcards.findIndex(c => c.textContent === "🐾")].click();
+        return;
+      }
+      // 아는 짝 페어가 이미 있으면 그걸 열기
+      const known = {};
+      for (const [i, e] of Object.entries(S.prSeen)) {
+        if (pcards[+i].classList.contains("done")) continue;
+        if (known[e] != null) { pcards[known[e]].click(); return; }
+        known[e] = +i;
+      }
+      const fresh = pcards.findIndex((c, i) => c.textContent === "🐾" && S.prSeen[i] == null && !c.classList.contains("done"));
+      if (fresh >= 0) { pcards[fresh].click(); return; }
+      const anyClosed = pcards.findIndex(c => c.textContent === "🐾" && !c.classList.contains("done"));
+      if (anyClosed >= 0) pcards[anyClosed].click();
+      return;
     }
     // 이중과제 별 질문 / 상자 세기 / 기타: 아무 보기나
     const any = $$("#game-area .choice-btn");
@@ -188,19 +239,30 @@
     KEYS.forEach(k => snap[k] = localStorage.getItem(k));
     // 시뮬 중 사용자가 실플레이하면 종료 복원이 그 기록을 덮어씀 → 영구 백업 남김 (수동 복구용)
     localStorage.setItem("bw_backup_" + Date.now(), JSON.stringify(snap));
-    localStorage.setItem("bw_levels", "{}"); // 전부 레벨 1로
+    localStorage.setItem("bw_levels", "{}"); // 전부 기본 레벨로
+    // 해금: 가짜 도장 8개 주입 (6+8*3=30 ≥ 전 게임) — 종료 시 스냅샷 복원으로 제거됨
+    const fake = [];
+    for (let d = 1; d <= 8; d++) {
+      const dt = new Date(); dt.setDate(dt.getDate() - d);
+      fake.push({ date: `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`, score: 50, games: {}, name: "심" });
+    }
+    localStorage.setItem("bw_history", JSON.stringify(fake));
     window.BW_TEST_SEC = 5;
     startAuto();
     try {
-      // 1) 19종 개별 완주
-      for (let i = 0; i < 19; i++) {
-        Object.assign(S, { g5cap: [], phHist: [], phLast: "", peCount: null, peLast: "", suPad: 0 });
+      // 1) 전 게임 개별 완주 (free-list 카드 수만큼 동적)
+      goHome(); await sleep(200);
+      $("#btn-free").click(); await sleep(150);
+      const N = $$(".free-card").length;
+      for (let i = 0; i < N; i++) {
+        Object.assign(S, { g5cap: [], phHist: [], phLast: "", peCount: null, peLast: "", suPad: 0, prSeen: {} });
         goHome();
         await sleep(200);
         $("#btn-free").click();
         await sleep(150);
         const card = $$(".free-card")[i];
         const name = card.querySelector(".fc-name").textContent;
+        if (card.classList.contains("locked")) { __sim.results.push({ i, name, done: false, score: "LOCKED", sane: false }); continue; }
         card.click();
         const ok = await waitResult(70000);
         const scoreTxt = ($("#result-score") || {}).textContent || "";
