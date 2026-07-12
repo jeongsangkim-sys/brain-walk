@@ -52,6 +52,29 @@ a:hover { text-decoration: underline; }
   gap: var(--sp-6);
 }
 .screen.active { display: flex; animation: screenIn 0.28s ease-out; }
+
+/* 상단 고정 바 (서브 화면 뒤로가기) */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  width: calc(100% + 40px); margin: 0 -20px;
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-5);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border-hairline);
+}
+.topbar h2 { font-size: 24px; }
+.back-btn {
+  flex: none; width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border-hairline); border-radius: 50%;
+  background: var(--surface); color: var(--fg-primary); cursor: pointer;
+  transition: border-color var(--t), background var(--t), transform var(--t);
+}
+.back-btn svg { width: 24px; height: 24px; }
+.back-btn:hover { border-color: var(--aia-red); color: var(--aia-red); background: var(--surface-hover); }
+.back-btn:active { transform: scale(0.94); }
 @keyframes screenIn {
   0% { opacity: 0; transform: translateY(10px); }
   100% { opacity: 1; transform: none; }

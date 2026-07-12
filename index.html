@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>두뇌 산책</title>
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 
@@ -13,7 +13,7 @@
 <section id="screen-home" class="screen active">
   <header class="home-head">
     <img class="brand-logo" src="assets/aia-logo.png" alt="AIA" onerror="this.style.display='none'">
-    <img id="mascot" src="assets/mascot.png?v=4" alt="두뇌 산책 마스코트" onerror="this.style.display='none'">
+    <img id="mascot" src="assets/mascot.png?v=5" alt="두뇌 산책 마스코트" onerror="this.style.display='none'">
     <h1>두뇌 산책</h1>
     <p id="home-date"></p>
     <p id="home-streak" class="streak"></p>
@@ -55,7 +55,12 @@
 
 <!-- 자유 플레이 게임 선택 -->
 <section id="screen-free" class="screen">
-  <h2>어떤 게임을 할까요?</h2>
+  <div class="topbar">
+    <button class="back-btn" data-goto="home" aria-label="홈으로">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+    </button>
+    <h2>어떤 게임을 할까요?</h2>
+  </div>
   <div id="free-list" class="free-grid"></div>
   <button class="big-btn ghost" data-goto="home">← 돌아가기</button>
 </section>
@@ -84,7 +89,7 @@
   <p id="result-comment"></p>
   <div id="result-detail"></div>
   <div class="coach">
-    <img src="assets/mascot.png?v=4" class="coach-img" alt="코치">
+    <img src="assets/mascot.png?v=5" class="coach-img" alt="코치">
     <div class="speech" id="coach-bubble"></div>
   </div>
   <button class="big-btn primary" id="btn-next"></button>
@@ -93,7 +98,12 @@
 
 <!-- 기록 -->
 <section id="screen-stats" class="screen">
-  <h2>기록</h2>
+  <div class="topbar">
+    <button class="back-btn" data-goto="home" aria-label="홈으로">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+    </button>
+    <h2>기록</h2>
+  </div>
   <div id="stamp-cal"></div>
   <canvas id="chart" width="640" height="280"></canvas>
   <div id="trend-box"></div>
@@ -108,16 +118,16 @@
   <button class="big-btn ghost" data-goto="home">← 돌아가기</button>
 </section>
 
-<script src="games/sound.js?v=4"></script>
-<script src="games/cloud.js?v=4"></script>
-<script src="games/juice.js?v=4"></script>
-<script src="games/calc.js?v=4"></script>
-<script src="games/memory.js?v=4"></script>
-<script src="games/stroop.js?v=4"></script>
-<script src="games/trail.js?v=4"></script>
-<script src="games/pack-speed.js?v=4"></script>
-<script src="games/pack-memory.js?v=4"></script>
-<script src="games/sudoku.js?v=4"></script>
-<script src="app.js?v=4"></script>
+<script src="games/sound.js?v=5"></script>
+<script src="games/cloud.js?v=5"></script>
+<script src="games/juice.js?v=5"></script>
+<script src="games/calc.js?v=5"></script>
+<script src="games/memory.js?v=5"></script>
+<script src="games/stroop.js?v=5"></script>
+<script src="games/trail.js?v=5"></script>
+<script src="games/pack-speed.js?v=5"></script>
+<script src="games/pack-memory.js?v=5"></script>
+<script src="games/sudoku.js?v=5"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
