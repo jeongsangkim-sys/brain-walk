@@ -67,7 +67,8 @@
     id: "grid55", name: "5×5 기억", icon: "🧩", mode: "count", check: true,
     intro: "불이 켜진 칸을 외웠다가\n그대로 다시 눌러 보세요.",
     start(area, level, api) {
-      const ROUNDS = 5, K = Math.min(8, 3 + level);
+      const ROUNDS = 5;
+      const K_ = () => Math.min(8, 3 + level + Math.floor(hit / 8)); // 인-세션 램프
       let r = 0, hit = 0, miss = 0;
       area.innerHTML = `<div class="feedback" id="g5-fb"></div><div class="grid5" id="g5"></div>`;
       const fb = area.querySelector("#g5-fb");
@@ -84,6 +85,7 @@
         fb.className = "feedback";
         grid.innerHTML = "";
         const targets = new Set();
+        const K = K_(); // 이번 라운드 칸 수
         while (targets.size < K) targets.add(U.rand(0, 24));
         const cells = [];
         for (let i = 0; i < 25; i++) {
@@ -176,7 +178,10 @@
     id: "people", name: "인원 세기", icon: "🏠", mode: "count",
     intro: "집에 사람이 드나들어요.\n지금 안에 몇 명인지 기억하세요!",
     start(area, level, api) {
-      const ROUNDS = 4, EVENTS = 4 + level, GAP = Math.max(1150, 1600 - level * 100);
+      const ROUNDS = 4;
+      // 인-세션 램프: 맞춘 라운드만큼 드나듦 횟수↑·속도↑
+      const EVENTS_ = () => 4 + level + ok;
+      const GAP_ = () => Math.max(950, 1600 - level * 100 - ok * 120);
       let r = 0, ok = 0;
       area.innerHTML = `
         <div class="pe-stage" id="pe-stage">
@@ -213,6 +218,7 @@
         fb.textContent = `${r} / ${ROUNDS}`;
         fb.className = "feedback";
         let inside = U.rand(1, 3), e = 0;
+        const EVENTS = EVENTS_(), GAP = GAP_(); // 이번 라운드 난이도
         ev.textContent = `처음에 ${inside}명 있어요`;
         const iv = setInterval(() => {
           if (e >= EVENTS) {
@@ -269,7 +275,7 @@
         fb.textContent = `${r} / ${ROUNDS} — 새를 세세요!`;
         fb.className = "feedback";
         sky.innerHTML = "";
-        const birds = 4 + level + U.rand(0, 3);
+        const birds = 4 + level + U.rand(0, 3) + ok; // 인-세션 램프: 맞출수록 새 증가
         const moths = level >= 2 ? U.rand(2, 4) : 0;
         const total = birds + moths;
         const items = U.shuffle([...Array(birds).fill("bird"), ...Array(moths).fill("butterfly")]);

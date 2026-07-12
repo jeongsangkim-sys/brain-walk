@@ -5,7 +5,9 @@ window.GAME_MEMORY = {
   intro: "숫자가 잠깐 나타났다가 가려집니다.\n작은 수부터 순서대로 눌러 주세요.",
 
   start(area, level, api) {
-    const N = Math.min(9, 3 + level);   // 외울 개수 4~9 (보드 배치 한계)
+    const N0 = Math.min(9, 3 + level);  // 시작 개수 (보드 한계 9)
+    // 인-세션 램프: 2연승마다 외울 개수 +1
+    const N_ = () => Math.min(9, N0 + Math.floor(roundWins / 2));
     const SHOW_MS = 1200 + level * 250;
     let good = 0, bad = 0, rounds = 0, roundWins = 0;
     let alive = true;
@@ -37,6 +39,7 @@ window.GAME_MEMORY = {
       if (!alive) return;
       rounds++;
       const nums = [];
+      const N = N_(); // 이번 라운드 개수
       while (nums.length < N) {
         const v = 1 + Math.floor(Math.random() * 50);
         if (!nums.includes(v)) nums.push(v);

@@ -6,7 +6,9 @@ window.GAME_TRAIL = {
 
   start(area, level, api) {
     const HANGUL = ["가", "나", "다", "라", "마", "바", "사", "아"];
-    const PAIRS = Math.min(7, 2 + level);  // 최대 7쌍 = 14개 (보드 한계)
+    const PAIRS0 = Math.min(7, 2 + level);  // 시작 쌍 수 (보드 한계 7쌍=14개)
+    // 인-세션 램프: 판을 깰 때마다 +1쌍
+    const PAIRS_ = () => Math.min(7, PAIRS0 + Math.max(0, boards - 1));
     let good = 0, bad = 0, cleared = 0, boards = 0;
     let alive = true;
 
@@ -18,6 +20,7 @@ window.GAME_TRAIL = {
       if (!alive) return;
       boards++;
       const seq = [];
+      const PAIRS = PAIRS_(); // 이번 판 쌍 수 (boards는 newBoard 진입 시 이미 +1됨)
       for (let i = 0; i < PAIRS; i++) { seq.push(String(i + 1)); seq.push(HANGUL[i]); }
       board.innerHTML = "";
       const W = board.clientWidth - 80, H = board.clientHeight - 80;
@@ -56,7 +59,7 @@ window.GAME_TRAIL = {
       alive = false;
       const clicks = good + bad;
       const acc = clicks ? good / clicks : 0;
-      const expected = PAIRS * 2;   // 30초에 한 판 완주 기준
+      const expected = PAIRS0 * 2;   // 25초에 한 판 완주 기준(시작 난이도 기준)
       const score = Math.round(100 * acc * Math.min(1, cleared / expected));
       api.finish(score, `지운 칸 ${cleared} · 실수 ${bad}`);
     });

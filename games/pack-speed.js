@@ -24,7 +24,8 @@
 
       function next() {
         comp = U.rand(0, 2);
-        const modes = level <= 2 ? ["win", "lose"] : ["win", "lose", "draw"]; // 1레벨부터 지시 혼합 — 이기기만 있으면 밋밋함
+        // 인-세션 램프: 정답 6개 넘으면 저레벨에도 '비기기' 등장
+        const modes = (level <= 2 && ok < 6) ? ["win", "lose"] : ["win", "lose", "draw"];
         goal = modes[U.rand(0, modes.length - 1)];
         inst.textContent = goal === "win" ? "이기세요!" : goal === "lose" ? "지세요!" : "비기세요!";
         inst.className = "inst " + goal;
@@ -75,7 +76,9 @@
 
       function next() {
         const f = U.rand(0, 1);
-        const neg = level >= 2 && Math.random() < Math.min(0.6, 0.2 + level * 0.1);
+        // 인-세션 램프: 정답 쌓일수록 '아니야!' 비율 상승 (1레벨도 5정답부터 등장)
+        const negP = Math.min(0.65, (level >= 2 ? 0.2 + level * 0.1 : 0) + (ok >= 5 ? 0.15 + ok * 0.02 : 0));
+        const neg = Math.random() < negP;
         answer = neg ? 1 - f : f;
         inst.innerHTML = `<span style="color:${FLAGS[f][1]}">${FLAGS[f][0]} 깃발</span> ${neg ? "아니야!" : "올려!"}`;
       }
@@ -176,7 +179,8 @@
       function next() {
         // 정답 부호가 유일해질 때까지 생성 (예: 2+2=2×2 모호성 배제)
         for (let guard = 0; guard < 50; guard++) {
-          const hi = level <= 2 ? 9 : level <= 5 ? 12 : 19;
+          const lv = level + Math.floor(ok / 4); // 인-세션 램프
+          const hi = lv <= 2 ? 9 : lv <= 5 ? 12 : 19;
           const a = U.rand(2, hi), b = U.rand(2, Math.min(9, hi));
           const pick = U.rand(0, 2);
           const c = OPS[pick][1](a, b);
@@ -261,8 +265,10 @@
     id: "highest", name: "최고 숫자", icon: "🔝", mode: "count", check: true,
     intro: "숫자들이 잠깐 보였다 숨어요.\n가장 큰 숫자 자리를 누르세요.",
     start(area, level, api) {
-      const ROUNDS = 8, N = Math.min(6, 3 + level);
-      const SHOW = Math.max(500, 1100 - level * 100);
+      const ROUNDS = 8;
+      // 인-세션 램프: 맞출수록 숫자 개수↑·노출시간↓
+      const N_ = () => Math.min(6, 3 + level + Math.floor(ok / 3));
+      const SHOW_ = () => Math.max(450, 1100 - level * 100 - ok * 60);
       let r = 0, ok = 0;
       area.innerHTML = `<div class="feedback" id="hi-fb"></div><div class="board short" id="hi-board"></div>`;
       const board = area.querySelector("#hi-board");
@@ -278,6 +284,7 @@
         fb.textContent = `${r} / ${ROUNDS}`;
         fb.className = "feedback";
         const nums = [];
+        const N = N_();
         while (nums.length < N) { const v = U.rand(10, 99); if (!nums.includes(v)) nums.push(v); }
         const max = Math.max(...nums);
         board.innerHTML = "";
@@ -296,7 +303,7 @@
           return b;
         });
         let armed = false;
-        setTimeout(() => { tiles.forEach(t => { t.classList.add("hidden-num"); }); armed = true; }, SHOW);
+        setTimeout(() => { tiles.forEach(t => { t.classList.add("hidden-num"); }); armed = true; }, SHOW_());
         tiles.forEach(t => {
           t.onclick = () => {
             if (!armed) return;

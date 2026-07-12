@@ -9,14 +9,17 @@ window.GAME_CALC = {
     const TARGET = BW_UTIL.targetFor("calc", 7, 30); // 실측 반응시간 있으면 자동 교정
 
     const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+    // 인-세션 램프: 정답 4개마다 한 단계 어려워짐 (원작 감각)
+    const eff = () => Math.min(9, level + Math.floor(correct / 4));
 
     function makeProblem() {
       let a, b, op;
-      if (level <= 1) { a = rand(1, 9); b = rand(1, 9); op = Math.random() < 0.5 ? "+" : "-"; }
-      else if (level === 2) { a = rand(2, 9); b = rand(2, 9); op = ["+", "-", "×"][rand(0, 2)]; }
-      else if (level === 3) { a = rand(10, 50); b = rand(10, 50); op = Math.random() < 0.5 ? "+" : "-"; }
-      else if (level === 4) { a = rand(10, 99); b = rand(2, 9); op = ["+", "-", "×"][rand(0, 2)]; }
-      else if (level <= 6) { a = rand(11, 99); b = rand(11, 99); op = ["+", "-", "×"][rand(0, 2)]; if (op === "×") b = rand(2, 12); }
+      const lv = eff();
+      if (lv <= 1) { a = rand(1, 9); b = rand(1, 9); op = Math.random() < 0.5 ? "+" : "-"; }
+      else if (lv === 2) { a = rand(2, 9); b = rand(2, 9); op = ["+", "-", "×"][rand(0, 2)]; }
+      else if (lv === 3) { a = rand(10, 50); b = rand(10, 50); op = Math.random() < 0.5 ? "+" : "-"; }
+      else if (lv === 4) { a = rand(10, 99); b = rand(2, 9); op = ["+", "-", "×"][rand(0, 2)]; }
+      else if (lv <= 6) { a = rand(11, 99); b = rand(11, 99); op = ["+", "-", "×"][rand(0, 2)]; if (op === "×") b = rand(2, 12); }
       else { a = rand(101, 999); b = rand(11, 99); op = ["+", "-", "×"][rand(0, 2)]; if (op === "×") { a = rand(12, 29); b = rand(11, 19); } }
       if (op === "-" && b > a) [a, b] = [b, a];
       const ans = op === "+" ? a + b : op === "-" ? a - b : a * b;

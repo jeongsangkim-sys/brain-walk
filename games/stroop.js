@@ -13,8 +13,8 @@ window.GAME_STROOP = {
     ];
     let correct = 0, wrong = 0, streak = 0;
     const TARGET = BW_UTIL.targetFor("stroop", 7, 30); // 실측 자동 교정
-    // 레벨이 오를수록 뜻≠색 (간섭) 비율 증가
-    const conflictP = Math.min(0.9, 0.4 + level * 0.1);
+    // 간섭 비율: 레벨 기본 + 세션 중 정답 쌓일수록 상승 (인-세션 램프)
+    const conflictP = () => Math.min(0.9, 0.4 + level * 0.1 + correct * 0.025);
 
     area.innerHTML = `
       <div class="problem" id="st-word"></div>
@@ -38,7 +38,7 @@ window.GAME_STROOP = {
     let ink = null;
     function next() {
       const word = COLORS[Math.floor(Math.random() * COLORS.length)];
-      if (Math.random() < conflictP) {
+      if (Math.random() < conflictP()) {
         do { ink = COLORS[Math.floor(Math.random() * COLORS.length)]; } while (ink.name === word.name);
       } else {
         ink = word;
