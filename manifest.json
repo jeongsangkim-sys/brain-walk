@@ -1,6 +1,6 @@
 {
-  "name": "두뇌 산책",
-  "short_name": "두뇌 산책",
+  "name": "브레인워크 Brain Walk",
+  "short_name": "브레인워크",
   "description": "매일 3분, 두뇌 트레이닝 게임",
   "start_url": ".",
   "display": "standalone",

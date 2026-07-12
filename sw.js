@@ -23,7 +23,7 @@ self.addEventListener("periodicsync", e => {
     // 앱이 이미 열려 있으면 알림 불필요
     const wins = await self.clients.matchAll({ type: "window" });
     if (wins.length) return;
-    await self.registration.showNotification("두뇌 산책 🐾", {
+    await self.registration.showNotification("브레인워크 🐾", {
       body: "오늘의 훈련이 기다리고 있어요 — 3분이면 끝!",
       icon: "assets/icon-192.png",
       badge: "assets/icon-192.png",

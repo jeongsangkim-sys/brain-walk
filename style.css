@@ -14,6 +14,7 @@
   --bad: var(--error-500);
   --card: var(--surface);
   --t: 150ms ease-out;
+  --icon-chip: #F6F1E4; /* 아이콘 칩 — 양 모드 동일(네이비 라인 가독) */
 }
 
 /* 다크 모드 — 시스템 설정 따름. 차콜 스케일을 반전시켜 모든 컴포넌트가 자동 적용
@@ -110,6 +111,8 @@ a:hover { text-decoration: underline; }
 }
 
 h1 { font-size: 38px; font-weight: var(--fw-bold); line-height: var(--lh-display); }
+.logo-h1 { line-height: 0; }
+.logo-img { width: 250px; max-width: 78vw; height: auto; }
 h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading); }
 
 /* ---------- 홈 ---------- */
@@ -280,8 +283,8 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 }
 #intro-desc { font-size: 19px; line-height: var(--lh-body); color: var(--fg-secondary); max-width: 400px; }
 .intro-icon { font-size: 72px; }
-.intro-img { width: 116px; height: 116px; object-fit: contain; border-radius: var(--radius-xl); }
-.name-img { width: 30px; height: 30px; object-fit: contain; border-radius: var(--radius-sm); vertical-align: -7px; }
+.intro-img { width: 116px; height: 116px; object-fit: contain; border-radius: var(--radius-xl); background: var(--icon-chip); padding: 8px; }
+.name-img { width: 30px; height: 30px; object-fit: contain; border-radius: var(--radius-sm); vertical-align: -7px; background: var(--icon-chip); }
 .intro-best {
   font-size: 15px; font-weight: var(--fw-semibold); color: var(--aia-red);
   background: var(--aia-red-100); border-radius: var(--radius-pill);
@@ -410,7 +413,7 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 .tease small { display: block; color: var(--fg-tertiary); }
 .tease-icons img {
   width: 34px; height: 34px; vertical-align: middle; margin: 0 2px;
-  filter: blur(4px) grayscale(0.6); border-radius: 8px;
+  filter: blur(4px) grayscale(0.6); border-radius: 8px; background: var(--icon-chip);
 }
 
 /* 🔥 콤보 배지 — 격투게임식 연속 카운터 (타이머 아래 우측 고정) */
@@ -589,15 +592,15 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 
 /* 가위바위보 손 스프라이트 — 각 칸이 세로형(458×768)이라 컨테이너도 세로 비율 필수 */
 .hand-view {
-  width: 120px; aspect-ratio: 458 / 768;
-  background-image: url("assets/hands.png");
+  width: 120px; aspect-ratio: 460 / 768;
+  background-image: url("assets/hands.png?v=2");
   background-size: 300% 100%; background-repeat: no-repeat;
 }
 .hand-btn { display: flex; flex-direction: column; align-items: center; gap: var(--sp-1); font-size: 21px; padding: var(--sp-2) 0; }
 .hand-mini {
-  width: 52px; aspect-ratio: 458 / 768; display: block;
-  background-image: url("assets/hands.png");
-  background-size: 330% 108%; background-repeat: no-repeat; /* 살짝 줌 — 옆 칸 손가락 비침 방지 */
+  width: 52px; aspect-ratio: 460 / 768; display: block;
+  background-image: url("assets/hands.png?v=2");
+  background-size: 300% 100%; background-repeat: no-repeat; /* 재센터링 스프라이트 — 줌 핵 제거 */
 }
 
 /* 직전 그림: 카드 등장 팝 — 시선을 그림으로 끌기 */
@@ -711,7 +714,7 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 .free-card:hover { border-color: var(--aia-red); box-shadow: var(--shadow-2); transform: translateY(-2px); }
 .free-card:active { transform: scale(0.99); box-shadow: var(--shadow-0); }
 .fc-icon { font-size: 40px; }
-.fc-img { width: 76px; height: 76px; object-fit: contain; border-radius: var(--radius-lg); }
+.fc-img { width: 76px; height: 76px; object-fit: contain; border-radius: var(--radius-lg); background: var(--icon-chip); padding: 5px; }
 .fc-name { font-size: 20px; font-weight: var(--fw-bold); color: var(--fg-primary); }
 .fc-best { font-size: 15px; color: var(--fg-tertiary); }
 

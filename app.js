@@ -368,6 +368,10 @@
       store.set("bw_wallet", w);
     }
     if (!w.games) w.games = []; // 구버전 지갑 마이그레이션 (마일 게임해금)
+    if (!w.welcome) { // 🎁 웰컴 300마일 — 첫날부터 '쓰는 맛' (기존 지갑도 1회 지급)
+      w.welcome = true; w.earned += 300;
+      store.set("bw_wallet", w);
+    }
     return w;
   }
   const miles = () => wallet().earned - wallet().spent;
@@ -480,7 +484,13 @@
       : near ? `아깝다! ${near[0] - score}점만 더 하면 ${near[1]}이었어요!` : comment(score);
     const rtAvg = RT.sessAvg();
     const mc = FX._maxCombo >= 5 ? ` · 🔥 최고 ${FX._maxCombo}연속` : "";
-    $("#result-detail").textContent = detail + (rtAvg ? ` · 평균 반응 ${rtAvg.toFixed(1)}초` : "") + mc;
+    // 자유 플레이도 마일 적립 (점수의 20%) — 많이 걸을수록 쌓이는 경제
+    let mileLine = "";
+    if (session.mode === "free") {
+      const earn = Math.round(score * 0.2);
+      if (earn > 0) { earnMiles(earn); mileLine = ` · 🐾 +${earn}마일`; }
+    }
+    $("#result-detail").textContent = detail + (rtAvg ? ` · 평균 반응 ${rtAvg.toFixed(1)}초` : "") + mc + mileLine;
     coachSay(score, isRecord);
     if (isRecord) FX.confetti();
     $("#btn-next").textContent = last
@@ -522,7 +532,7 @@
     u.searchParams.set("gg", game.id);
     u.searchParams.set("gs", score);
     u.searchParams.set("gn", player() || "게스트");
-    const text = `🐾 [두뇌 산책 대결장] ${msg}\n${u}`;
+    const text = `🐾 [브레인워크 대결장] ${msg}\n${u}`;
     try {
       if (navigator.share) { await navigator.share({ text }); return; }
       await navigator.clipboard.writeText(text);
