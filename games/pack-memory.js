@@ -7,7 +7,7 @@
   // ---------- 직전 그림 (1-back / 2-back — 작업기억) ----------
   window.GAME_PHOTO = {
     id: "photo", name: "직전 그림", icon: "🖼️", mode: "count",
-    intro: "그림이 한 장씩 지나가요.\n\"직전에 본 그림\"을 골라내세요.",
+    intro: "그림이 잠깐 나왔다 사라져요.\n방금 본 그림을 골라내세요.",
     start(area, level, api) {
       const BACK = level >= 8 ? 3 : level >= 4 ? 2 : 1;
       const ROUNDS = 8;
@@ -41,8 +41,9 @@
         }
         r++;
         card.textContent = "❓";
-        inst.textContent = BACK === 1 ? `(${r}/${ROUNDS}) 직전 그림은?` : `(${r}/${ROUNDS}) 2장 전 그림은?`;
-        const ans = hist[hist.length - 1 - BACK];
+        // BACK=1: 방금 가려진 그 그림 (사용자가 자연스럽게 기대하는 정답)
+        inst.textContent = BACK === 1 ? `(${r}/${ROUNDS}) 방금 본 그림은?` : `(${r}/${ROUNDS}) ${BACK}장 전 그림은?`;
+        const ans = hist[hist.length - BACK];
         const opts = new Set([ans]);
         while (opts.size < 4) opts.add(EMOJI[U.rand(0, EMOJI.length - 1)]);
         U.renderChoices(choices, U.shuffle([...opts]), (v, btn) => {
