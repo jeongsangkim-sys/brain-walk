@@ -501,7 +501,12 @@
       cur
     );
     if (u === null) return; // 취소
-    CLOUD.setUrl(u);
+    const t = (u || "").trim();
+    if (t && !/^https:\/\/script\.google\.com\/macros\//.test(t)) {
+      alert("URL 형식이 아니에요.\nhttps://script.google.com/macros/… 로 시작하는 웹 앱 URL을 붙여넣어 주세요.");
+      return;
+    }
+    CLOUD.setUrl(t);
     renderCloud();
   };
 
