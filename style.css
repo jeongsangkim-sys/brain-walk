@@ -16,6 +16,22 @@
   --t: 150ms ease-out;
 }
 
+/* 다크 모드 — 시스템 설정 따름. 차콜 스케일을 반전시켜 모든 컴포넌트가 자동 적용
+   (--fg-primary 등 시맨틱 토큰이 charcoal을 참조하므로 사용 시점에 재해석됨) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --charcoal-50: #232323; --charcoal-100: #2C2C2C; --charcoal-200: #3A3A3A;
+    --charcoal-300: #4A4A4A; --charcoal-400: #8A8A8A; --charcoal-500: #A8A8A8;
+    --charcoal-600: #C4C4C4; --charcoal-700: #D6D6D6; --charcoal-800: #E8E8E8;
+    --charcoal-900: #F2F2F2;
+    --bg-canvas: #151515; --surface: #1E1E1E;
+    --bg-subtle: #232323; --surface-hover: #262626;
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, .4), 0 2px 8px rgba(0, 0, 0, .5);
+    --shadow-2: 0 2px 4px rgba(0, 0, 0, .5), 0 8px 20px rgba(0, 0, 0, .6);
+    --shadow-3: 0 6px 12px rgba(0, 0, 0, .6), 0 16px 32px rgba(0, 0, 0, .7);
+  }
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -343,6 +359,15 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   55% { transform: scale(1.22); opacity: 0.9; }
   100% { transform: scale(0); opacity: 0; }
 }
+/* 가족 기록 필터 칩 */
+.who-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); justify-content: center; margin-bottom: var(--sp-2); }
+.who-chip {
+  font: inherit; font-size: 15px; font-weight: var(--fw-bold);
+  padding: 6px 14px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border-default); background: var(--surface); color: var(--fg-primary);
+}
+.who-chip.on { background: #D31145; border-color: #D31145; color: #fff; }
+
 /* 필기 입력 패드 */
 .ink-pad {
   display: block; width: 100%; max-width: 340px; height: 240px;

@@ -69,6 +69,9 @@
   const best = () => store.get("bw_best", {});
   const history = () => store.get("bw_history", []);
   const ageChecks = () => store.get("bw_agecheck", []);
+  // 가족 기록 분리: 기록에 이름 태그. 이름 없는 옛 기록은 모두의 것으로 인정(레거시 그레이스)
+  const mine = (r, who) => !who || !r.name || r.name === who;
+  const myHist = who => history().filter(r => mine(r, who));
   const settings = () => store.get("bw_settings", { relaxMode: false, sound: true });
   const levelOf = id => levels()[id] || 1;
 
@@ -133,7 +136,7 @@
   // ---------- 홈 ----------
   // 스트릭 실드: 7일에 한 번은 쉬어도 연속 기록 유지 (Streak Ruin 방지)
   function streakDays() {
-    const dates = new Set(history().map(h => h.date));
+    const dates = new Set(myHist(player()).map(h => h.date));
     let n = 0, shieldUsed = false;
     const usedWeeks = new Set();
     const d = new Date();
@@ -155,14 +158,14 @@
   function renderHome() {
     $("#home-date").textContent = new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
     const s = streakDays().n, shield = streakDays().shieldUsed;
-    const ac = ageChecks();
+    const ac = ageChecks().filter(r => mine(r, player()));
     let line = s > 0 ? `🔥 ${s}일 연속 산책 중${shield ? " 🛡️" : ""}` : "";
     if (ac.length) line += (line ? "  ·  " : "") + `🧠 최근 뇌 나이 ${ac[ac.length - 1].age}세`;
     $("#home-streak").textContent = line;
     $("#home-player").textContent = player() ? `🙋 ${player()} (바꾸기)` : "🙋 이름 정하기";
     $("#home-player").onclick = () => askPlayer(true);
-    // 오늘의 훈련 완료 여부에 따른 습관 유도 카피
-    const doneToday = history().some(r => r.date === today());
+    // 오늘의 훈련 완료 여부에 따른 습관 유도 카피 (본인 기준 — 가족별 하루 1회)
+    const doneToday = myHist(player()).some(r => r.date === today());
     const hh = new Date().getHours();
     const GREET = hh < 5 ? "늦은 밤에도 반가워요!" : hh < 11 ? "좋은 아침이에요!" : hh < 17 ? "오후 머리 깨우기 딱 좋은 시간!" : hh < 22 ? "오늘 하루 마무리 산책 어때요?" : "자기 전 가볍게 한 판!";
     $("#daily-sub").textContent = doneToday ? "오늘 완료 ✓ 내일 새 훈련이 기다려요" : "아직 안 했어요 — 3분이면 끝!";
@@ -384,16 +387,17 @@
     const scores = Object.values(session.results);
     const total = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
     const h = history();
-    const already = h.some(r => r.date === today());
+    const who = player() || "게스트";
+    const already = h.some(r => r.date === today() && mine(r, who));
     if (!already) {
-      h.push({ date: today(), score: total, games: session.results });
+      h.push({ date: today(), score: total, games: session.results, name: who });
       store.set("bw_history", h);
       mirrorTrained(); // 알림용 훈련일 미러 (SW가 읽음)
-      CLOUD.submit("daily", player() || "게스트", total); // 온라인 기록판 (연결 시)
+      CLOUD.submit("daily", who, total); // 온라인 기록판 (연결 시)
     }
-    // 어제의 나와 대결
+    // 어제의 나와 대결 (본인 기록만)
     const yd = new Date(); yd.setDate(yd.getDate() - 1);
-    const yRec = h.find(r => r.date === localDate(yd));
+    const yRec = h.find(r => r.date === localDate(yd) && mine(r, who));
     let vs = "";
     if (yRec) {
       const d = total - yRec.score;
@@ -432,13 +436,15 @@
     const scores = Object.values(session.results);
     const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
     const age = brainAge(avg);
-    const ac = ageChecks();
-    const prev = ac.length ? ac[ac.length - 1].age : null;
-    // 원작식: 뇌 나이 기록은 하루 1회. 추가 측정은 연습으로만
-    const measuredToday = ac.some(r => r.date === today());
+    const all = ageChecks();
+    const who = player() || "게스트";
+    const minecks = all.filter(r => mine(r, who));
+    const prev = minecks.length ? minecks[minecks.length - 1].age : null;
+    // 원작식: 뇌 나이 기록은 하루 1회(본인 기준). 추가 측정은 연습으로만
+    const measuredToday = minecks.some(r => r.date === today());
     if (!measuredToday) {
-      ac.push({ date: today(), age, avg });
-      store.set("bw_agecheck", ac);
+      all.push({ date: today(), age, avg, name: who });
+      store.set("bw_agecheck", all);
     }
     show("result");
     $("#result-title").textContent = "🧠 재미로 보는 뇌 나이";
@@ -531,8 +537,8 @@
     const now = new Date(), y = now.getFullYear(), m = now.getMonth();
     const pad2 = n => String(n).padStart(2, "0");
     const trained = new Set([
-      ...history().map(r => r.date),
-      ...ageChecks().map(r => r.date)
+      ...history().filter(r => mine(r, statsWho)).map(r => r.date),
+      ...ageChecks().filter(r => mine(r, statsWho)).map(r => r.date)
     ].filter(d => d.startsWith(`${y}-${pad2(m + 1)}`)));
     const first = new Date(y, m, 1).getDay();
     const days = new Date(y, m + 1, 0).getDate();
@@ -557,19 +563,38 @@
   }
 
   // ---------- 기록 ----------
+  let statsWho = null; // null=전체, 이름=그 사람만 (기록 화면 필터)
+  function renderWhoChips() {
+    const names = [...new Set([...history(), ...ageChecks()].map(r => r.name).filter(Boolean))];
+    const box = $("#stats-who");
+    if (names.length < 2) { box.innerHTML = ""; statsWho = null; return; }
+    if (statsWho && !names.includes(statsWho)) statsWho = null;
+    box.innerHTML = ["전체", ...names].map(n =>
+      `<button class="who-chip${(n === "전체" ? statsWho === null : statsWho === n) ? " on" : ""}" data-who="${n}">${n === "전체" ? "👨‍👩‍👧 전체" : "🙋 " + n}</button>`
+    ).join("");
+    box.querySelectorAll(".who-chip").forEach(b => b.onclick = () => {
+      statsWho = b.dataset.who === "전체" ? null : b.dataset.who;
+      renderStats();
+    });
+  }
   function renderStats() {
+    renderWhoChips();
     renderCal();
-    const h = history().slice(-14);
+    const h = history().filter(r => mine(r, statsWho)).slice(-14);
     const cv = $("#chart"), ctx = cv.getContext("2d");
+    // 다크 모드 대응: 캔버스 색은 CSS 토큰에서 읽음
+    const css = getComputedStyle(document.documentElement);
+    const tok = (n, f) => (css.getPropertyValue(n) || "").trim() || f;
+    const cInk = tok("--fg-primary", "#1A1A1A"), cAxis = tok("--border-hairline", "#DDDDDD"), cLabel = tok("--fg-tertiary", "#757575");
     ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.font = "14px Manrope, sans-serif";
-    ctx.fillStyle = "#1A1A1A";
+    ctx.fillStyle = cInk;
     if (h.length === 0) {
       ctx.font = "20px sans-serif";
       ctx.fillText("아직 기록이 없어요. 오늘의 훈련을 시작해 보세요!", 90, 145);
     } else {
       const P = 40, W = cv.width - P * 2, H = cv.height - P * 2;
-      ctx.strokeStyle = "#DDDDDD";
+      ctx.strokeStyle = cAxis;
       ctx.beginPath(); ctx.moveTo(P, P); ctx.lineTo(P, P + H); ctx.lineTo(P + W, P + H); ctx.stroke();
       [0, 50, 100].forEach(v => {
         const y = P + H - (v / 100) * H;
@@ -589,7 +614,7 @@
         const x = P + (h.length > 1 ? i * step : W / 2);
         const y = P + H - (r.score / 100) * H;
         ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = "#757575";
+        ctx.fillStyle = cLabel;
         ctx.fillText(r.date.slice(5), x - 18, P + H + 20);
         ctx.fillStyle = "#D31145";
       });
@@ -613,13 +638,13 @@
 
   // ---------- 흐름 분석 (치매 위험 "판정"이 아닌 정직한 추세 알림) ----------
   function renderTrend() {
-    const h = history();
+    const h = history().filter(r => mine(r, statsWho));
     const box = $("#trend-box");
     const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
     let body;
     if (h.length === 0) { box.innerHTML = ""; return; }
     const latest = h[h.length - 1];
-    const ac = ageChecks();
+    const ac = ageChecks().filter(r => mine(r, statsWho));
     const ageLine = ac.length
       ? `<div class="trend-age">재미로 보는 뇌 나이: <b>${ac[ac.length - 1].age}세</b> <small>(${ac[ac.length - 1].date} 체크)</small></div>`
       : `<div class="trend-age">재미로 보는 뇌 나이: <b>${brainAge(latest.score)}세</b> <small>(최근 훈련 ${latest.score}점 기준)</small></div>`;
