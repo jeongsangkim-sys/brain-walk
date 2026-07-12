@@ -534,5 +534,15 @@
     }).catch(() => alert("파일을 읽을 수 없어요."));
   };
 
+  // 자동 연결 링크: ?board=<웹앱URL> 로 열면 온라인 순위 URL 자동 저장 (폰 설정 원클릭)
+  try {
+    const bp = new URLSearchParams(location.search).get("board");
+    if (bp && /^https:\/\/script\.google\.com\/macros\//.test(bp)) {
+      CLOUD.setUrl(bp);
+      history.replaceState(null, "", location.pathname);
+      alert("🌐 온라인 순위가 연결됐어요!");
+    }
+  } catch {}
+
   renderHome();
 })();
