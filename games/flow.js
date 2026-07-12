@@ -2,7 +2,7 @@
 // 퍼즐 생성은 역산: 격자를 뱀길 K개로 완전 분할 → 각 길의 양끝을 점으로. 항상 풀 수 있음.
 (function () {
   const U = window.BW_UTIL;
-  const COLORS = ["#E8722C", "#3A6EA5", "#3E8E5A", "#D9A422", "#8A6BBC", "#C94F4F"];
+  const COLORS = ["#E8722C", "#3A6EA5", "#3E8E5A", "#D9A422", "#8A6BBC", "#C94F4F", "#2AA8A0", "#B5651D", "#D96C9C", "#5C6B2F", "#7A7A7A", "#274B8F"];
 
   // 격자(N×N)를 길이 3+ 뱀길 pairs개로 분할 (실패 시 재시도)
   function carve(N, pairs) {
@@ -47,9 +47,11 @@
     id: "flow", name: "점 잇기", icon: "🔀", mode: "count",
     intro: "같은 색 점끼리 길을 그어 이으세요.\n길은 서로 겹칠 수 없어요!",
     start(area, level, api) {
-      const N = level <= 3 ? 5 : level <= 6 ? 6 : 7;
-      const PAIRS = level <= 3 ? 4 : level <= 6 ? 5 : 6;
-      const BOARDS = 2;
+      // 캠페인 모드: 레벨 1~1000 곡선 (한 판) / 일반: 빠른 2판
+      const camp = window.BW_CAMPAIGN && window.BW_CAMPAIGN.id === "flow" ? window.BW_CAMPAIGN.level : 0;
+      const N = camp ? Math.min(9, 5 + Math.floor((camp - 1) / 60)) : (level <= 3 ? 5 : level <= 6 ? 6 : 7);
+      const PAIRS = camp ? Math.min(N + 3, 12, 4 + Math.floor((camp - 1) / 25)) : (level <= 3 ? 4 : level <= 6 ? 5 : 6);
+      const BOARDS = camp ? 1 : 2;
       let board = 0, resets = 0, alive = true;
 
       area.innerHTML = `
@@ -65,7 +67,7 @@
       function newBoard() {
         if (!alive) return;
         board++;
-        prog.textContent = `판 ${board} / ${BOARDS}`;
+        prog.textContent = camp ? `레벨 ${camp}` : `판 ${board} / ${BOARDS}`;
         sol = carve(N, PAIRS);
         if (!sol) { api.finish(0, "퍼즐 생성 실패"); return; } // 사실상 도달 불가
         window.__flowSol = sol; // 시뮬 하네스 훅
@@ -129,7 +131,7 @@
               const el = api.elapsedSec();
               const target = BOARDS * (N * N * 1.2); // 여유 기준
               api.finish(Math.round(100 * Math.min(1, target / el) * Math.max(0.5, 1 - resets * 0.05)),
-                `${BOARDS}판 ${Math.round(el)}초 · 다시 그림 ${resets}`);
+                (camp ? `레벨 ${camp} 클리어! · ` : `${BOARDS}판 · `) + `${Math.round(el)}초 · 다시 그림 ${resets}`);
             } else {
               fb.textContent = "완성! 다음 판이에요";
               setTimeout(newBoard, 600);

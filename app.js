@@ -259,6 +259,7 @@
   let session = null; // { mode: daily|free|check, queue, i, results }
 
   function startSession(mode, queue) {
+    if (!window.__campStarting) window.BW_CAMPAIGN = null; // 스테일 캠페인 방지
     askPlayer(false); // 첫 플레이 때 한 번만 물어봄
     session = { mode, queue, i: 0, results: {} };
     runCurrent();
@@ -541,6 +542,22 @@
       shareBtn.textContent = "⚔️ 친구에게 대결장 보내기";
       shareBtn.onclick = () => shareGhost(game, score, `${player() || "게스트"}님의 ${game.name} ${score}점 — 이길 수 있어요?`);
     } else shareBtn.hidden = true;
+
+    // 🧗 퍼즐 캠페인 체인: 클리어 → 진행도 저장 → '레벨 N+1' 원버튼 연속
+    if (window.BW_CAMPAIGN && window.BW_CAMPAIGN.id === game.id && last) {
+      const lv = window.BW_CAMPAIGN.level;
+      window.BW_CAMPAIGN = null;
+      const pz = store.get("bw_puzzle", {});
+      if ((pz[game.id] || 1) <= lv) { pz[game.id] = Math.min(CAMP_MAX, lv + 1); store.set("bw_puzzle", pz); }
+      $("#result-title").textContent = `🧗 레벨 ${lv} 클리어!`;
+      if (lv >= CAMP_MAX) {
+        $("#btn-next").textContent = "🏆 1000레벨 정복!";
+        $("#btn-next").onclick = () => { renderHome(); show("home"); FX.confetti(); };
+      } else {
+        $("#btn-next").textContent = `레벨 ${lv + 1} 도전 →`;
+        $("#btn-next").onclick = () => startCampaign(game, lv + 1);
+      }
+    }
   }
 
   // ---------- 👻 고스트 대결 링크 (서버 없는 소셜 — URL 파라미터만) ----------
@@ -750,6 +767,16 @@
     { name: "보통", desc: "빈칸 40개 — 오늘의 본판", holes: 40, need: 3 },
     { name: "어려움", desc: "빈칸 50개 — 진짜 실력 시험", holes: 50, need: 7 }
   ];
+  // 퍼즐 캠페인 (레벨 1~1000, 진행도 저장)
+  const CAMP_MAX = 1000;
+  const puzzleLv = id => Math.min(CAMP_MAX, (store.get("bw_puzzle", {})[id] || 1));
+  function startCampaign(g, lv) {
+    window.__campStarting = true;
+    startSession("free", [g]);
+    window.__campStarting = false;
+    window.BW_CAMPAIGN = { id: g.id, level: lv };
+  }
+
   const CHEV = `<span class="mc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span>`;
   const puzzleItem = (iconId, title, desc, onClick, locked) => {
     const b = document.createElement("button");
@@ -763,8 +790,8 @@
   function renderPuzzleMenu() {
     const box = $("#sudoku-diffs");
     box.innerHTML = "";
-    box.appendChild(puzzleItem("flow", "점 잇기", "같은 색 점끼리 길을 그어 연결", () => startSession("free", [window.GAME_FLOW])));
-    box.appendChild(puzzleItem("arrows", "화살표 탈출", "뚫린 화살표부터 차례로 내보내기", () => startSession("free", [window.GAME_ARROWS])));
+    box.appendChild(puzzleItem("flow", `점 잇기 · 레벨 ${puzzleLv("flow")}`, "깰수록 커지는 판 — 1000레벨 등반", () => startCampaign(window.GAME_FLOW, puzzleLv("flow"))));
+    box.appendChild(puzzleItem("arrows", `화살표 탈출 · 레벨 ${puzzleLv("arrows")}`, "깰수록 빽빽해지는 미로 — 1000레벨 등반", () => startCampaign(window.GAME_ARROWS, puzzleLv("arrows"))));
     box.appendChild(puzzleItem("sudoku", "스도쿠", "난이도 골라서 느긋하게 한 판", renderSudokuDiffs));
   }
   // 2단계: 스도쿠 난이도

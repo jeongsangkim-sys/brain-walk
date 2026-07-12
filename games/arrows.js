@@ -37,9 +37,11 @@
     id: "arrows", name: "화살표 탈출", icon: "➡️", mode: "count",
     intro: "화살표를 눌러 그 방향으로 내보내세요.\n길에 다른 화살표가 있으면 못 나가요!",
     start(area, level, api) {
-      const N = level <= 3 ? 5 : level <= 6 ? 6 : 7;
-      const COUNT = level <= 3 ? 10 : level <= 6 ? 15 : 20;
-      const BOARDS = 2;
+      // 캠페인 모드: 레벨 1~1000 곡선 (한 판, 밀도 점증) / 일반: 빠른 2판
+      const camp = window.BW_CAMPAIGN && window.BW_CAMPAIGN.id === "arrows" ? window.BW_CAMPAIGN.level : 0;
+      const N = camp ? Math.min(9, 5 + Math.floor((camp - 1) / 70)) : (level <= 3 ? 5 : level <= 6 ? 6 : 7);
+      const COUNT = camp ? Math.min(N * N - 4, 10 + Math.floor((camp - 1) / 6)) : (level <= 3 ? 10 : level <= 6 ? 15 : 20);
+      const BOARDS = camp ? 1 : 2;
       let board = 0, blocked = 0, cleared = 0, alive = true;
 
       area.innerHTML = `
@@ -73,7 +75,7 @@
         }
         upd();
       }
-      const upd = () => prog.textContent = `판 ${board}/${BOARDS} · 남은 화살표 ${remain}`;
+      const upd = () => prog.textContent = (camp ? `레벨 ${camp}` : `판 ${board}/${BOARDS}`) + ` · 남은 화살표 ${remain}`;
 
       function pathClear(i) {
         const a = grid[i];
@@ -107,7 +109,7 @@
               const el = api.elapsedSec();
               const target = BOARDS * COUNT * 1.6;
               api.finish(Math.round(100 * Math.min(1, target / el) * Math.max(0.5, 1 - blocked * 0.04)),
-                `${BOARDS}판 ${Math.round(el)}초 · 막힘 ${blocked}`);
+                (camp ? `레벨 ${camp} 클리어! · ` : `${BOARDS}판 · `) + `${Math.round(el)}초 · 막힘 ${blocked}`);
             } else {
               fb.textContent = "탈출 완료! 다음 판이에요";
               fb.className = "feedback flash-good";
