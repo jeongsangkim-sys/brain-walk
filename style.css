@@ -605,23 +605,42 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 @keyframes starPop { 0% { transform: scale(0); } 50% { transform: scale(1.3); } 100% { transform: scale(1); opacity: 0.2; } }
 
 /* 스도쿠 9×9 — 밴드 구분은 셀 테두리(마진은 그리드 폭 초과로 잘림 유발) */
-.sudoku9 { display: grid; grid-template-columns: repeat(9, 1fr); gap: 2px; width: 100%; max-width: 420px; background: var(--charcoal-800); padding: 4px; border-radius: var(--radius-lg); }
+/* 하이라이트 색은 라이트/다크 쌍으로 — 고정 연분홍은 다크에서 밝은 글자를 잡아먹음 (폰 실사고) */
+:root {
+  --su-frame: var(--charcoal-800);
+  --su-hole: #F3EFEA;      /* 빈칸 */
+  --su-hl: #FDECE7;        /* 행/열/박스 */
+  --su-hole-hl: #FBDAD0;
+  --su-same: #F6B7A6;      /* 같은 숫자 */
+  --su-same-fg: #7A1F0E;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --su-frame: #4A4A4A;   /* 셀(#1E1E1E)과 확실히 구분되는 격자선 */
+    --su-hole: #2E2B28;
+    --su-hl: #3B2229;
+    --su-hole-hl: #4A2630;
+    --su-same: #6E3040;
+    --su-same-fg: #FFD9CE;
+  }
+}
+.sudoku9 { display: grid; grid-template-columns: repeat(9, 1fr); gap: 2px; width: 100%; max-width: 420px; background: var(--su-frame); padding: 4px; border-radius: var(--radius-lg); }
 .sucell {
   aspect-ratio: 1; border: none; border-radius: 3px; background: var(--surface);
   font: inherit; font-family: "Manrope", var(--font-kr);
   font-size: 19px; font-weight: var(--fw-bold); color: var(--fg-primary); cursor: pointer;
   padding: 0; min-width: 0;
 }
-.sucell.br { border-right: 3px solid var(--charcoal-800); }
-.sucell.bb { border-bottom: 3px solid var(--charcoal-800); }
+.sucell.br { border-right: 3px solid var(--su-frame); }
+.sucell.bb { border-bottom: 3px solid var(--su-frame); }
 .su-pad { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--sp-2); width: 100%; max-width: 420px; }
 .su-key { min-height: 60px; font-size: 26px; }
-.sucell.hole { background: var(--warmgrey-100); }
+.sucell.hole { background: var(--su-hole); }
 .sucell.sel { outline: 3px solid var(--aia-red); outline-offset: -3px; }
 .sucell.solved { color: var(--aia-red); }
-.sucell.hl { background: var(--salmon-50); }          /* 선택 셀의 행/열/박스 */
-.sucell.hole.hl { background: var(--salmon-100, #FBDAD0); }
-.sucell.same { background: var(--salmon-200, #F6B7A6); } /* 같은 숫자 */
+.sucell.hl { background: var(--su-hl); }              /* 선택 셀의 행/열/박스 */
+.sucell.hole.hl { background: var(--su-hole-hl); }
+.sucell.same { background: var(--su-same); color: var(--su-same-fg); }
 .su-key { position: relative; }
 .su-key small { position: absolute; right: 6px; bottom: 3px; font-size: 12px; color: var(--fg-tertiary); }
 .su-key:disabled { opacity: 0.35; cursor: default; }
