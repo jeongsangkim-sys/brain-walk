@@ -375,6 +375,11 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   background-size: 330% 108%; background-repeat: no-repeat; /* 살짝 줌 — 옆 칸 손가락 비침 방지 */
 }
 
+/* 이모지 렌더 강제 — Manrope가 이모지 글꼴 선택을 막는 안드로이드 대응 */
+.emoji-text, .emoji-choices .choice-btn {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+}
+
 /* 게임 내 일러스트 */
 .game-img { width: 150px; height: 150px; object-fit: contain; border-radius: var(--radius-xl); }
 

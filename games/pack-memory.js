@@ -1,7 +1,8 @@
 // 기억·관찰 계열 게임 팩
 (function () {
   const U = window.BW_UTIL;
-  const EMOJI = ["🍎", "🚗", "🐶", "🌻", "⚽", "🎩", "🍞", "🐟", "🌙", "✂️", "☂️", "🔔"];
+  // 전부 SMP 그림문자만 사용 — ✂☂ 류는 폰에서 흑백/깨짐 위험
+  const EMOJI = ["🍎", "🚗", "🐶", "🌻", "🎩", "🍞", "🐟", "🌙", "📕", "🌂", "🔔", "🍌"];
 
   // ---------- 직전 그림 (1-back / 2-back — 작업기억) ----------
   window.GAME_PHOTO = {
@@ -14,9 +15,9 @@
       const hist = [];
       area.innerHTML = `
         <div class="inst" id="ph-inst"></div>
-        <div class="problem" id="ph-card" style="font-size:96px"></div>
+        <div class="problem emoji-text" id="ph-card" style="font-size:96px"></div>
         <div class="feedback" id="ph-fb"></div>
-        <div class="choices" id="ph-c"></div>`;
+        <div class="choices emoji-choices" id="ph-c"></div>`;
       const inst = area.querySelector("#ph-inst");
       const card = area.querySelector("#ph-card");
       const fb = area.querySelector("#ph-fb");

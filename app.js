@@ -495,11 +495,15 @@
   }
 
   $("#btn-cloud").onclick = () => {
-    const cur = CLOUD.url();
-    const u = window.prompt(
-      "구글 시트 기록판 URL을 붙여넣으세요.\n(만드는 법: cloud/apps-script.gs 파일 참고. 비우면 연결 해제)",
-      cur
-    );
+    // 이미 연결됨 → 상태 안내 + 해제 여부만 (URL 재입력 요구 금지)
+    if (CLOUD.enabled()) {
+      if (confirm("🌐 온라인 순위가 이미 연결되어 있어요.\n\n[확인] = 연결 해제\n[취소] = 그대로 두기")) {
+        CLOUD.setUrl("");
+        renderCloud();
+      }
+      return;
+    }
+    const u = window.prompt("구글 시트 기록판 URL을 붙여넣으세요.\n(자동 연결 링크로 열면 이 과정이 필요 없어요)", "");
     if (u === null) return; // 취소
     const t = (u || "").trim();
     if (t && !/^https:\/\/script\.google\.com\/macros\//.test(t)) {
