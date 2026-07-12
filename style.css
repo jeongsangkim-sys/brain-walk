@@ -349,6 +349,41 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 @keyframes fxGood { 0% { transform: scale(1); } 40% { transform: scale(1.015); } 100% { transform: scale(1); } }
 @keyframes fxBad { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
 
+/* 닌텐도식 대형 판정 오버레이 */
+.judge {
+  position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%);
+  font-size: 150px; font-weight: 800; line-height: 1;
+  pointer-events: none; z-index: 90; opacity: 0;
+  animation: judgePop 0.42s ease-out;
+}
+.judge-o { color: var(--success-500); }
+.judge-x { color: var(--error-500); }
+@keyframes judgePop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  30% { opacity: 0.4; transform: translate(-50%, -50%) scale(1.05); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.15); }
+}
+
+/* 콤보 마일스톤 문구 */
+.combo-float {
+  position: fixed; left: 50%; top: 26%; transform: translateX(-50%);
+  font-size: 34px; font-weight: 800; color: var(--aia-red);
+  pointer-events: none; z-index: 91;
+  animation: comboFloat 0.9s ease-out forwards;
+}
+@keyframes comboFloat {
+  0% { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.6); }
+  25% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+}
+
+/* 마지막 5초 위기 비네트 */
+#screen-game.low-time { animation: dangerEdge 0.9s ease infinite; }
+@keyframes dangerEdge {
+  0%, 100% { box-shadow: inset 0 0 0 0 rgba(200, 16, 46, 0); }
+  50% { box-shadow: inset 0 0 46px 6px rgba(200, 16, 46, 0.22); }
+}
+
 /* 축포 — 브랜드 팔레트 색종이 */
 .confetti {
   position: fixed; top: -50px; z-index: 99; pointer-events: none;
@@ -573,6 +608,13 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 
 #best-table { width: 100%; max-width: 460px; font-size: 19px; line-height: 2; }
 #best-table h3 { font-size: 19px; margin-bottom: var(--sp-2); }
+.family-rank {
+  font-size: 17px; line-height: 1.5;
+  background: var(--aia-red-100); color: var(--aia-red-800);
+  border-radius: var(--radius-md); padding: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+.family-rank b { color: var(--aia-red); }
 #best-table .best-row { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-hairline); padding: 2px 0; }
 #best-table .best-row b { font-variant-numeric: tabular-nums; }
 .row { display: flex; gap: var(--sp-3); width: 100%; max-width: 460px; flex-wrap: wrap; }

@@ -40,11 +40,41 @@ window.FX = {
     else this._combo = 0;
     if (window.RT) RT.note(ok);
     if (window.SND) ok ? SND.good(this._combo) : SND.bad();
+    if (navigator.vibrate) navigator.vibrate(ok ? 15 : [50, 40, 50]); // 햅틱 손맛
+    this.judge(ok);
+    if (ok && this._combo > 0 && this._combo % 5 === 0) this.comboBurst(this._combo + 1);
     const el = document.getElementById("game-area");
     if (!el) return;
     el.classList.remove("fx-good", "fx-bad");
     void el.offsetWidth;
     el.classList.add(ok ? "fx-good" : "fx-bad");
+  },
+  // 닌텐도식 ⭕/❌ 대형 판정 오버레이 (짧고 반투명 — 리듬 안 깨게)
+  judge(ok) {
+    const j = document.createElement("div");
+    j.className = "judge " + (ok ? "judge-o" : "judge-x");
+    j.textContent = ok ? "◯" : "✕";
+    document.body.appendChild(j);
+    setTimeout(() => j.remove(), 420);
+  },
+  // 콤보 마일스톤(5·10·15…) — 미니 축포 + 문구 팝
+  comboBurst(n) {
+    const t = document.createElement("div");
+    t.className = "combo-float";
+    t.textContent = `🔥 ${n}연속!`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 900);
+    const COLORS = ["#D31145", "#F2876B", "#FFD34D"];
+    for (let i = 0; i < 10; i++) {
+      const s = document.createElement("span");
+      s.className = "confetti";
+      s.style.background = COLORS[i % 3];
+      s.style.left = 35 + Math.random() * 30 + "vw";
+      s.style.animationDelay = Math.random() * 0.2 + "s";
+      document.body.appendChild(s);
+      setTimeout(() => s.remove(), 2600);
+    }
+    if (navigator.vibrate) navigator.vibrate([20, 30, 20, 30, 40]);
   },
   // 숫자 카운트업 (결과 점수 롤링). rAF는 백그라운드 탭에서 멈추므로 최종값 안전판 필수.
   countUp(el, to, suffix, dur) {

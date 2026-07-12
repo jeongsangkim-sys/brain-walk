@@ -195,8 +195,11 @@
 
   function runCurrent() {
     stopTimer(); // 이전 게임 타이머 잔존 방지
+    $("#screen-game").classList.remove("low-time");
     const game = session.queue[session.i];
     const lv = levelOf(game.id);
+    // ⚡ 황금 산책: 시간제 게임 15% 확률 — 이 판 점수 +10 (예측불가 보상)
+    session.golden = !game.mode && Math.random() < 0.15;
     show("game");
     $("#game-name").innerHTML = `<img class="name-img" src="${iconSrc(game)}" alt="" onerror="this.remove()"> ${game.name} <span class="lv-chip">Lv.${lv}</span>`;
     $("#game-timer").textContent = "";
@@ -209,7 +212,8 @@
     $("#intro-title").textContent = game.name;
     $("#intro-desc").textContent = game.intro;
     const b = best()[game.id];
-    $("#intro-best").textContent = b != null ? `내 최고 기록 ${b}점 ${medal(b)} — 넘어 보세요!` : "첫 도전이에요!";
+    $("#intro-best").textContent = (session.golden ? "⚡ 황금 산책! 이 판 점수 +10 · " : "") +
+      (b != null ? `내 최고 기록 ${b}점 ${medal(b)} — 넘어 보세요!` : "첫 도전이에요!");
 
     $("#game-hint").textContent = "";
     $("#btn-go").onclick = () => {
@@ -231,8 +235,10 @@
           // 세션이 바뀐 뒤 도착한 늦은 finish는 무시 (점수 오염 방지)
           if (session !== mySession || session.i !== myIdx) return;
           stopTimer();
+          $("#screen-game").classList.remove("low-time");
           SND.bgmStop();
           RT.stop();
+          if (session.golden) { score = Math.min(100, score + 10); detail += " · ⚡황금 +10"; }
           onGameDone(game, score, detail);
         }
       };
@@ -254,7 +260,12 @@
           elT.textContent = left + "초";
           fill.style.width = (100 * left / dur) + "%";
           if (left <= 10) elT.classList.add("low");
-          if (left <= 5 && left > 0) { SND.tick(); fill.classList.add("low"); }
+          if (left <= 5 && left > 0) {
+            SND.tick();
+            fill.classList.add("low");
+            $("#screen-game").classList.add("low-time"); // 위기 비네트
+            if (left <= 3 && navigator.vibrate) navigator.vibrate(25);
+          }
           if (left <= 0) { stopTimer(); timeUpCb && timeUpCb(); }
         }, 1000);
       }
@@ -271,10 +282,10 @@
 
   // 말티즈 코치 대사 (결과 화면 말풍선)
   const COACH = {
-    record: ["신기록이에요! 오늘 간식 두 배! 🦴", "역대 최고! 저 방금 세 바퀴 돌았어요!", "이 기록, 액자에 걸어야 해요! 🏆"],
-    high: ["대단해요! 제 꼬리가 저절로 흔들려요 🐾", "이 정도면 제가 배워야겠는걸요?", "오늘 두뇌 회전 최고 속도예요!"],
-    mid: ["좋아요, 어제의 나를 이기는 중!", "꾸준함이 제일 무서운 재능이에요.", "감이 점점 올라오고 있어요!"],
-    low: ["괜찮아요, 실수도 훈련이에요!", "다음 판은 분명 오를 거예요. 한 판 더?", "처음엔 다 그래요. 내일 보자고요! 🐾"]
+    record: ["신기록이에요! 오늘 간식 두 배! 🦴", "역대 최고! 저 방금 세 바퀴 돌았어요!", "이 기록, 액자에 걸어야 해요! 🏆", "가족분들한테 자랑해도 돼요, 진짜로!", "이 속도면 제가 산책 끌려다니겠어요!"],
+    high: ["대단해요! 제 꼬리가 저절로 흔들려요 🐾", "이 정도면 제가 배워야겠는걸요?", "오늘 두뇌 회전 최고 속도예요!", "옆집 강아지한테 소문 낼게요!", "황금 산책 걸릴 자격 있는 실력!"],
+    mid: ["좋아요, 어제의 나를 이기는 중!", "꾸준함이 제일 무서운 재능이에요.", "감이 점점 올라오고 있어요!", "메달 냄새가 나요… 킁킁 🐾", "한 판 더 하면 넘을 것 같은데요?"],
+    low: ["괜찮아요, 실수도 훈련이에요!", "다음 판은 분명 오를 거예요. 한 판 더?", "처음엔 다 그래요. 내일 보자고요! 🐾", "오늘은 몸풀기! 내일이 진짜예요.", "저도 공 못 잡는 날이 있어요. 멍."]
   };
   function coachSay(score, isRecord) {
     const pool = isRecord ? COACH.record : score >= 80 ? COACH.high : score >= 50 ? COACH.mid : COACH.low;
@@ -297,7 +308,10 @@
     show("result");
     $("#result-title").textContent = (isRecord ? "🏆 신기록! " : "") + game.name + " 결과";
     FX.countUp($("#result-score"), score, "점 " + medal(score));
-    $("#result-comment").textContent = isRecord ? `이전 최고 ${prevBest}점을 넘었어요!` : comment(score);
+    // 니어미스: 다음 메달까지 5점 이내면 아쉬움 자극
+    const near = [[85, "🥇"], [65, "🥈"], [40, "🥉"]].find(([t]) => score < t && t - score <= 5);
+    $("#result-comment").textContent = isRecord ? `이전 최고 ${prevBest}점을 넘었어요!`
+      : near ? `아깝다! ${near[0] - score}점만 더 하면 ${near[1]}이었어요!` : comment(score);
     const rtAvg = RT.sessAvg();
     $("#result-detail").textContent = detail + (rtAvg ? ` · 평균 반응 ${rtAvg.toFixed(1)}초` : "");
     coachSay(score, isRecord);
@@ -343,6 +357,20 @@
       session.queue.map(g => `${icon(g)} ${g.name}: ${session.results[g.id]}점 ${medal(session.results[g.id])}`).join("<br>") + vs;
     $("#btn-next").textContent = "기록 보기";
     $("#btn-next").onclick = () => { renderStats(); show("stats"); };
+
+    // 🌐 온라인 실시간 비교 — 사회적 증거 (연결 시)
+    if (CLOUD.enabled()) {
+      CLOUD.fetchTop().then(top => {
+        if (!top || !top.daily || !top.daily.length) return;
+        const list = top.daily;
+        const rank = list.filter(r => r.score > total).length + 1;
+        const el = $("#result-detail");
+        if (rank <= 10 && (list.length < 10 || total >= list[list.length - 1].score))
+          el.innerHTML += `<br>🌐 온라인 훈련 순위 <b>${rank}위</b> 진입!`;
+        else
+          el.innerHTML += `<br>🌐 1위 ${list[0].name} ${list[0].score}점 — ${list[0].score - total}점 차이, 내일 노려봐요!`;
+      }).catch(() => {});
+    }
   }
 
   function finishCheck() {
@@ -514,7 +542,14 @@
     renderTrend();
     renderCloud();
     const b = best(), c = champs();
-    $("#best-table").innerHTML = "<h3>게임별 최고 기록</h3>" + ALL.map(g => {
+    // 👑 가족 서열: 이름별 명예의 전당 보유 수 (원작 가족 경쟁 오마주)
+    const tally = {};
+    Object.values(c).forEach(r => tally[r.name] = (tally[r.name] || 0) + 1);
+    const tallyLine = Object.keys(tally).length >= 2
+      ? `<div class="family-rank">👑 명예의 전당 보유: ` +
+        Object.entries(tally).sort((x, y) => y[1] - x[1]).map(([n, k]) => `<b>${n}</b> ${k}개`).join(" · ") + `</div>`
+      : "";
+    $("#best-table").innerHTML = tallyLine + "<h3>게임별 최고 기록</h3>" + ALL.map(g => {
       const score = b[g.id] != null ? b[g.id] + "점 " + medal(b[g.id]) : "—";
       const who = c[g.id] ? `<span class="champ-name">${c[g.id].name}</span>` : "";
       return `<div class="best-row"><span>${icon(g)} ${g.name}</span><b>${score}${who}</b></div>`;
