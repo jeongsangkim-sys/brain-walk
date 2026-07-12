@@ -538,9 +538,11 @@
   try {
     const bp = new URLSearchParams(location.search).get("board");
     if (bp && /^https:\/\/script\.google\.com\/macros\//.test(bp)) {
+      const isNew = CLOUD.url() !== bp;
       CLOUD.setUrl(bp);
-      history.replaceState(null, "", location.pathname);
-      alert("🌐 온라인 순위가 연결됐어요!");
+      // 로드 초기 replaceState는 크롬이 무시할 수 있어 지연 실행
+      setTimeout(() => { try { history.replaceState(null, "", location.pathname); } catch {} }, 300);
+      if (isNew) alert("🌐 온라인 순위가 연결됐어요!");
     }
   } catch {}
 
