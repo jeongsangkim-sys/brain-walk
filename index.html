@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#151515" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="assets/icon-192.png">
-<link rel="stylesheet" href="style.css?v=26">
+<link rel="stylesheet" href="style.css?v=27">
 </head>
 <body>
 
@@ -17,7 +17,7 @@
 <section id="screen-home" class="screen active">
   <header class="home-head">
     <img class="brand-logo" src="assets/aia-logo.png" alt="AIA" onerror="this.style.display='none'">
-    <img id="mascot" src="assets/mascot.png?v=26" alt="두뇌 산책 마스코트" onerror="this.style.display='none'">
+    <img id="mascot" src="assets/mascot.png?v=27" alt="두뇌 산책 마스코트" onerror="this.style.display='none'">
     <h1>두뇌 산책</h1>
     <p class="tagline">하루 3분, 오늘도 가볍게 한 바퀴 🐾</p>
     <p id="home-date"></p>
@@ -66,6 +66,10 @@
       <input type="checkbox" id="chk-ink"><span class="tswitch"></span>✍️ 필기 입력 (속산·태블릿 추천)
     </label>
   </div>
+  <div class="shop">
+    <button id="shop-toggle" class="big-btn ghost small"></button>
+    <div id="shop-list" hidden></div>
+  </div>
   <footer class="credits">고객총괄본부 상품마케팅팀 제작 · Made by JeongSang</footer>
 </section>
 
@@ -99,6 +103,7 @@
     <span id="game-timer"></span>
   </div>
   <div class="timer-bar"><i id="timer-fill"></i></div>
+  <div id="ghost-race" hidden><span id="ghost-label"></span><div class="ghost-track"><i id="ghost-fill"></i></div></div>
   <div id="game-hint" class="game-hint"></div>
   <div id="game-intro" class="game-intro">
     <img id="intro-icon" class="intro-img" alt="" onerror="this.style.visibility='hidden'">
@@ -117,10 +122,11 @@
   <p id="result-comment"></p>
   <div id="result-detail"></div>
   <div class="coach">
-    <img src="assets/mascot.png?v=26" class="coach-img" alt="코치">
+    <img src="assets/mascot.png?v=27" class="coach-img" alt="코치">
     <div class="speech" id="coach-bubble"></div>
   </div>
   <button class="big-btn primary" id="btn-next"></button>
+  <button class="big-btn ghost" id="btn-ghost-share" hidden>⚔️ 친구에게 대결장 보내기</button>
   <button class="big-btn ghost" data-goto="home">홈으로</button>
 </section>
 
@@ -144,17 +150,17 @@
   <button class="big-btn ghost" data-goto="home">← 돌아가기</button>
 </section>
 
-<script src="games/sound.js?v=26"></script>
-<script src="games/cloud.js?v=26"></script>
-<script src="games/juice.js?v=26"></script>
-<script src="games/ink.js?v=26"></script>
-<script src="games/calc.js?v=26"></script>
-<script src="games/memory.js?v=26"></script>
-<script src="games/stroop.js?v=26"></script>
-<script src="games/trail.js?v=26"></script>
-<script src="games/pack-speed.js?v=26"></script>
-<script src="games/pack-memory.js?v=26"></script>
-<script src="games/sudoku.js?v=26"></script>
-<script src="app.js?v=26"></script>
+<script src="games/sound.js?v=27"></script>
+<script src="games/cloud.js?v=27"></script>
+<script src="games/juice.js?v=27"></script>
+<script src="games/ink.js?v=27"></script>
+<script src="games/calc.js?v=27"></script>
+<script src="games/memory.js?v=27"></script>
+<script src="games/stroop.js?v=27"></script>
+<script src="games/trail.js?v=27"></script>
+<script src="games/pack-speed.js?v=27"></script>
+<script src="games/pack-memory.js?v=27"></script>
+<script src="games/sudoku.js?v=27"></script>
+<script src="app.js?v=27"></script>
 </body>
 </html>

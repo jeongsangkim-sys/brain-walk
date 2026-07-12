@@ -168,7 +168,9 @@
     const doneToday = myHist(player()).some(r => r.date === today());
     const hh = new Date().getHours();
     const GREET = hh < 5 ? "늦은 밤에도 반가워요!" : hh < 11 ? "좋은 아침이에요!" : hh < 17 ? "오후 머리 깨우기 딱 좋은 시간!" : hh < 22 ? "오늘 하루 마무리 산책 어때요?" : "자기 전 가볍게 한 판!";
-    $("#daily-sub").textContent = doneToday ? "오늘 완료 ✓ 내일 새 훈련이 기다려요" : "아직 안 했어요 — 3분이면 끝!";
+    $("#daily-sub").textContent = doneToday
+      ? `오늘 완료 ✓ 새 훈련 3종이 약 ${24 - hh}시간 뒤 열려요`
+      : "아직 안 했어요 — 3분이면 끝!";
     $("#btn-daily").classList.toggle("todo", !doneToday);
 
     // 오늘의 한 마디 (박사 잡담 포지션 — 일반 상식만, 의료 조언 아님)
@@ -298,6 +300,14 @@
         }
       };
 
+      // 👻 고스트 대결: 상대 페이스 바 (시간제 게임만 — 분량제는 종료 비교만)
+      const gr = $("#ghost-race");
+      gr.hidden = !(session.ghost && !game.mode);
+      if (!gr.hidden) {
+        $("#ghost-label").textContent = `👻 ${session.ghost.name}님의 고스트(${session.ghost.score}점)가 달리는 중`;
+        $("#ghost-fill").style.width = "0%";
+      }
+
       if (game.mode === "count") {
         // 분량제: 시간은 올라가기만, 게임이 스스로 끝냄
         fill.style.width = "0%";
@@ -314,6 +324,7 @@
           left--;
           elT.textContent = left + "초";
           fill.style.width = (100 * left / dur) + "%";
+          if (!gr.hidden) $("#ghost-fill").style.width = (100 * (dur - left) / dur) + "%";
           if (left <= 10) elT.classList.add("low");
           if (left <= 5 && left > 0 && !settings().relaxMode) {
             // 여유 모드에선 압박 연출(비네트·틱·진동) 전부 끔 — '산책' 정체성 보호
@@ -335,6 +346,93 @@
     if (score >= 40) return "좋은 페이스예요. 한 번 더 하면 더 오를 거예요.";
     return "괜찮아요. 매일 조금씩이 실력의 비결이에요.";
   }
+
+  // ---------- 🐾 산책 마일리지 + 🎨 테마 상점 (가족 공동 지갑 — 도장과 동일 철학) ----------
+  function wallet() {
+    let w = store.get("bw_wallet", null);
+    if (!w) {
+      // 소급 적립: 기존 기록 전부 마일리지로 인정 (그랜드파더링)
+      const earned = history().reduce((a, r) => a + (r.score || 0), 0) + ageChecks().reduce((a, r) => a + (r.avg || 0), 0);
+      w = { earned, spent: 0, owned: ["basic"] };
+      store.set("bw_wallet", w);
+    }
+    return w;
+  }
+  const miles = () => wallet().earned - wallet().spent;
+  function earnMiles(n) {
+    if (n <= 0) return;
+    const w = wallet();
+    w.earned += n;
+    store.set("bw_wallet", w);
+    renderShopBtn();
+  }
+  const THEMES = [
+    { id: "basic", name: "기본 레드", cost: 0, c: null },
+    { id: "dawn", name: "새벽 산책", cost: 300, c: "#3E6DB5" },
+    { id: "forest", name: "숲길", cost: 300, c: "#2E7D5B" },
+    { id: "sunset", name: "노을", cost: 500, c: "#D96C2C" },
+    { id: "olive", name: "클래식 올리브", cost: 1000, c: "#6B6D3C" }
+  ];
+  function applyTheme(id) {
+    const t = THEMES.find(x => x.id === id) || THEMES[0];
+    // 액센트 변수 하나만 바꾸면 전체 테마 전환 (--fg-link·--border-focus가 이걸 참조)
+    if (t.c) document.documentElement.style.setProperty("--aia-red", t.c);
+    else document.documentElement.style.removeProperty("--aia-red");
+  }
+  applyTheme(settings().theme || "basic");
+  function renderShopBtn() {
+    $("#shop-toggle").innerHTML = `🎨 테마 상점 · 🐾 ${miles().toLocaleString()}마일`;
+  }
+  function renderShop() {
+    const w = wallet();
+    const cur = settings().theme || "basic";
+    $("#shop-list").innerHTML = THEMES.map(t => {
+      const owned = w.owned.includes(t.id);
+      const state = t.id === cur ? `<b class="shop-on">적용 중</b>`
+        : owned ? `<button class="who-chip" data-act="use" data-id="${t.id}">적용</button>`
+          : miles() >= t.cost ? `<button class="who-chip" data-act="buy" data-id="${t.id}">🐾 ${t.cost}</button>`
+            : `<span class="shop-locked">🐾 ${t.cost}</span>`;
+      return `<div class="shop-row"><span class="swatch" style="background:${t.c || "#D31145"}"></span><span class="shop-name">${t.name}</span>${state}</div>`;
+    }).join("") + `<div class="disclaimer">마일리지는 훈련·체크 점수만큼 쌓여요. 가족 공동 지갑!</div>`;
+    $("#shop-list").querySelectorAll("[data-act]").forEach(b => b.onclick = () => {
+      const t = THEMES.find(x => x.id === b.dataset.id);
+      if (b.dataset.act === "buy") {
+        if (miles() < t.cost) return;
+        const w2 = wallet();
+        w2.spent += t.cost; w2.owned.push(t.id);
+        store.set("bw_wallet", w2);
+        FX.confetti(); // 구매 축하
+      }
+      store.set("bw_settings", { ...settings(), theme: t.id });
+      applyTheme(t.id);
+      renderShopBtn(); renderShop();
+    });
+  }
+  $("#shop-toggle").onclick = () => {
+    const list = $("#shop-list");
+    list.hidden = !list.hidden;
+    if (!list.hidden) renderShop();
+  };
+  renderShopBtn();
+
+  // 🍪 웰니스 쿠키 문구 (일반 상식·위트 — 의료 조언 아님)
+  const COOKIES = [
+    "웃음은 공짜 두뇌 영양제래요. 오늘 한 번 크게 웃어 보기!",
+    "계단을 오르면 다리보다 기억력이 먼저 좋아진대요.",
+    "낮에 본 하늘 색, 자기 전에 떠올려 보세요. 그게 기억 훈련이에요.",
+    "새로운 길로 퇴근하면 뇌가 '여행 중'이라고 착각한대요.",
+    "오늘 마신 물 잔 수를 세어 보세요. 세는 것 자체가 훈련!",
+    "귤 향기를 맡으면 기분이 3% 밝아진다는 소문이 있어요. (출처: 말티즈)",
+    "손으로 쓴 글씨는 타자보다 오래 기억에 남는대요.",
+    "10분 산책은 커피 반 잔만큼 머리를 깨워요.",
+    "오늘 처음 보는 단어 하나를 사전에서 찾아보세요. 뇌가 좋아해요.",
+    "저녁에 오늘 있었던 일 3가지를 떠올리면 그게 바로 회상 훈련!",
+    "식물에 물 주며 이름을 불러 주세요. 다정함도 습관이에요.",
+    "콧노래는 뇌의 스트레칭이래요. 지금 한 소절 어때요?",
+    "양치질을 반대 손으로 해 보세요. 뇌가 깜짝 놀라요.",
+    "오래된 사진 한 장을 꺼내 보세요. 추억 회상은 최고의 두뇌 간식!",
+    "잠들기 전 스마트폰 대신 창밖 보기 — 내일 점수가 오를지도?"
+  ];
 
   // 말티즈 코치 대사 (결과 화면 말풍선)
   const COACH = {
@@ -381,6 +479,42 @@
       else if (session.mode === "check") finishCheck();
       else startSession("free", [game]); // 자유 플레이: 같은 게임 재도전 (홈은 아래 버튼)
     };
+
+    // ⚔️ 고스트 대결 결과 / 자유 플레이 대결장 보내기
+    const shareBtn = $("#btn-ghost-share");
+    const ghost = session.ghost;
+    if (ghost && last) {
+      const win = score > ghost.score;
+      $("#result-title").textContent = (win ? "🎉 " : "👻 ") + game.name + " 대결 결과";
+      $("#result-comment").textContent =
+        win ? `${ghost.name}님의 고스트(${ghost.score}점)를 앞질렀어요!`
+          : score === ghost.score ? `${ghost.name}님과 딱 동점! 막상막하예요.`
+            : `${ghost.name}님의 고스트(${ghost.score}점)가 ${ghost.score - score}점 앞섰어요. 다음 산책에서 설욕!`;
+      if (win) FX.confetti();
+      shareBtn.hidden = false;
+      shareBtn.textContent = win ? "⚔️ 역도발 대결장 보내기" : "⚔️ 설욕 대결장 보내기";
+      shareBtn.onclick = () => shareGhost(game, score,
+        win ? `${player() || "게스트"}님이 ${ghost.name}님의 고스트를 앞질렀어요! (${game.name} ${score}점) 다시 붙어 보실래요?`
+          : `${player() || "게스트"}님이 ${game.name} ${score}점으로 재도전장을 보냈어요!`);
+    } else if (session.mode === "free" && last) {
+      shareBtn.hidden = false;
+      shareBtn.textContent = "⚔️ 친구에게 대결장 보내기";
+      shareBtn.onclick = () => shareGhost(game, score, `${player() || "게스트"}님의 ${game.name} ${score}점 — 이길 수 있어요?`);
+    } else shareBtn.hidden = true;
+  }
+
+  // ---------- 👻 고스트 대결 링크 (서버 없는 소셜 — URL 파라미터만) ----------
+  async function shareGhost(game, score, msg) {
+    const u = new URL(location.origin + location.pathname);
+    u.searchParams.set("gg", game.id);
+    u.searchParams.set("gs", score);
+    u.searchParams.set("gn", player() || "게스트");
+    const text = `🐾 [두뇌 산책 대결장] ${msg}\n${u}`;
+    try {
+      if (navigator.share) { await navigator.share({ text }); return; }
+      await navigator.clipboard.writeText(text);
+      alert("대결 링크를 복사했어요!\n카톡 등에 붙여넣어 보내세요.");
+    } catch { /* 사용자가 공유 취소 */ }
   }
 
   function finishDaily() {
@@ -394,6 +528,7 @@
       store.set("bw_history", h);
       mirrorTrained(); // 알림용 훈련일 미러 (SW가 읽음)
       CLOUD.submit("daily", who, total); // 온라인 기록판 (연결 시)
+      earnMiles(total); // 🐾 점수만큼 마일리지 적립
     }
     // 어제의 나와 대결 (본인 기록만)
     const yd = new Date(); yd.setDate(yd.getDate() - 1);
@@ -415,6 +550,23 @@
       session.queue.map(g => `${icon(g)} ${g.name}: ${session.results[g.id]}점 ${medal(session.results[g.id])}`).join("<br>") + vs;
     $("#btn-next").textContent = "기록 보기";
     $("#btn-next").onclick = () => { renderStats(); show("stats"); };
+
+    // 🍪 웰니스 쿠키 + 🔮 내일 예고 (자이가르닉 — 끝났다는 느낌을 지움)
+    const el2 = $("#result-detail");
+    const cookieIdx = Math.floor(Date.now() / 86400000) % COOKIES.length; // 하루 하나 고정
+    const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
+    const teaseGames = dailyLineup(localDate(tmr));
+    const hoursLeft = 24 - new Date().getHours();
+    el2.innerHTML += (already ? "" : `<br>🐾 <b>+${total} 마일</b> 적립! (보유 ${miles().toLocaleString()}마일)`) + `
+      <button class="cookie-card" id="cookie-card">🍪 <b>오늘의 웰니스 쿠키</b> <small>눌러서 열기</small></button>
+      <div class="tease">🔮 내일의 산책 예고
+        <span class="tease-icons">${teaseGames.map(g => `<img src="${iconSrc(g)}" alt="?" onerror="this.outerHTML='❓'">`).join("")}</span>
+        <small>새 훈련 3종, 자정에 열려요 (약 ${hoursLeft}시간 뒤)</small>
+      </div>`;
+    $("#cookie-card").onclick = e => {
+      e.currentTarget.outerHTML = `<div class="cookie-open">🥠 ${COOKIES[cookieIdx]}</div>`;
+      SND.pop && SND.pop();
+    };
 
     // 🌐 온라인 실시간 비교 — 사회적 증거 (연결 시)
     if (CLOUD.enabled()) {
@@ -445,6 +597,7 @@
     if (!measuredToday) {
       all.push({ date: today(), age, avg, name: who });
       store.set("bw_agecheck", all);
+      earnMiles(avg); // 🐾 마일리지 적립
     }
     show("result");
     $("#result-title").textContent = "🧠 재미로 보는 뇌 나이";
@@ -481,12 +634,21 @@
     stroop: "반응", rps: "반응", flags: "반응", dual: "반응",
     trail: "관찰", people: "관찰", birds: "관찰", boxes: "관찰"
   };
-  $("#btn-daily").onclick = () => {
+  // 날짜 시드 결정적 랜덤 — 오늘 라인업을 어제 미리 알 수 있음 (내일 예고용)
+  function dailyLineup(dateStr) {
+    let h = 2166136261;
+    for (const c of dateStr) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
+    const rnd = () => {
+      h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909);
+      return ((h ^= h >>> 16) >>> 0) / 4294967296;
+    };
+    const shuffle = a => { const x = [...a]; for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
     const byCat = {};
     DAILY_POOL.filter(isUnlocked).forEach(g => (byCat[CATS[g.id]] = byCat[CATS[g.id]] || []).push(g));
-    const cats = U.shuffle(Object.keys(byCat)).slice(0, 3);
-    startSession("daily", cats.map(c => U.shuffle(byCat[c])[0]));
-  };
+    const cats = shuffle(Object.keys(byCat).sort()).slice(0, 3);
+    return cats.map(c => shuffle(byCat[c])[0]);
+  }
+  $("#btn-daily").onclick = () => startSession("daily", dailyLineup(today()));
   $("#btn-check").onclick = () => startSession("check", U.shuffle(CHECK_POOL).slice(0, 3));
   $("#btn-free").onclick = () => {
     const list = $("#free-list");
@@ -506,6 +668,29 @@
     show("free");
   };
   $("#btn-stats").onclick = () => { renderStats(); show("stats"); };
+
+  // 👻 대결장 수신: ?gg=게임&gs=점수&gn=이름 — 홈에 도전장 카드
+  (function ghostFromURL() {
+    const q = new URLSearchParams(location.search);
+    if (!q.get("gg")) return;
+    const g = ALL.find(x => x.id === q.get("gg"));
+    const score = Math.max(0, Math.min(100, Math.round(+q.get("gs") || 0)));
+    const name = decodeURIComponent(q.get("gn") || "친구").slice(0, 8);
+    q.delete("gg"); q.delete("gs"); q.delete("gn");
+    window.history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : "")); // 재실행 방지 (board 파라미터는 보존)
+    if (!g) return;
+    const card = document.createElement("button");
+    card.className = "menu-btn primary";
+    card.innerHTML = `<span class="mi">👻</span>
+      <span class="mt"><b>${name}님의 대결장 도착!</b><small>${g.name} ${score}점 — 고스트를 이겨 보세요</small></span>
+      <span class="mc">⚔️</span>`;
+    card.onclick = () => {
+      card.remove();
+      startSession("free", [g]); // 해금 무관 — 대결장은 바로 입장
+      session.ghost = { name, score };
+    };
+    document.querySelector(".home-menu").prepend(card);
+  })();
 
   // ---------- 스도쿠 전용 모드 (보상: 도장으로 난이도 해금) ----------
   const SUDOKU_DIFFS = [

@@ -359,6 +359,48 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   55% { transform: scale(1.22); opacity: 0.9; }
   100% { transform: scale(0); opacity: 0; }
 }
+/* 🎨 테마 상점 */
+.shop { width: 100%; max-width: 420px; }
+.shop > button { width: 100%; }
+#shop-list { margin-top: var(--sp-2); padding: var(--sp-3); border: 1px solid var(--border-hairline); border-radius: var(--radius-lg); background: var(--surface); }
+.shop-row { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-2) 0; }
+.shop-name { flex: 1; font-weight: var(--fw-semibold); }
+.swatch { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border-hairline); flex-shrink: 0; }
+.shop-on { color: var(--aia-red); font-size: 15px; }
+.shop-locked { color: var(--fg-tertiary); font-size: 15px; }
+
+/* 🍪 웰니스 쿠키 + 🔮 내일 예고 */
+.cookie-card {
+  display: block; width: 100%; margin-top: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4); font: inherit; font-size: 17px; cursor: pointer;
+  border: 2px dashed var(--aia-red); border-radius: var(--radius-lg);
+  background: var(--surface); color: var(--fg-primary);
+}
+.cookie-card small { color: var(--fg-tertiary); }
+.cookie-open {
+  margin-top: var(--sp-4); padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-lg); background: var(--charcoal-50);
+  font-size: 16px; animation: screenIn 0.25s ease-out;
+}
+.tease { margin-top: var(--sp-3); font-size: 15px; color: var(--fg-secondary); }
+.tease small { display: block; color: var(--fg-tertiary); }
+.tease-icons img {
+  width: 34px; height: 34px; vertical-align: middle; margin: 0 2px;
+  filter: blur(4px) grayscale(0.6); border-radius: 8px;
+}
+
+/* 👻 고스트 대결 페이스 바 */
+#ghost-race {
+  width: 100%; display: flex; align-items: center; gap: var(--sp-2);
+  font-size: 14px; font-weight: var(--fw-semibold); color: var(--fg-secondary);
+}
+#ghost-race[hidden] { display: none; }
+.ghost-track {
+  flex: 1; height: 5px; border-radius: var(--radius-pill);
+  background: var(--charcoal-100); overflow: hidden;
+}
+#ghost-fill { display: block; height: 100%; width: 0; background: #8A6BBC; transition: width 1s linear; }
+
 /* 가족 기록 필터 칩 */
 .who-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); justify-content: center; margin-bottom: var(--sp-2); }
 .who-chip {
