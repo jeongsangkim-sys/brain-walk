@@ -131,19 +131,32 @@
   document.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => { stopTimer(); renderHome(); show(b.dataset.goto); });
 
   // ---------- 홈 ----------
+  // 스트릭 실드: 7일에 한 번은 쉬어도 연속 기록 유지 (Streak Ruin 방지)
   function streakDays() {
     const dates = new Set(history().map(h => h.date));
-    let n = 0;
+    let n = 0, shieldUsed = false;
+    const usedWeeks = new Set();
     const d = new Date();
-    if (!dates.has(today())) d.setDate(d.getDate() - 1);
-    while (dates.has(localDate(d))) { n++; d.setDate(d.getDate() - 1); }
-    return n;
+    if (!dates.has(today())) d.setDate(d.getDate() - 1); // 오늘은 아직 실패 아님
+    while (true) {
+      if (dates.has(localDate(d))) { n++; d.setDate(d.getDate() - 1); continue; }
+      const wk = Math.floor(d.getTime() / 604800000); // 7일 단위 주 키
+      const next = new Date(d); next.setDate(next.getDate() - 1);
+      // 그 주 실드 미사용 + 하루짜리 공백이면 쉼표로 이어줌
+      if (!usedWeeks.has(wk) && dates.has(localDate(next)) && n > 0) {
+        usedWeeks.add(wk); shieldUsed = true;
+        d.setDate(d.getDate() - 1);
+        continue;
+      }
+      break;
+    }
+    return { n, shieldUsed };
   }
   function renderHome() {
     $("#home-date").textContent = new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
-    const s = streakDays();
+    const s = streakDays().n, shield = streakDays().shieldUsed;
     const ac = ageChecks();
-    let line = s > 0 ? `🔥 ${s}일 연속 산책 중` : "";
+    let line = s > 0 ? `🔥 ${s}일 연속 산책 중${shield ? " 🛡️" : ""}` : "";
     if (ac.length) line += (line ? "  ·  " : "") + `🧠 최근 뇌 나이 ${ac[ac.length - 1].age}세`;
     $("#home-streak").textContent = line;
     $("#home-player").textContent = player() ? `🙋 ${player()} (바꾸기)` : "🙋 이름 정하기";
@@ -260,10 +273,11 @@
           elT.textContent = left + "초";
           fill.style.width = (100 * left / dur) + "%";
           if (left <= 10) elT.classList.add("low");
-          if (left <= 5 && left > 0) {
+          if (left <= 5 && left > 0 && !settings().relaxMode) {
+            // 여유 모드에선 압박 연출(비네트·틱·진동) 전부 끔 — '산책' 정체성 보호
             SND.tick();
             fill.classList.add("low");
-            $("#screen-game").classList.add("low-time"); // 위기 비네트
+            $("#screen-game").classList.add("low-time");
             if (left <= 3 && navigator.vibrate) navigator.vibrate(25);
           }
           if (left <= 0) { stopTimer(); timeUpCb && timeUpCb(); }
@@ -365,10 +379,11 @@
         const list = top.daily;
         const rank = list.filter(r => r.score > total).length + 1;
         const el = $("#result-detail");
+        // 서열식 대신 산책 은유 — 콘셉트 톤 유지
         if (rank <= 10 && (list.length < 10 || total >= list[list.length - 1].score))
-          el.innerHTML += `<br>🌐 온라인 훈련 순위 <b>${rank}위</b> 진입!`;
+          el.innerHTML += `<br>🌐 오늘 함께 산책한 사람들 중 <b>${rank}번째</b>로 상쾌한 걸음!`;
         else
-          el.innerHTML += `<br>🌐 1위 ${list[0].name} ${list[0].score}점 — ${list[0].score - total}점 차이, 내일 노려봐요!`;
+          el.innerHTML += `<br>🌐 오늘의 선두 ${list[0].name}님과 ${list[0].score - total}점 차이 — 내일 나란히 걸어봐요!`;
       }).catch(() => {});
     }
   }
