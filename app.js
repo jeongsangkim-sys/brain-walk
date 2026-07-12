@@ -880,18 +880,6 @@
       ${gameRows ? `<h4>게임별 1위</h4>${gameRows}` : ""}`;
   }
 
-  $("#btn-cloud").onclick = () => {
-    // URL 수동 붙여넣기 제거 — 연결은 ?board= 자동 링크로만 (폰 UX)
-    if (CLOUD.enabled()) {
-      if (confirm("🌐 온라인 순위가 이미 연결되어 있어요.\n\n[확인] = 연결 해제\n[취소] = 그대로 두기")) {
-        CLOUD.setUrl("");
-        renderCloud();
-      }
-      return;
-    }
-    alert("🌐 온라인 순위는 '자동 연결 링크'로 접속하면 켜져요.\n\n가족 공유방에 있는 두뇌 산책 링크(?board=…)로 한 번만 열어 주세요.");
-  };
-
   // ---------- 마스코트 이스터에그 (원작 교수 얼굴 찌르기 오마주) ----------
   let petCount = 0, petTimer = null;
   $("#mascot").onclick = () => {

@@ -1,8 +1,9 @@
-// 온라인 기록판 — 구글 시트 Apps Script 연동 (선택 기능)
-// URL 미설정이면 전부 조용히 무시. 실패해도 게임 진행에 영향 없음.
+// 온라인 기록판 — 구글 시트 Apps Script 연동
+// 가족용 기본 기록판 URL 내장 (연결 절차 0). ?board= 링크로 다른 시트 덮어쓰기 가능.
 window.CLOUD = (function () {
   const KEY = "bw_cloud";
-  const url = () => { try { return JSON.parse(localStorage.getItem(KEY)) || ""; } catch { return ""; } };
+  const DEFAULT = "https://script.google.com/macros/s/AKfycbygJBHULZF2JNuu36aH98nzZYd85T1DOidk1xu4WDvMiZ9glJha03anYVgMVxleY5YL/exec";
+  const url = () => { try { return JSON.parse(localStorage.getItem(KEY)) || DEFAULT; } catch { return DEFAULT; } };
 
   return {
     enabled: () => !!url(),

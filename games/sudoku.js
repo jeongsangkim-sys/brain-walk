@@ -117,9 +117,9 @@
             selected.el.classList.remove("sel", "hole");
             selected.el.classList.add("fixed", "solved");
             filled++;
-            updateProg(); refreshPad(); highlight();
-            selected = null;
+            selected = null; // 먼저 해제 — highlight()가 잔류 하이라이트를 남기지 않게 (v28 '자동으로 채워지는 듯' 착시 원인)
             cells.forEach(x => x.el.classList.remove("sel"));
+            updateProg(); refreshPad(); highlight();
             fb.textContent = "좋아요!"; fb.className = "feedback flash-good";
             FX.flash(true);
             if (filled >= HOLES) finish();
