@@ -26,7 +26,8 @@
     { g: window.GAME_SUDOKU },
     { g: window.GAME_CHANGE, daily: true },
     { g: window.GAME_PAIRS, daily: true },
-    { g: window.GAME_COMPARE, daily: true, check: true },
+    { g: window.GAME_COMPARE, daily: true }, // 체크에서 제외(지각속도 중복) — 훈련·자유 플레이용으로 유지
+    { g: window.GAME_RECALL, daily: true, check: true }, // 회상형 기억 — 체크 배터리 '기억 회상' 도메인 보강
     { g: window.GAME_FLOW, daily: true },
     { g: window.GAME_ARROWS, daily: true }
   ].filter(r => r.g);
@@ -60,6 +61,7 @@
     change: "낸 돈 − 물건값 = 거스름돈",
     pairs: "같은 그림 두 장을 찾아 뒤집으세요",
     compare: "개수가 더 많은 쪽을 빠르게!",
+    recall: "방금 본 그림이면 ⭕, 처음 보면 ❌",
     flow: "같은 색 점끼리 — 길이 겹치면 안 돼요",
     arrows: "길이 뚫린 화살표부터 차례로 내보내요"
   };
@@ -147,7 +149,7 @@
   const UNLOCK_SEQ = ["calc", "memory", "stroop", "rps", "trail", "flags",
     "calc25", "sign", "photo", "people", "birds", "highest", "grid55",
     "boxes", "dual", "simon", "serial", "speedcount", "sudoku", "calc100",
-    "change", "pairs", "compare", "flow", "arrows"];
+    "change", "pairs", "compare", "flow", "arrows", "recall"];
   const stamps = () => new Set(history().map(r => r.date)).size; // 훈련한 날 수
   const unlockLimit = () => 6 + stamps() * 3; // 시작 6종 + 하루 3종씩
   const UNLOCK_COST = 300; // 🐾 마일로 조기 해금 (도장 대안)
@@ -816,7 +818,7 @@
 
   // 과제별 '인간 최고 수준' 평균 반응시간(초) — 이 속도 + 무오답 = 20세 앵커. 실측 보며 튜닝
   // simon은 불빛 재생 대기가 첫 탭 간격에 섞여 구조적으로 길어짐 → 앵커도 그만큼 높게
-  const BEST_RT = { stroop: 0.55, trail: 0.5, sign: 1.2, compare: 0.6, simon: 1.1 };
+  const BEST_RT = { stroop: 0.55, trail: 0.5, sign: 1.2, simon: 1.1, recall: 0.9 };
 
   function finishCheck() {
     const scores = Object.values(session.results);

@@ -509,4 +509,92 @@
       });
     }
   };
+
+  // ---------- 본 그림 기억 (회상형 재인 기억 — 언어·일화 기억 도메인, 뇌 나이 체크 배터리용) ----------
+  // 다른 기억 게임(순간기억=위치, 직전그림=작업기억)과 달리 '무엇을 봤는가'(항목 기억)를 잼 → 노화 민감 영역 보강
+  window.GAME_RECALL = {
+    id: "recall", name: "본 그림 기억", icon: "🎴", check: true,
+    intro: "그림 몇 개가 잠깐 보였다 사라져요.\n이어서 나오는 그림이 '아까 있었는지' ⭕❌로 답하세요!",
+    start(area, level, api) {
+      // 폰에서 확실히 컬러로 뜨는 SMP 그림문자만 (흑백 깨짐 위험 이모지 배제)
+      const POOL = ["🍎", "🚗", "🐶", "🌻", "🎩", "🍞", "🐟", "🌙", "📕", "🌂", "🔔", "🍌", "🍇", "🐱", "🐰", "🌸", "🚌", "🍕", "🎁", "🦋", "🐢", "🍭", "🍊", "🐻", "🍉", "🐝", "🚀", "🌈"];
+      const setSize = Math.min(5, 3 + Math.floor(level / 3)); // Lv3=3개, 레벨 오를수록 최대 5개
+      const PROBES = 5; // 세트당 O/X 문제 수
+      let good = 0, bad = 0, rounds = 0, streak = 0, locked = false, alive = true;
+      const timers = [];
+
+      area.innerHTML = `
+        <div class="inst" id="rc-inst"></div>
+        <div class="feedback" id="rc-fb"></div>
+        <div class="recall-show" id="rc-show"></div>
+        <div id="rc-probe" hidden>
+          <div class="recall-item" id="rc-item"></div>
+          <div class="choices" id="rc-c"></div>
+        </div>`;
+      const inst = area.querySelector("#rc-inst");
+      const fb = area.querySelector("#rc-fb");
+      const showEl = area.querySelector("#rc-show");
+      const probeBox = area.querySelector("#rc-probe");
+      const itemEl = area.querySelector("#rc-item");
+      // 홈 이탈로 게임 영역이 비워지면 inst가 detach → 예약 콜백 중단 (백그라운드 무한 라운드 방지)
+      const later = (fn, ms) => timers.push(setTimeout(() => { if (alive && document.body.contains(inst)) fn(); }, ms));
+
+      let targets = [], seq = [], pi = 0;
+
+      function round() {
+        if (!alive) return;
+        rounds++;
+        const sh = U.shuffle(POOL);
+        targets = sh.slice(0, setSize);
+        const distract = sh.slice(setSize, setSize + PROBES); // 미끼(안 보여준 것)
+        probeBox.hidden = true;
+        showEl.hidden = false;
+        showEl.innerHTML = targets.map(e => `<span class="recall-face">${e}</span>`).join("");
+        inst.textContent = "외우세요!";
+        fb.textContent = ""; fb.className = "feedback";
+        later(() => {
+          if (!alive) return;
+          showEl.hidden = true;
+          seq = [];
+          for (let i = 0; i < PROBES; i++) {
+            const isT = Math.random() < 0.5;
+            seq.push(isT ? { e: targets[U.rand(0, targets.length - 1)], t: true } : { e: distract[i], t: false });
+          }
+          pi = 0;
+          inst.textContent = "아까 봤나요?";
+          probeBox.hidden = false;
+          drawProbe();
+        }, 1400 + setSize * 300); // 개수 많을수록 조금 더 보여줌
+      }
+
+      function drawProbe() {
+        if (!alive) return;
+        if (pi >= seq.length) { later(round, 350); return; }
+        itemEl.textContent = seq[pi].e;
+        locked = false;
+      }
+
+      // 버튼은 1회만 생성(재사용) — 현재 문제(pi)를 읽어 판정
+      U.renderChoices(area.querySelector("#rc-c"), ["⭕ 있었다", "❌ 없었다"], (v, btn) => {
+        if (locked || probeBox.hidden || pi >= seq.length) return;
+        locked = true;
+        const said = v.startsWith("⭕");
+        const correct = said === seq[pi].t;
+        U.markBtn(btn, correct);
+        if (correct) { good++; streak++; fb.textContent = "정답!" + U.comboText(streak); fb.className = "feedback flash-good"; }
+        else { bad++; streak = 0; fb.textContent = seq[pi].t ? "있었어요!" : "처음 나온 그림!"; fb.className = "feedback flash-bad"; }
+        FX.flash(correct);
+        pi++;
+        later(drawProbe, 320);
+      });
+
+      round();
+      api.onTimeUp(() => {
+        alive = false;
+        timers.forEach(clearTimeout);
+        const n = good + bad, acc = n ? good / n : 0;
+        api.finish(Math.round(100 * acc * Math.min(1, n / 8)), `정답 ${good} · 오답 ${bad} · 세트 ${rounds}`);
+      });
+    }
+  };
 })();
