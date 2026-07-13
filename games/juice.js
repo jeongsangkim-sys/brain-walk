@@ -1,7 +1,7 @@
 // 반응시간 수집 — FX.flash(모든 정답/오답이 지나는 길목)에서 중앙 기록
 window.RT = {
   _t0: 0, _game: null, _sess: null,
-  start(gameId) { this._game = gameId; this._t0 = performance.now(); this._sess = { n: 0, sum: 0 }; },
+  start(gameId) { this._game = gameId; this._t0 = performance.now(); this._sess = { n: 0, sum: 0, ok: 0 }; },
   stop() { this._game = null; },
   note(ok) {
     if (!this._game) return;
@@ -10,6 +10,7 @@ window.RT = {
     this._t0 = now;
     if (dt < 200 || dt > 15000) return; // 대기·이탈 노이즈 컷
     this._sess.n++; this._sess.sum += dt;
+    if (ok) this._sess.ok++;
     try {
       const all = JSON.parse(localStorage.getItem("bw_rt") || "{}");
       const a = all[this._game] = all[this._game] || { n: 0, ok: 0, ms: [] };
@@ -20,6 +21,7 @@ window.RT = {
     } catch {}
   },
   sessAvg() { return this._sess && this._sess.n >= 3 ? this._sess.sum / this._sess.n / 1000 : null; },
+  sessAcc() { return this._sess && this._sess.n >= 3 ? this._sess.ok / this._sess.n : null; }, // 세션 정답률 (뇌 나이 산정용)
   median(gameId) {
     try {
       const a = JSON.parse(localStorage.getItem("bw_rt") || "{}")[gameId];

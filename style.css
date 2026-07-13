@@ -259,6 +259,11 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   padding: var(--sp-3) var(--sp-4);
 }
 .age-hist small { color: var(--fg-tertiary); font-size: 12px; }
+.age-basis {
+  font-size: 18px; margin: var(--sp-2) 0;
+  background: var(--charcoal-50); border-radius: var(--radius-lg);
+  padding: var(--sp-2) var(--sp-4); display: inline-block;
+}
 .age-down { color: var(--success-500); font-weight: var(--fw-bold); }
 .age-up { color: var(--error-500); font-weight: var(--fw-bold); }
 .big-btn[disabled] { opacity: 0.35; pointer-events: none; }

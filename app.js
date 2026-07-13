@@ -32,7 +32,8 @@
   ].filter(r => r.g);
   const ALL = REG.map(r => r.g);
   const DAILY_POOL = REG.filter(r => r.daily).map(r => r.g);
-  const CHECK_POOL = REG.filter(r => r.check).map(r => r.g);
+  // 체크 배터리 = 시간제 5종 고정(순서만 셔플) — 매번 같은 과제라 날짜 간 비교가 공정, RT 표본도 안정
+  const CHECK_POOL = REG.filter(r => r.check && !r.g.mode).map(r => r.g);
 
   // 인플레이 힌트 — 플레이 중 타이머 아래 상시 표시 (규칙 헷갈릴 때 즉시 확인)
   const HINTS = {
@@ -260,7 +261,7 @@
   // ---------- 🚶 첫걸음 안내 투어 (첫 방문: 이름→훈련부터, 이후 메뉴를 순서대로 코치가 안내) ----------
   const TOUR = [
     { btn: "#btn-daily", msg: () => player() ? "먼저 '오늘의 훈련' — 5게임 딱 1분 30초면 끝!" : "처음 오셨네요! 이름 정하고 1분 30초짜리 '오늘의 훈련'부터 🐾" },
-    { btn: "#btn-check", msg: () => "훈련 잘하셨어요! 이번엔 '뇌 나이 체크' — 누르면 바로 측정 시작!" },
+    { btn: "#btn-check", msg: () => "훈련 잘하셨어요! 이번엔 '뇌 나이 체크' — 5가지 과제, 약 2분!" },
     { btn: "#btn-free", msg: () => "'자유 플레이'에선 원하는 게임만 골라서 할 수 있어요." },
     { btn: "#btn-sudoku", msg: () => "'퍼즐 산책'에선 스도쿠·점 잇기를 느긋하게 — 레벨 1000 등반도!" },
     { btn: "#btn-stats", msg: () => "마지막이에요! '기록 보기'에서 도장 달력과 점수 흐름을 봐요." }
@@ -424,6 +425,8 @@
           stopTimer();
           $("#screen-game").classList.remove("low-time");
           SND.bgmStop();
+          // 체크 모드: 과제별 반응속도·정답률을 뇌 나이 산정용으로 보관 (RT.stop 전에 캡처)
+          if (session.mode === "check") (session.meta = session.meta || {})[game.id] = { rt: RT.sessAvg(), acc: RT.sessAcc() };
           RT.stop();
           // 채점 곡선: score^1.3 디플레이션 — 게임별 원점수가 후해서 중상위권을 눌러줌 (JS 피드백)
           score = Math.round(100 * Math.pow(Math.min(100, Math.max(0, score)) / 100, 1.3));
@@ -455,8 +458,8 @@
         elT.textContent = "0초";
         timerId = setInterval(() => { t++; elT.textContent = t + "초"; }, 1000);
       } else {
-        // BW_TEST_SEC: 콘솔 테스트용 단축 타이머 · 데일리는 게임당 18초 고정(5게임=1분 30초 약속)
-        const baseSec = session.mode === "daily" ? DAILY_SEC : (game.sec || 25);
+        // BW_TEST_SEC: 콘솔 테스트용 단축 타이머 · 데일리 18초(5게임=1분 30초) · 체크 20초(5과제≈2분 안내와 일치)
+        const baseSec = session.mode === "daily" ? DAILY_SEC : session.mode === "check" ? CHECK_SEC : (game.sec || 25);
         const dur = Math.round((window.BW_TEST_SEC || baseSec) * (settings().relaxMode ? 1.5 : 1));
         let left = dur;
         elT.textContent = left + "초";
@@ -480,10 +483,18 @@
       game.start($("#game-area"), lv, api);
     };
 
-    // 체크 모드: 인트로·시작 버튼 생략 — 누르는 순간 3-2-1 후 바로 측정 (과제 사이도 자동 연결)
+    // 체크 모드: 첫 과제 전엔 브리핑 1장(과제 수·소요시간·채점 기준 안내), 이후엔 자동 연결
     if (session.mode === "check") {
-      $("#game-intro").style.display = "none";
-      $("#btn-go").click();
+      if (session.i === 0 && !session.briefed) {
+        session.briefed = true;
+        ii.style.visibility = "hidden";
+        $("#intro-title").textContent = "🧠 뇌 나이 체크";
+        $("#intro-desc").textContent = `${session.queue.length}가지 과제가 쉬는 시간 없이 자동으로 이어져요. (약 2분)\n빠르고 정확할수록 젊게 나와요 — 최고 속도·무오답이면 20세!`;
+        $("#intro-best").textContent = "준비되면 시작을 누르세요";
+      } else {
+        $("#game-intro").style.display = "none";
+        $("#btn-go").click();
+      }
     }
   }
 
@@ -741,7 +752,7 @@
     const measuredAge = ageChecks().some(r => r.date === today() && mine(r, who));
     if (measuredAge) {
       $("#btn-next").textContent = "🧠 뇌 나이 다시 재기 — 젊어졌나?";
-      $("#btn-next").onclick = () => startSession("check", U.shuffle(CHECK_POOL).slice(0, 3));
+      $("#btn-next").onclick = startCheck;
     } else {
       $("#btn-next").textContent = "기록 보기";
       $("#btn-next").onclick = () => { renderStats(); show("stats"); };
@@ -788,10 +799,30 @@
     }
   }
 
+  // 과제별 '인간 최고 수준' 평균 반응시간(초) — 이 속도 + 무오답 = 20세 앵커. 실측 보며 튜닝
+  // simon은 불빛 재생 대기가 첫 탭 간격에 섞여 구조적으로 길어짐 → 앵커도 그만큼 높게
+  const BEST_RT = { stroop: 0.55, trail: 0.5, sign: 1.2, compare: 0.6, simon: 1.1 };
+
   function finishCheck() {
     const scores = Object.values(session.results);
     const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-    const age = brainAge(avg);
+    // 뇌 나이 = 속도 나이 + 오답 가산 (단조: 느리거나 틀리면 반드시 늙어짐 — 점수 역산의 '많이 틀렸는데 젊어짐' 역전 차단)
+    const metas = session.queue.map(g => {
+      const m = (session.meta || {})[g.id] || {};
+      const best = BEST_RT[g.id] || 0.6;
+      return {
+        ratio: m.rt != null ? Math.min(4, Math.max(1, m.rt / best)) : 4, // 데이터 없음(방치·미응답)=최저속 취급
+        err: m.acc != null ? 1 - m.acc : 1,
+        rt: m.rt
+      };
+    });
+    const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+    const speedAge = 20 + (mean(metas.map(m => m.ratio)) - 1) * 22; // 최고속=20세 · 2배 느리면 42세 · 4배 86세
+    const errAdd = mean(metas.map(m => m.err)) * 45;                 // 오답률 20%=+9세 · 절반 틀리면 +22.5세
+    const age = Math.max(20, Math.min(85, Math.round(speedAge + errAdd)));
+    const rts = metas.filter(m => m.rt != null).map(m => m.rt);
+    const avgRt = rts.length ? mean(rts) : null;
+    const accPct = Math.round((1 - mean(metas.map(m => m.err))) * 100);
     const all = ageChecks();
     const who = player() || "게스트";
     const minecks = all.filter(r => mine(r, who));
@@ -824,10 +855,15 @@
               : age > prev ? `지난번 ${prev}세보다 살짝 높네요. 컨디션 탓일 거예요.`
                 : "지난번과 같아요. 안정적!";
       const tier = age <= 32 ? 1 : age <= 45 ? 2 : age <= 62 ? 3 : 4; // 로켓/파워워킹/산책/여유
+      // 산정 근거를 그대로 공개 — '왜 이 나이인지' 납득되게 (속도·정답률만 반영, 단조)
       $("#result-detail").innerHTML =
         `<img class="age-img" src="assets/age${tier}.png" alt="" onerror="this.remove()">` +
-        session.queue.map(g => `${icon(g)} ${g.name}: ${session.results[g.id]}점`).join("<br>") +
-        `<br><span class="disclaimer">놀이용 추정치예요. 의료 검사가 아닙니다.</span>`;
+        `<div class="age-basis">⚡ 평균 반응 <b>${avgRt != null ? avgRt.toFixed(2) + "초" : "측정 부족"}</b> · 🎯 정답률 <b>${accPct}%</b></div>` +
+        session.queue.map(g => {
+          const m = (session.meta || {})[g.id] || {};
+          return `${icon(g)} ${g.name}: ${m.rt != null ? m.rt.toFixed(1) + "초" : "무응답"} · ${m.acc != null ? Math.round(m.acc * 100) + "%" : "-"}`;
+        }).join("<br>") +
+        `<br><span class="disclaimer">빠르고 정확할수록 젊어져요 (최고 속도·무오답 = 20세). 놀이용 추정치예요. 의료 검사가 아닙니다.</span>`;
       $("#coach-bubble").textContent =
         prev != null && age < prev ? "젊어졌어요! 훈련 효과 제대로네요! 🐾"
           : age <= 35 ? "이 두뇌, 팔팔한데요?"
@@ -856,6 +892,7 @@
   // ---------- 진입점 ----------
   const DAILY_COUNT = 5; // 오늘의 훈련 게임 수
   const DAILY_SEC = 18;  // 게임당 18초 × 5 = 정확히 90초 — "1분 30초면 끝" 카피와 실플레이 일치
+  const CHECK_SEC = 20;  // 체크 과제당 20초 × 5 + 카운트다운 ≈ "약 2분" 안내와 일치
   // 데일리: 인지 영역별 1개씩 우선 확보 — 완전 랜덤이면 같은 계열만 몰릴 수 있음
   const CATS = {
     calc: "수", calc25: "수", sign: "수", change: "수",
@@ -881,7 +918,8 @@
     return picked.concat(rest).slice(0, DAILY_COUNT);
   }
   $("#btn-daily").onclick = () => startSession("daily", dailyLineup(today()));
-  $("#btn-check").onclick = () => startSession("check", U.shuffle(CHECK_POOL).slice(0, 3));
+  function startCheck() { startSession("check", U.shuffle(CHECK_POOL).slice(0, 5)); } // 시간제 5과제 전부(순서만 셔플)
+  $("#btn-check").onclick = startCheck;
   $("#btn-free").onclick = () => {
     const list = $("#free-list");
     list.innerHTML = "";
