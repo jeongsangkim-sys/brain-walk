@@ -1,7 +1,7 @@
 // 반응시간 수집 — FX.flash(모든 정답/오답이 지나는 길목)에서 중앙 기록
 window.RT = {
   _t0: 0, _game: null, _sess: null,
-  start(gameId) { this._game = gameId; this._t0 = performance.now(); this._sess = { n: 0, sum: 0, ok: 0 }; },
+  start(gameId) { this._game = gameId; this._t0 = performance.now(); this._taskT0 = this._t0; this._sess = { n: 0, sum: 0, ok: 0 }; },
   stop() { this._game = null; },
   note(ok) {
     if (!this._game) return;
@@ -9,8 +9,8 @@ window.RT = {
     const dt = now - this._t0;
     this._t0 = now;
     if (dt < 200 || dt > 15000) return; // 대기·이탈 노이즈 컷
-    this._sess.n++; this._sess.sum += dt;
-    if (ok) this._sess.ok++;
+    // 워밍업: 과제 첫 2.5초(적응 구간)는 세션 집계(뇌 나이용)에서 제외 — 낯선 첫 판이 콜드스타트로 과대하게 늙게 나오는 것 방지
+    if (now - this._taskT0 >= 2500) { this._sess.n++; this._sess.sum += dt; if (ok) this._sess.ok++; }
     try {
       const all = JSON.parse(localStorage.getItem("bw_rt") || "{}");
       const a = all[this._game] = all[this._game] || { n: 0, ok: 0, ms: [] };

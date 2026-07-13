@@ -834,7 +834,7 @@
     const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
     const speedAge = 20 + (mean(metas.map(m => m.ratio)) - 1) * 22; // 최고속=20세 · 2배 느리면 42세 · 4배 86세
     const errAdd = mean(metas.map(m => m.err)) * 45;                 // 오답률 20%=+9세 · 절반 틀리면 +22.5세
-    const age = Math.max(20, Math.min(85, Math.round(speedAge + errAdd)));
+    const rawAge = Math.max(20, Math.min(85, speedAge + errAdd));
     const rts = metas.filter(m => m.rt != null).map(m => m.rt);
     const avgRt = rts.length ? mean(rts) : null;
     const accPct = Math.round((1 - mean(metas.map(m => m.err))) * 100);
@@ -842,6 +842,9 @@
     const who = player() || "게스트";
     const minecks = all.filter(r => mine(r, who));
     const prev = minecks.length ? minecks[minecks.length - 1].age : null;
+    // 신뢰도 보정(EMA): 매 측정을 직전 나이와 절반씩 블렌딩 → 적응 효과로 한 번에 20살씩 튀는 것 방지,
+    // 훈련하며 여러 번 재면 실제 실력으로 서서히 수렴. (첫 측정은 기준이 없어 원값)
+    const age = prev == null ? Math.round(rawAge) : Math.round(prev + (rawAge - prev) * 0.5);
     // 원작식: 공식 기록은 하루 1회(본인 기준). 추가 측정도 (연습) 표식으로 기록 — 히스토리 가시성
     const measuredToday = minecks.some(r => r.date === today());
     all.push(measuredToday
