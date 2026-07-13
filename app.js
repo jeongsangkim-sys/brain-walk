@@ -18,7 +18,7 @@
     { g: window.GAME_SPEEDCOUNT, check: true },
     { g: window.GAME_PHOTO, daily: true },
     { g: window.GAME_GRID55, check: true },
-    { g: window.GAME_NBACK, daily: true, check: true },
+    { g: window.GAME_SIMON, daily: true, check: true },
     { g: window.GAME_PEOPLE, daily: true },
     { g: window.GAME_BIRDS, daily: true },
     { g: window.GAME_BOXES, daily: true },
@@ -50,7 +50,7 @@
     speedcount: "왼쪽·오른쪽 번갈아 눌러야 올라가요",
     photo: "방금 사라진 그림을 고르세요",
     grid55: "불 켜졌던 칸을 그대로 다시 누르세요",
-    nback: "직전과 같은 자리에 또 나오면 버튼!",
+    simon: "불 켜진 순서 그대로 따라 누르세요",
     people: "들어가고 나간 사람을 계속 셈하세요",
     birds: "나비는 빼고, 새만 세세요",
     boxes: "뒤에 가려진 상자까지 세야 해요",
@@ -128,7 +128,7 @@
   // ---------- 게임 해금 (원작식: 훈련한 날이 쌓이면 새 게임이 열림) ----------
   const UNLOCK_SEQ = ["calc", "memory", "stroop", "rps", "trail", "flags",
     "calc25", "sign", "photo", "people", "birds", "highest", "grid55",
-    "boxes", "dual", "nback", "serial", "speedcount", "sudoku", "calc100",
+    "boxes", "dual", "simon", "serial", "speedcount", "sudoku", "calc100",
     "change", "pairs", "compare", "flow", "arrows"];
   const stamps = () => new Set(history().map(r => r.date)).size; // 훈련한 날 수
   const unlockLimit = () => 6 + stamps() * 3; // 시작 6종 + 하루 3종씩
@@ -849,7 +849,7 @@
   // 데일리: 인지 영역별 1개씩 우선 확보 — 완전 랜덤이면 같은 계열만 몰릴 수 있음
   const CATS = {
     calc: "수", calc25: "수", sign: "수", change: "수",
-    memory: "기억", photo: "기억", nback: "기억", pairs: "기억",
+    memory: "기억", photo: "기억", simon: "기억", pairs: "기억",
     stroop: "반응", rps: "반응", flags: "반응", dual: "반응",
     trail: "관찰", people: "관찰", birds: "관찰", boxes: "관찰", compare: "관찰", flow: "관찰", arrows: "관찰"
   };

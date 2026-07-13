@@ -121,70 +121,89 @@
     }
   };
 
-  // ---------- 같은 위치 (N-back — 워킹 메모리) ----------
-  window.GAME_NBACK = {
-    id: "nback", name: "같은 위치", icon: "📍", mode: "count",
-    intro: "네모가 차례로 나타나요.\n직전과 같은 자리면 버튼을 누르세요!",
+  // ---------- 순서 따라 누르기 (사이먼식 — 순서 기억. N-back '같은 위치'가 규칙 난해로 교체됨) ----------
+  window.GAME_SIMON = {
+    id: "simon", name: "순서 따라 누르기", icon: "💡",
+    intro: "칸에 불이 차례로 켜져요.\n켜진 순서 그대로 따라 누르세요!",
     start(area, level, api) {
-      const N = level >= 8 ? 3 : level >= 4 ? 2 : 1;
-      const STIM = 18, GAP = Math.max(1100, 1700 - level * 120);
-      let i = 0, hits = 0, fa = 0, miss = 0, targets = 0;
-      const seq = [];
-      for (let k = 0; k < STIM; k++) {
-        if (k >= N && Math.random() < 0.35) { seq.push(seq[k - N]); }
-        else {
-          let v; do { v = U.rand(0, 8); } while (k >= N && v === seq[k - N] && Math.random() < 0.7);
-          seq.push(v);
-        }
-      }
-      seq.forEach((v, k) => { if (k >= N && v === seq[k - N]) targets++; });
+      let wins = 0, good = 0, bad = 0;
+      let len = Math.min(6, 2 + Math.floor(level / 3)); // Lv3 시작 3칸, 성공마다 +1
+      let alive = true;
+      const timers = [];
+      // 홈 이탈로 보드가 떨어져 나가면 타이머 체인 중단 (백그라운드 무한 라운드 방지)
+      const later = (fn, ms) => timers.push(setTimeout(() => { if (alive && document.body.contains(grid)) fn(); }, ms));
 
       area.innerHTML = `
-        <div class="inst" id="nb-inst"></div>
-        <div class="feedback" id="nb-fb"></div>
-        <div class="grid3" id="nb"></div>
-        <button class="big-btn primary" id="nb-btn" style="max-width:320px">🔔 같은 자리!</button>
-        <div class="inst" id="nb-prog" style="font-size:18px;color:var(--fg-tertiary)"></div>`;
-      area.querySelector("#nb-inst").textContent = N === 1 ? "네모가 직전과 같은 자리에 또 나오면 버튼!" : `${N}번 전과 같은 자리면 버튼!`;
-      const fb = area.querySelector("#nb-fb");
-      const prog = area.querySelector("#nb-prog");
-      const grid = area.querySelector("#nb");
-      for (let k = 0; k < 9; k++) grid.appendChild(document.createElement("div")).className = "g3cell";
-      const cells = grid.querySelectorAll(".g3cell");
-      let pressed = false;
+        <div class="inst" id="sm-inst"></div>
+        <div class="feedback" id="sm-fb"></div>
+        <div class="grid3" id="sm"></div>`;
+      const inst = area.querySelector("#sm-inst");
+      const fb = area.querySelector("#sm-fb");
+      const grid = area.querySelector("#sm");
+      for (let k = 0; k < 9; k++) {
+        const c = document.createElement("button");
+        c.className = "g3cell";
+        grid.appendChild(c);
+      }
+      const cells = [...grid.querySelectorAll(".g3cell")];
+      let seq = [], idx = -1; // -1 = 보여주는 중(입력 잠금)
 
-      const isTargetAt = k => k >= N && seq[k] === seq[k - N];
-
-      area.querySelector("#nb-btn").onclick = () => {
-        if (i === 0) { fb.textContent = "아직이에요 — 잘 보세요!"; fb.className = "feedback"; return; }
-        if (pressed) return;
-        pressed = true;
-        const isT = isTargetAt(i - 1);
-        if (isT) { hits++; fb.textContent = "잘 잡았어요!"; fb.className = "feedback flash-good"; }
-        else { fa++; fb.textContent = "지금은 아니에요"; fb.className = "feedback flash-bad"; }
-        FX.flash(isT);
-      };
-
-      const iv = setInterval(() => {
-        // 직전 자극이 타깃이었는데 안 눌렀으면 '놓침' 피드백
-        if (i > 0 && isTargetAt(i - 1) && !pressed) {
-          miss++;
-          fb.textContent = "앗, 같은 자리였어요!";
+      function playback(k) {
+        if (k >= seq.length) { inst.textContent = "따라 누르세요!"; idx = 0; return; }
+        const c = cells[seq[k]];
+        c.classList.add("on");
+        later(() => { c.classList.remove("on"); later(() => playback(k + 1), 160); }, 520);
+      }
+      function round() {
+        seq = [];
+        while (seq.length < len) {
+          const v = U.rand(0, 8);
+          if (seq[seq.length - 1] !== v) seq.push(v); // 같은 칸 연속 방지 (헷갈림 컷)
+        }
+        idx = -1;
+        inst.textContent = `잘 보세요 — ${len}칸!`;
+        fb.textContent = "";
+        fb.className = "feedback";
+        later(() => playback(0), 550);
+      }
+      cells.forEach((c, p) => c.onclick = () => {
+        if (!alive || idx < 0) return;
+        if (p === seq[idx]) {
+          good++;
+          FX.flash(true);
+          c.classList.add("on");
+          later(() => c.classList.remove("on"), 220);
+          idx++;
+          if (idx >= seq.length) {
+            wins++;
+            idx = -1;
+            len = Math.min(9, len + 1);
+            fb.textContent = "성공! 한 칸 더 길어져요";
+            fb.className = "feedback flash-good";
+            later(round, 700);
+          }
+        } else {
+          bad++;
+          FX.flash(false);
+          const right = cells[seq[idx]];
+          right.classList.add("on"); // 정답 칸을 보여줌
+          later(() => right.classList.remove("on"), 500);
+          fb.textContent = "여기였어요 — 다시 한 번!";
           fb.className = "feedback flash-bad";
+          idx = -1;
+          len = Math.max(2, len - 1);
+          later(round, 850);
         }
-        cells.forEach(c => c.classList.remove("on"));
-        if (i >= STIM) {
-          clearInterval(iv);
-          const score = Math.max(0, Math.round(100 * (hits - fa) / Math.max(1, targets)));
-          api.finish(score, `잡음 ${hits}/${targets} · 놓침 ${miss} · 헛누름 ${fa}`);
-          return;
-        }
-        cells[seq[i]].classList.add("on");
-        pressed = false;
-        i++;
-        prog.textContent = `${i} / ${STIM}`;
-      }, GAP);
-      api.onTimeUp(() => { clearInterval(iv); });
+      });
+      round();
+
+      api.onTimeUp(() => {
+        alive = false;
+        timers.forEach(clearTimeout);
+        const taps = good + bad;
+        const acc = taps ? good / taps : 0;
+        api.finish(Math.round(100 * acc * Math.min(1, wins / 3)), `완주 ${wins}라운드 · 최장 ${Math.max(0, len - 1)}칸`);
+      });
     }
   };
 
