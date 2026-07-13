@@ -250,15 +250,48 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 .free-card.locked .fc-icon { font-size: 34px; }
 .champ-name { font-size: 14px; color: var(--fg-tertiary); font-weight: var(--fw-regular); margin-left: 4px; }
 
+/* ---------- 🚶 첫걸음 안내 투어 ---------- */
+.tour-tip {
+  display: flex; align-items: center; gap: var(--sp-3);
+  width: 100%; max-width: 460px;
+  background: var(--surface);
+  border: 2px solid var(--aia-red);
+  border-radius: var(--radius-xl);
+  padding: var(--sp-3) var(--sp-4);
+  font-size: 17px; font-weight: var(--fw-semibold); line-height: var(--lh-tight);
+  box-shadow: var(--shadow-2);
+  animation: cardIn 0.4s ease both;
+}
+.tour-dog { width: 44px; height: 44px; object-fit: contain; flex: none; }
+.tour-tip span { flex: 1; text-align: left; }
+.tour-skip {
+  flex: none; font-size: 14px; color: var(--fg-tertiary);
+  background: none; border: none; text-decoration: underline; cursor: pointer; padding: 4px;
+}
+.tour-glow { border-color: var(--aia-red) !important; animation: tourGlow 1.6s ease infinite; }
+@keyframes tourGlow { 50% { box-shadow: 0 0 0 7px rgba(211, 17, 69, 0.22); } }
+
 /* ---------- 게임 화면 ---------- */
 .game-top {
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--sp-3);
   font-size: 20px;
   font-weight: var(--fw-bold);
 }
+#game-name { flex: 1; }
+.game-home {
+  flex: none; width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border-hairline); border-radius: 50%;
+  background: var(--surface); color: var(--fg-primary); cursor: pointer;
+  transition: border-color var(--t), background var(--t), transform var(--t);
+}
+.game-home svg { width: 22px; height: 22px; }
+.game-home:hover { border-color: var(--aia-red); color: var(--aia-red); background: var(--surface-hover); }
+.game-home:active { transform: scale(0.94); }
 .lv-chip {
   display: inline-block; vertical-align: 2px;
   font-size: 13px; font-weight: var(--fw-semibold);

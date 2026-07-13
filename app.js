@@ -83,15 +83,15 @@
   const mine = (r, who) => !who || !r.name || r.name === who;
   const myHist = who => history().filter(r => mine(r, who));
   const settings = () => store.get("bw_settings", { relaxMode: false, sound: true });
-  // 시작 레벨 2 — L1은 몸풀기용(원작도 첫 판부터 두 자리 연산). 못 따라오면 DDA가 1로 내려줌
-  const levelOf = id => levels()[id] || 2;
+  // 시작 레벨 3 — 몸풀기 생략, 첫 판부터 본 훈련 난도(JS 피드백: 더 어렵게). 못 따라오면 DDA가 내려줌
+  const levelOf = id => levels()[id] || 3;
 
   function adjustLevel(id, score) {
     const lv = levels();
-    const cur = lv[id] || 2;
-    // 70↑ 승급 / 35↓ 강등 — 원작처럼 '살짝 벅찬' 중간대(50~70)에 오래 머물게
-    if (score >= 70) lv[id] = Math.min(9, cur + 1);
-    else if (score < 35) lv[id] = Math.max(1, cur - 1);
+    const cur = lv[id] || 3;
+    // 65↑ 승급 / 30↓ 강등 — 승급 문턱을 낮춰 '살짝 벅찬' 구간에 더 빨리 도달 (난이도 상향)
+    if (score >= 65) lv[id] = Math.min(9, cur + 1);
+    else if (score < 30) lv[id] = Math.max(1, cur - 1);
     else lv[id] = cur;
     store.set("bw_levels", lv);
   }
@@ -207,6 +207,42 @@
     $("#chk-sound").checked = settings().sound !== false;
     $("#chk-notify").checked = !!settings().notify;
     $("#chk-ink").checked = !!settings().ink;
+    renderTour();
+  }
+
+  // ---------- 🚶 첫걸음 안내 투어 (첫 방문: 이름→훈련부터, 이후 메뉴를 순서대로 코치가 안내) ----------
+  const TOUR = [
+    { btn: "#btn-daily", msg: () => player() ? "먼저 '오늘의 훈련'으로 가볍게 3분 걸어 봐요!" : "처음 오셨네요! 이름 정하고 '오늘의 훈련'부터 시작해요 🐾" },
+    { btn: "#btn-check", msg: () => "훈련 잘하셨어요! 이번엔 '뇌 나이 체크'로 재미있게 측정해 봐요." },
+    { btn: "#btn-free", msg: () => "'자유 플레이'에선 원하는 게임만 골라서 할 수 있어요." },
+    { btn: "#btn-sudoku", msg: () => "'퍼즐 산책'에선 스도쿠·점 잇기를 느긋하게 — 레벨 1000 등반도!" },
+    { btn: "#btn-stats", msg: () => "마지막이에요! '기록 보기'에서 도장 달력과 점수 흐름을 봐요." }
+  ];
+  function tourStep() {
+    let s = store.get("bw_tour", null);
+    if (s === null) { // 이미 기록이 있는 기존 사용자는 안내 생략 (그랜드파더링)
+      s = (history().length || ageChecks().length) ? TOUR.length : 0;
+      store.set("bw_tour", s);
+    }
+    return s;
+  }
+  function renderTour() {
+    document.querySelectorAll(".tour-tip").forEach(e => e.remove());
+    document.querySelectorAll(".tour-glow").forEach(e => e.classList.remove("tour-glow"));
+    const step = tourStep();
+    if (step >= TOUR.length) return;
+    const t = TOUR[step];
+    const btn = $(t.btn);
+    btn.classList.add("tour-glow");
+    const tip = document.createElement("div");
+    tip.className = "tour-tip";
+    tip.innerHTML = `<img class="tour-dog" src="assets/mascot.png" alt="" onerror="this.remove()"><span>${t.msg()}</span><button class="tour-skip">건너뛰기</button>`;
+    btn.parentNode.insertBefore(tip, btn);
+    tip.querySelector(".tour-skip").onclick = e => { e.stopPropagation(); store.set("bw_tour", TOUR.length); renderTour(); };
+    // 안내한 메뉴를 누르면 다음 단계로 — renderHome 재호출로 쌓인 중복 리스너는 step 가드로 무해
+    btn.addEventListener("click", () => {
+      if (tourStep() === step) store.set("bw_tour", step + 1);
+    }, { once: true, capture: true });
   }
   $("#chk-relax").onchange = e => store.set("bw_settings", { ...settings(), relaxMode: e.target.checked });
   $("#chk-ink").onchange = e => store.set("bw_settings", { ...settings(), ink: e.target.checked });
@@ -258,6 +294,22 @@
 
   let session = null; // { mode: daily|free|check, queue, i, results }
 
+  // 🏠 인게임 홈 버튼 — 진행 중이던 판은 버리고 즉시 홈으로 (늦은 finish는 세션 가드가 무시)
+  $("#game-home").onclick = () => {
+    const playing = session && $("#game-intro").style.display === "none";
+    if (playing && !confirm("진행 중인 게임을 그만두고 홈으로 갈까요?\n(이번 판 점수는 남지 않아요)")) return;
+    stopTimer();
+    try { SND.bgmStop(); } catch { }
+    try { RT.stop(); } catch { }
+    session = null;            // 세션 무효화 — 게임 내부의 늦은 finish()·타임업 콜백 차단
+    timeUpCb = null;
+    window.BW_CAMPAIGN = null; // 캠페인 판도 폐기 (진행도는 클리어 시에만 저장되므로 안전)
+    $("#screen-game").classList.remove("low-time");
+    $("#game-area").innerHTML = "";
+    renderHome();
+    show("home");
+  };
+
   function startSession(mode, queue) {
     if (!window.__campStarting) window.BW_CAMPAIGN = null; // 스테일 캠페인 방지
     askPlayer(false); // 첫 플레이 때 한 번만 물어봄
@@ -289,6 +341,7 @@
 
     $("#game-hint").textContent = "";
     $("#btn-go").onclick = async () => {
+      const sess0 = session; // 카운트다운 중 홈 이탈 감지용
       // 체크 모드: 3-2-1 카운트다운 (검사 긴장감)
       if (session.mode === "check") {
         const ov = document.createElement("div");
@@ -302,6 +355,7 @@
         }
         ov.remove();
       }
+      if (session !== sess0) return; // 카운트다운 사이에 홈으로 나감 — 게임 시작 취소
       SND.start(); SND.bgmStart();
       RT.start(game.id); // 반응시간 수집 시작
       FX.comboReset(); // 콤보 배지·최고 연속 초기화
