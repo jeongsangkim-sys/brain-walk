@@ -1,4 +1,4 @@
-// 시뮬레이션 하네스 — 전 게임(현 23종) 자동 완주 + 데일리/뇌나이체크 E2E
+// 시뮬레이션 하네스 — 전 게임(현 25종) 자동 완주 + 데일리(5)/뇌나이체크(5과제 무중단) E2E
 // 사용: 콘솔에서 <script src="sim/autoplay.js"> 주입. 결과는 window.__sim
 // 주의: 실행 전 localStorage 스냅샷, 종료 후 복원 (실기록 오염 방지)
 (function () {
@@ -12,7 +12,7 @@
   window.addEventListener("error", e => __sim.errs.push(e.message));
 
   // ----- 게임별 스마트 클릭 (매 틱 호출) -----
-  const S = { g5cap: [], phHist: [], phLast: "", peCount: null, peLast: "", suPad: 0, prSeen: {} };
+  const S = { g5cap: [], phHist: [], phLast: "", peCount: null, peLast: "", suPad: 0, prSeen: {}, smSeq: [], smLast: -1, smPhase: "" };
 
   function calcAnswer(txt) {
     const m = txt.match(/(\d+)\s*([+\-×−÷])\s*(\d+)/);
@@ -65,6 +65,25 @@
     if (memTiles.length) {
       memTiles.sort((a, b) => +a.textContent - +b.textContent)[0].click();
       return;
+    }
+    // 순서 따라 누르기(사이먼): 재생 중 켜진 순서 기록 → 입력 단계에 그대로 클릭
+    const smInst = $("#sm-inst");
+    if (smInst) {
+      const cells = $$("#sm .g3cell");
+      const lit = cells.findIndex(c => c.classList.contains("on"));
+      const txt = smInst.textContent || "";
+      if (txt.includes("잘 보세요")) {
+        if (S.smPhase !== "show") { S.smPhase = "show"; S.smSeq = []; S.smLast = -1; }
+        if (lit >= 0 && lit !== S.smLast) { S.smSeq.push(lit); S.smLast = lit; }
+        else if (lit < 0) S.smLast = -1;
+        return;
+      }
+      if (txt.includes("따라 누르세요")) {
+        S.smPhase = "input";
+        if (S.smSeq.length) { const i = S.smSeq.shift(); cells[i] && cells[i].click(); }
+        return;
+      }
+      return; // 성공/실패 피드백 짧은 창 — 대기
     }
     // 순서 잇기: 랭크 최소 타일
     const trTiles = $$("#tr-board .tile").filter(t => !t.classList.contains("cleared"));
@@ -206,7 +225,6 @@
     // 이중과제 별 질문 / 상자 세기 / 기타: 아무 보기나
     const any = $$("#game-area .choice-btn");
     if (any.length) { any[Math.floor(Math.random() * any.length)].click(); return; }
-    // N-back: 방치 (자체 종료)
   }
 
   // ----- 자동 플레이어 루프 -----
@@ -262,7 +280,7 @@
       $("#btn-free").click(); await sleep(150);
       const N = $$(".free-card").length;
       for (let i = 0; i < N; i++) {
-        Object.assign(S, { g5cap: [], phHist: [], phLast: "", peCount: null, peLast: "", suPad: 0, prSeen: {} });
+        Object.assign(S, { g5cap: [], phHist: [], phLast: "", peCount: null, peLast: "", suPad: 0, prSeen: {}, smSeq: [], smLast: -1, smPhase: "" });
         goHome();
         await sleep(200);
         $("#btn-free").click();
@@ -284,11 +302,11 @@
         });
         await sleep(300);
       }
-      // 2) 데일리 E2E
+      // 2) 데일리 E2E — 5게임, 게임 사이 결과 화면 있음
       goHome(); await sleep(250);
       $("#btn-daily").click();
       let dailyOk = false;
-      for (let g = 0; g < 3; g++) {
+      for (let g = 0; g < 7; g++) {
         if (!await waitResult(70000)) break;
         const last = $("#btn-next").textContent.includes("종합");
         $("#btn-next").click();
@@ -296,20 +314,13 @@
         if (last) { dailyOk = document.querySelector(".screen.active").id === "screen-result"; break; }
       }
       __sim.daily = { ok: dailyOk, score: ($("#result-score") || {}).textContent, vs: ($("#result-detail") || {}).textContent };
-      // 3) 뇌 나이 체크 E2E
+      // 3) 뇌 나이 체크 E2E — 5과제 무중단 자동 진행 → 최종 나이 화면만 대기 (사이 결과 화면 없음)
       goHome(); await sleep(250);
-      $("#btn-check").click();
-      let checkOk = false;
-      for (let g = 0; g < 3; g++) {
-        if (!await waitResult(70000)) break;
-        const last = $("#btn-next").textContent.includes("뇌 나이");
-        $("#btn-next").click();
-        await sleep(400);
-        if (last) {
-          await sleep(2400); // 드럼롤 대기
-          checkOk = true;
-          __sim.check = { age: ($("#result-score") || {}).textContent, coach: ($("#coach-bubble") || {}).textContent };
-        }
+      $("#btn-check").click();               // 브리핑 → autoplay가 btn-go 눌러 시작, 이후 과제 자동 연결
+      const checkOk = await waitResult(150000); // 5과제 × ~6초 + 드럼롤 여유
+      if (checkOk) {
+        await sleep(2600); // 나이 드럼롤 대기
+        __sim.check = { age: ($("#result-score") || {}).textContent, detail: ($("#result-detail") || {}).textContent.slice(0, 160) };
       }
       __sim.checkOk = checkOk;
     } finally {

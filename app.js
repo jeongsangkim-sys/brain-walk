@@ -73,6 +73,23 @@
     get(k, def) { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch { return def; } },
     set(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
   };
+  // 1회 마이그레이션: nback('같은 위치') → simon('순서 따라 누르기') 교체 시 기존 유저 자산 승계
+  // (마일 해금·최고기록·챔피언·레벨·반응시간을 새 게임 id로 이전 — 안 하면 조용히 사라짐)
+  (function migrateNbackToSimon() {
+    if (store.get("bw_mig_simon", false)) return;
+    ["bw_best", "bw_levels", "bw_champs"].forEach(k => {
+      const o = store.get(k, null);
+      if (o && o.nback !== undefined) { o.simon = o.nback; delete o.nback; store.set(k, o); }
+    });
+    const rt = store.get("bw_rt", null);
+    if (rt && rt.nback) { rt.simon = rt.nback; delete rt.nback; store.set("bw_rt", rt); }
+    const w = store.get("bw_wallet", null);
+    if (w && Array.isArray(w.games) && w.games.includes("nback")) {
+      w.games = w.games.map(id => id === "nback" ? "simon" : id);
+      store.set("bw_wallet", w);
+    }
+    store.set("bw_mig_simon", true);
+  })();
   // 로컬(한국) 날짜 기준 — toISOString은 UTC라 오전 9시 전에 어제로 찍히는 버그 방지
   const localDate = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const today = () => localDate(new Date());
