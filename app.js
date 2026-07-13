@@ -796,18 +796,22 @@
     const who = player() || "게스트";
     const minecks = all.filter(r => mine(r, who));
     const prev = minecks.length ? minecks[minecks.length - 1].age : null;
-    // 원작식: 뇌 나이 기록은 하루 1회(본인 기준). 추가 측정은 연습으로만
+    // 원작식: 공식 기록은 하루 1회(본인 기준). 추가 측정도 (연습) 표식으로 기록 — 히스토리 가시성
     const measuredToday = minecks.some(r => r.date === today());
-    if (!measuredToday) {
-      all.push({ date: today(), age, avg, name: who });
-      store.set("bw_agecheck", all);
-      earnMiles(avg); // 🐾 마일리지 적립
-    }
+    all.push(measuredToday
+      ? { date: today(), age, avg, name: who, practice: true }
+      : { date: today(), age, avg, name: who });
+    store.set("bw_agecheck", all);
+    if (!measuredToday) earnMiles(avg); // 🐾 마일리지는 공식 측정만
     show("result");
     $("#result-title").textContent = "🧠 당신의 뇌 나이는…";
     $("#result-comment").textContent = "";
     $("#result-detail").innerHTML = "";
     $("#coach-bubble").textContent = "두구두구두구…";
+    $("#btn-ghost-share").hidden = true; // 이전 자유 플레이의 대결 버튼 잔상 제거
+    // 🔒 오터치 가드: 게임 중 연타 잔여 터치가 공개 화면을 실수로 닫지 않게, 공개가 끝날 때까지 버튼 잠금
+    const guarded = [$("#btn-next"), document.querySelector("#screen-result [data-goto]")];
+    guarded.forEach(b => b && (b.disabled = true));
     // 드럼롤 → 숫자 롤링 → 쾅 공개
     FX.reveal($("#result-score"), age, "세", () => {
       // 개선 루프 델타: 같은 날 재측정(연습)은 아까 기록과 직접 비교 — "젊어졌다"가 훅
@@ -830,6 +834,12 @@
             : "내일 또 재면 더 젊어질 거예요!";
       setCoachFace((prev != null && age < prev) || age <= 35 ? "happy" : prev != null && age > prev ? "sad" : "base");
       if (prev != null && age < prev) FX.confetti();
+      // 📜 나이 히스토리 스트립: 이번 측정 포함 최근 기록을 결과에서 바로 확인
+      const rec = ageChecks().filter(r => mine(r, who)).slice(-5);
+      if (rec.length > 1) $("#result-detail").insertAdjacentHTML("beforeend",
+        `<div class="age-hist">📜 ${rec.map(r => `${r.date === today() ? "오늘" : r.date.slice(5).replace("-", "/")} <b>${r.age}세</b>${r.practice ? "<small>(연습)</small>" : ""}`).join(" → ")}</div>`);
+      // 잠금 해제는 공개 연출이 완전히 끝나고 한 박자 뒤 — 잔여 연타 흡수
+      setTimeout(() => guarded.forEach(b => b && (b.disabled = false)), 900);
     });
     courseAdvance("check"); // 🚩 첫 산책 코스 미션 ②
     // 🧠 개선 루프: 오늘 훈련 전이면 "훈련하고 젊어지기"가 다음 걸음 (측정→훈련→재측정)
@@ -1087,14 +1097,15 @@
     const box = $("#trend-box");
     const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
     let body;
-    if (h.length === 0) { box.innerHTML = ""; return; }
-    const latest = h[h.length - 1];
     const ac = ageChecks().filter(r => mine(r, statsWho));
+    // 훈련 기록이 없어도 뇌 나이 기록만 있으면 표시 (히스토리 가시성)
+    if (h.length === 0 && ac.length === 0) { box.innerHTML = ""; return; }
+    const latest = h[h.length - 1];
     const ageLine = ac.length
       ? `<div class="trend-age">재미로 보는 뇌 나이: <b>${ac[ac.length - 1].age}세</b> <small>(${ac[ac.length - 1].date} 체크)</small></div>`
       : `<div class="trend-age">재미로 보는 뇌 나이: <b>${brainAge(latest.score)}세</b> <small>(최근 훈련 ${latest.score}점 기준)</small></div>`;
     if (h.length < 6) {
-      body = "기록이 6일 이상 쌓이면 점수 흐름 분석을 보여드려요.";
+      body = h.length ? "기록이 6일 이상 쌓이면 점수 흐름 분석을 보여드려요." : "오늘의 훈련 기록이 쌓이면 점수 흐름도 보여드려요.";
     } else {
       const recent = avg(h.slice(-3).map(r => r.score));
       const base = avg(h.slice(0, -3).slice(-7).map(r => r.score));
@@ -1103,7 +1114,15 @@
       else if (diff >= 5) body = `📈 최근 3회 평균이 평소보다 ${diff}점 높아요. 흐름이 좋습니다!`;
       else body = `➖ 점수 흐름이 안정적이에요. 꾸준함이 최고의 훈련입니다.`;
     }
+    // 🧠 뇌 나이 기록: 최근 측정 목록(연습 포함) — 이전 기록 대비 ▼젊어짐/▲올라감 표시
+    const ageRows = ac.slice(-8).reverse().map((r, i, arr) => {
+      const older = arr[i + 1]; // 시간상 직전 기록
+      const d = older ? r.age - older.age : 0;
+      const delta = !older ? "" : d < 0 ? ` <span class="age-down">▼${-d}</span>` : d > 0 ? ` <span class="age-up">▲${d}</span>` : "";
+      return `<div class="best-row"><span>${r.date}${r.practice ? ' <small class="champ-name">(연습)</small>' : ""}</span><b>${r.age}세${delta}</b></div>`;
+    }).join("");
     box.innerHTML = ageLine + `<div>${body}</div>` +
+      (ageRows ? `<h3>🧠 뇌 나이 기록</h3>${ageRows}` : "") +
       `<div class="disclaimer">이 게임은 의료 검사가 아니며, 치매를 진단하거나 위험을 예측할 수 없어요.</div>`;
   }
 
