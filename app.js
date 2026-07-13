@@ -279,7 +279,7 @@
 
   // ---------- 🚶 첫걸음 안내 투어 (첫 방문: 이름→훈련부터, 이후 메뉴를 순서대로 코치가 안내) ----------
   const TOUR = [
-    { btn: "#btn-daily", msg: () => player() ? "먼저 '오늘의 훈련' — 5게임 딱 1분 30초면 끝!" : "처음 오셨네요! 이름 정하고 1분 30초짜리 '오늘의 훈련'부터 🐾" },
+    { btn: "#btn-daily", msg: () => "뇌 나이를 쟀으니, 이제 매일 훈련해 젊게 유지해요 — '오늘의 훈련'부터! 🐾" },
     { btn: "#btn-check", msg: () => "훈련 잘하셨어요! 이번엔 '뇌 나이 체크' — 5가지 과제, 약 2분!" },
     { btn: "#btn-free", msg: () => "'자유 플레이'에선 원하는 게임만 골라서 할 수 있어요." },
     { btn: "#btn-sudoku", msg: () => "'퍼즐 산책'에선 스도쿠·점 잇기를 느긋하게 — 레벨 1000 등반도!" },
@@ -288,7 +288,8 @@
   function tourStep() {
     let s = store.get("bw_tour", null);
     if (s === null) { // 이미 기록이 있는 기존 사용자는 안내 생략 (그랜드파더링)
-      s = (history().length || ageChecks().length) ? TOUR.length : 0;
+      const veteran = !store.get("bw_onboard", 0) && (history().length || ageChecks().length);
+      s = veteran ? TOUR.length : 0;
       store.set("bw_tour", s);
     }
     return s;
@@ -507,9 +508,16 @@
       if (session.i === 0 && !session.briefed) {
         session.briefed = true;
         ii.style.visibility = "hidden";
-        $("#intro-title").textContent = "🧠 뇌 나이 체크";
-        $("#intro-desc").textContent = `${session.queue.length}가지 과제가 쉬는 시간 없이 자동으로 이어져요. (약 2분)\n빠르고 정확할수록 젊게 나와요 — 최고 속도·무오답이면 20세!`;
-        $("#intro-best").textContent = "준비되면 시작을 누르세요";
+        if (onboarding) {
+          $("#intro-title").textContent = `🎓 ${PROF.name}`;
+          $("#intro-desc").textContent = PROF.intro + "\n\n" + PROF.checkBrief;
+          $("#intro-best").textContent = "준비되면 시작을 누르세요";
+          onboarding = false;
+        } else {
+          $("#intro-title").textContent = "🧠 뇌 나이 체크";
+          $("#intro-desc").textContent = `${session.queue.length}가지 과제가 쉬는 시간 없이 자동으로 이어져요. (약 2분)\n빠르고 정확할수록 젊게 나와요 — 최고 속도·무오답이면 20세!`;
+          $("#intro-best").textContent = "준비되면 시작을 누르세요";
+        }
       } else {
         $("#game-intro").style.display = "none";
         $("#btn-go").click();
@@ -941,6 +949,11 @@
     return U.shuffle(pool).slice(0, DAILY_COUNT);
   }
   $("#btn-daily").onclick = () => startSession("daily", dailyLineup());
+  // 🎓 첫 부팅 온보딩: 교수 브리핑 → 첫 뇌 나이 측정 직행 (닌텐도식)
+  let onboarding = false;
+  function isNewUser() {
+    return !store.get("bw_onboard", 0) && history().length === 0 && ageChecks().length === 0;
+  }
   function startCheck() { startSession("check", U.shuffle(CHECK_POOL).slice(0, 5)); } // 시간제 5과제 전부(순서만 셔플)
   $("#btn-check").onclick = startCheck;
   $("#btn-free").onclick = () => {
@@ -1286,4 +1299,5 @@
   } catch {}
 
   renderHome();
+  if (isNewUser()) { onboarding = true; store.set("bw_onboard", 1); startCheck(); }
 })();
