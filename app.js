@@ -183,8 +183,8 @@
     const hh = new Date().getHours();
     const GREET = hh < 5 ? "늦은 밤에도 반가워요!" : hh < 11 ? "좋은 아침이에요!" : hh < 17 ? "오후 머리 깨우기 딱 좋은 시간!" : hh < 22 ? "오늘 하루 마무리 산책 어때요?" : "자기 전 가볍게 한 판!";
     $("#daily-sub").textContent = doneToday
-      ? `오늘 완료 ✓ 새 훈련 3종이 약 ${24 - hh}시간 뒤 열려요`
-      : "아직 안 했어요 — 3분이면 끝!";
+      ? `오늘 완료 ✓ 새 훈련 5종이 약 ${24 - hh}시간 뒤 열려요`
+      : "20초씩 5게임 — 1분 30초면 끝!";
     $("#btn-daily").classList.toggle("todo", !doneToday);
 
     // 오늘의 한 마디 (박사 잡담 포지션 — 일반 상식만, 의료 조언 아님)
@@ -202,7 +202,7 @@
     ];
     const dayIdx = Math.floor(Date.now() / 86400000) % TIPS.length; // 하루 하나 고정
     // 미완료: 시간대 인사로 유도 / 완료: 오늘의 팁
-    $("#home-tip").textContent = doneToday ? `💬 ${TIPS[dayIdx]}` : `💬 ${GREET} 3분만 걷고 가요!`;
+    $("#home-tip").textContent = doneToday ? `💬 ${TIPS[dayIdx]}` : `💬 ${GREET} 딱 1분 30초만 걷고 가요!`;
     $("#chk-relax").checked = settings().relaxMode;
     $("#chk-sound").checked = settings().sound !== false;
     $("#chk-notify").checked = !!settings().notify;
@@ -212,8 +212,8 @@
 
   // ---------- 🚶 첫걸음 안내 투어 (첫 방문: 이름→훈련부터, 이후 메뉴를 순서대로 코치가 안내) ----------
   const TOUR = [
-    { btn: "#btn-daily", msg: () => player() ? "먼저 '오늘의 훈련'으로 가볍게 3분 걸어 봐요!" : "처음 오셨네요! 이름 정하고 '오늘의 훈련'부터 시작해요 🐾" },
-    { btn: "#btn-check", msg: () => "훈련 잘하셨어요! 이번엔 '뇌 나이 체크'로 재미있게 측정해 봐요." },
+    { btn: "#btn-daily", msg: () => player() ? "먼저 '오늘의 훈련' — 20초씩 5게임, 1분 30초면 끝!" : "처음 오셨네요! 이름 정하고 1분 30초짜리 '오늘의 훈련'부터 🐾" },
+    { btn: "#btn-check", msg: () => "훈련 잘하셨어요! 이번엔 '뇌 나이 체크' — 누르면 바로 측정 시작!" },
     { btn: "#btn-free", msg: () => "'자유 플레이'에선 원하는 게임만 골라서 할 수 있어요." },
     { btn: "#btn-sudoku", msg: () => "'퍼즐 산책'에선 스도쿠·점 잇기를 느긋하게 — 레벨 1000 등반도!" },
     { btn: "#btn-stats", msg: () => "마지막이에요! '기록 보기'에서 도장 달력과 점수 흐름을 봐요." }
@@ -322,8 +322,8 @@
     $("#screen-game").classList.remove("low-time");
     const game = session.queue[session.i];
     const lv = levelOf(game.id);
-    // ⚡ 황금 산책: 시간제 게임 15% 확률 — 이 판 점수 +10 (예측불가 보상)
-    session.golden = !game.mode && Math.random() < 0.15;
+    // ⚡ 황금 산책: 시간제 게임 15% 확률 — 이 판 점수 +10 (예측불가 보상). 체크는 측정이라 제외
+    session.golden = session.mode !== "check" && !game.mode && Math.random() < 0.15;
     show("game");
     $("#game-name").innerHTML = `<img class="name-img" src="${iconSrc(game)}" alt="" onerror="this.remove()"> ${game.name} <span class="lv-chip">Lv.${lv}</span>`;
     $("#game-timer").textContent = "";
@@ -378,6 +378,8 @@
           $("#screen-game").classList.remove("low-time");
           SND.bgmStop();
           RT.stop();
+          // 채점 곡선: score^1.3 디플레이션 — 게임별 원점수가 후해서 중상위권을 눌러줌 (JS 피드백)
+          score = Math.round(100 * Math.pow(Math.min(100, Math.max(0, score)) / 100, 1.3));
           if (session.golden) { score = Math.min(100, score + 10); detail += " · ⚡황금 +10"; }
           onGameDone(game, score, detail);
         }
@@ -398,8 +400,9 @@
         elT.textContent = "0초";
         timerId = setInterval(() => { t++; elT.textContent = t + "초"; }, 1000);
       } else {
-        // BW_TEST_SEC: 콘솔 테스트용 단축 타이머
-        const dur = Math.round((window.BW_TEST_SEC || game.sec || 25) * (settings().relaxMode ? 1.5 : 1));
+        // BW_TEST_SEC: 콘솔 테스트용 단축 타이머 · 데일리는 게임당 20초 고정("1분 30초" 약속)
+        const baseSec = session.mode === "daily" ? DAILY_SEC : (game.sec || 25);
+        const dur = Math.round((window.BW_TEST_SEC || baseSec) * (settings().relaxMode ? 1.5 : 1));
         let left = dur;
         elT.textContent = left + "초";
         fill.classList.remove("low");
@@ -421,6 +424,12 @@
       }
       game.start($("#game-area"), lv, api);
     };
+
+    // 체크 모드: 인트로·시작 버튼 생략 — 누르는 순간 3-2-1 후 바로 측정 (과제 사이도 자동 연결)
+    if (session.mode === "check") {
+      $("#game-intro").style.display = "none";
+      $("#btn-go").click();
+    }
   }
 
   function comment(score) {
@@ -547,6 +556,14 @@
     const isRecord = score > prevBest && prevBest > 0;
 
     const last = session.i >= session.queue.length - 1;
+
+    // 체크 모드: 과제 사이 점수 화면 없이 직행 — 마지막 과제 끝나면 바로 나이 공개
+    if (session.mode === "check") {
+      if (!last) { session.i++; runCurrent(); }
+      else finishCheck();
+      return;
+    }
+
     show("result");
     $("#result-title").textContent = (isRecord ? "🏆 신기록! " : "") + game.name + " 결과";
     FX.countUp($("#result-score"), score, "점 " + medal(score));
@@ -672,7 +689,7 @@
       <button class="cookie-card" id="cookie-card">🍪 <b>오늘의 웰니스 쿠키</b> <small>눌러서 열기</small></button>
       <div class="tease">🔮 내일의 산책 예고
         <span class="tease-icons">${teaseGames.map(g => `<img src="${iconSrc(g)}" alt="?" onerror="this.outerHTML='❓'">`).join("")}</span>
-        <small>새 훈련 3종, 자정에 열려요 (약 ${hoursLeft}시간 뒤)</small>
+        <small>새 훈련 5종, 자정에 열려요 (약 ${hoursLeft}시간 뒤)</small>
       </div>`;
     $("#cookie-card").onclick = e => {
       e.currentTarget.outerHTML = `<div class="cookie-open">🥠 ${COOKIES[cookieIdx]}</div>`;
@@ -711,7 +728,7 @@
       earnMiles(avg); // 🐾 마일리지 적립
     }
     show("result");
-    $("#result-title").textContent = "🧠 재미로 보는 뇌 나이";
+    $("#result-title").textContent = "🧠 당신의 뇌 나이는…";
     $("#result-comment").textContent = "";
     $("#result-detail").innerHTML = "";
     $("#coach-bubble").textContent = "두구두구두구…";
@@ -740,7 +757,9 @@
   }
 
   // ---------- 진입점 ----------
-  // 데일리: 인지 영역별 1개씩 (계산·기억·반응·관찰 중 3영역) — 완전 랜덤이면 같은 계열 3개가 걸릴 수 있음
+  const DAILY_COUNT = 5; // 오늘의 훈련 게임 수
+  const DAILY_SEC = 20;  // 게임당 20초 — "1분 30초면 끝" 후킹의 근거
+  // 데일리: 인지 영역별 1개씩 우선 확보 — 완전 랜덤이면 같은 계열만 몰릴 수 있음
   const CATS = {
     calc: "수", calc25: "수", sign: "수", change: "수",
     memory: "기억", photo: "기억", nback: "기억", pairs: "기억",
@@ -756,10 +775,13 @@
       return ((h ^= h >>> 16) >>> 0) / 4294967296;
     };
     const shuffle = a => { const x = [...a]; for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
+    // '20초씩 5게임' 약속 — 시간제 게임만(분량제 count는 20초 컷이 안 먹혀 제외), 영역별 1개 먼저 뽑고 나머지 채움
+    const pool = DAILY_POOL.filter(g => isUnlocked(g) && !g.mode);
     const byCat = {};
-    DAILY_POOL.filter(isUnlocked).forEach(g => (byCat[CATS[g.id]] = byCat[CATS[g.id]] || []).push(g));
-    const cats = shuffle(Object.keys(byCat).sort()).slice(0, 3);
-    return cats.map(c => shuffle(byCat[c])[0]);
+    pool.forEach(g => (byCat[CATS[g.id]] = byCat[CATS[g.id]] || []).push(g));
+    const picked = shuffle(Object.keys(byCat).sort()).map(c => shuffle(byCat[c])[0]);
+    const rest = shuffle(pool.filter(g => !picked.includes(g)));
+    return picked.concat(rest).slice(0, DAILY_COUNT);
   }
   $("#btn-daily").onclick = () => startSession("daily", dailyLineup(today()));
   $("#btn-check").onclick = () => startSession("check", U.shuffle(CHECK_POOL).slice(0, 3));
