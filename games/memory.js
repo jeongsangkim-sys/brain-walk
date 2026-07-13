@@ -18,14 +18,17 @@ window.GAME_MEMORY = {
 
     function placeTiles(nums) {
       board.innerHTML = "";
-      const W = board.clientWidth - 80, H = board.clientHeight - 80;
-      const placed = [];
-      return nums.map(n => {
-        let x, y, tries = 0;
-        do {
-          x = Math.random() * W; y = Math.random() * H; tries++;
-        } while (tries < 200 && placed.some(p => Math.hypot(p.x - x, p.y - y) < 92));
-        placed.push({ x, y });
+      // 격자 셀 추첨 + 셀 안 지터 — 이전 랜덤 산포는 타일끼리 겹쳐 숫자가 가려지는 버그(폰 실사고)
+      const COLS = 4, ROWS = 3; // 12셀 ≥ 최대 9타일
+      const TILE = 76; // .tile 데스크톱 크기 기준(모바일 64px은 여유만 커짐)
+      const cw = board.clientWidth / COLS, ch = board.clientHeight / ROWS;
+      const cells = [];
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) cells.push([c, r]);
+      for (let i = cells.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [cells[i], cells[j]] = [cells[j], cells[i]]; }
+      return nums.map((n, i) => {
+        const [c, r] = cells[i];
+        const x = c * cw + Math.random() * Math.max(0, cw - TILE);
+        const y = r * ch + Math.random() * Math.max(0, ch - TILE);
         const t = document.createElement("button");
         t.className = "tile";
         t.style.left = x + "px"; t.style.top = y + "px";

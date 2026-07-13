@@ -380,6 +380,14 @@
           RT.stop();
           // 채점 곡선: score^1.3 디플레이션 — 게임별 원점수가 후해서 중상위권을 눌러줌 (JS 피드백)
           score = Math.round(100 * Math.pow(Math.min(100, Math.max(0, score)) / 100, 1.3));
+          // 속도 가중: 평균 반응이 빠르면 보너스·느리면 감점, 낮은 레벨일수록 비중 큼(쉬운 판은 속도가 실력) — 뇌 나이 변별력
+          const rt = RT.sessAvg();
+          if (rt != null) {
+            const w = lv <= 3 ? 1 : Math.max(0.4, 1 - (lv - 3) * 0.15); // Lv3까지 100% → Lv7+ 40%
+            let f = Math.max(0.75, Math.min(1.12, 1.36 - 0.3 * rt));    // 평균 0.8초≈+12% · 1.2초≈0 · 2초≈-24%
+            if (settings().relaxMode) f = Math.max(1, f); // 여유 모드는 감점 없음 ('산책' 정체성)
+            score = Math.min(100, Math.round(score * (1 + (f - 1) * w))); // 반응시간 표기는 결과 화면 '평균 반응'이 담당
+          }
           if (session.golden) { score = Math.min(100, score + 10); detail += " · ⚡황금 +10"; }
           onGameDone(game, score, detail);
         }
