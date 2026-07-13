@@ -380,7 +380,7 @@
 
   function startSession(mode, queue) {
     if (!window.__campStarting) window.BW_CAMPAIGN = null; // 스테일 캠페인 방지
-    askPlayer(false); // 첫 플레이 때 한 번만 물어봄
+    if (!onboarding) askPlayer(false); // 온보딩 첫 측정은 이름 나중에 (측정 먼저)
     session = { mode, queue, i: 0, results: {} };
     runCurrent();
   }
