@@ -800,6 +800,7 @@
       e.currentTarget.outerHTML = `<div class="cookie-open">🥠 ${COOKIES[cookieIdx]}</div>`;
       SND.pop && SND.pop();
     };
+    maybeInstallNudge(); // 🐾 첫 훈련 완주 → 설치 가능하면 홈 추가 유도 (맨 위에 삽입)
 
     // 🌐 온라인 실시간 비교 — 사회적 증거 (연결 시)
     if (CLOUD.enabled()) {
@@ -1207,25 +1208,50 @@
   const installBtn = $("#btn-install");
   let deferredInstall = null;
   const isStandalone = () => matchMedia("(display-mode: standalone)").matches || !!navigator.standalone;
+  const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent);
   if (!isStandalone()) installBtn.hidden = false; // 이미 앱으로 열었으면 숨김
   window.addEventListener("beforeinstallprompt", e => {
     e.preventDefault(); // 크롬 자동 배너 대신 우리 버튼으로
     deferredInstall = e;
     if (!isStandalone()) installBtn.hidden = false;
   });
-  window.addEventListener("appinstalled", () => { installBtn.hidden = true; deferredInstall = null; });
-  installBtn.onclick = async () => {
+  window.addEventListener("appinstalled", () => {
+    installBtn.hidden = true; deferredInstall = null;
+    store.set("bw_install_nudge", 1); // 설치했으면 넛지 다신 안 띄움
+  });
+  async function doInstall() {
     if (deferredInstall) { // 원클릭 설치 (안드로이드 크롬 · PC 크롬/엣지)
       deferredInstall.prompt();
       await deferredInstall.userChoice.catch(() => {});
       deferredInstall = null;
       return;
     }
-    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    alert(ios
+    alert(isIOS()
       ? "📲 아이폰·아이패드에 추가하기\n\n1️⃣ Safari 아래쪽 공유 버튼(⬆️)을 누르세요\n2️⃣ '홈 화면에 추가'를 찾아 누르세요\n3️⃣ 오른쪽 위 '추가'를 누르면 끝!\n\n홈 화면 아이콘으로 앱처럼 열 수 있어요 🐾"
       : "📲 홈 화면에 추가하기\n\n· 안드로이드(크롬): 오른쪽 위 ⋮ 메뉴 → '홈 화면에 추가'\n· 컴퓨터(크롬·엣지): 주소창 오른쪽 설치 아이콘 클릭\n\n홈 화면 아이콘으로 앱처럼 열 수 있어요 🐾");
-  };
+  }
+  installBtn.onclick = doInstall;
+
+  // 🐾 첫 유저 설치 유도: 첫 훈련 직후, 실제로 설치 가능할 때만 딱 한 번 (먹통 방지 — 원클릭도 iOS안내도 불가하면 안 띄우고 다음 기회로)
+  function maybeInstallNudge() {
+    if (isStandalone()) return;                      // 이미 앱으로 실행 중
+    if (store.get("bw_install_nudge", 0)) return;    // 이미 한 번 보여줌
+    if (history().length > 1) return;                // 최초 유저에게만 (기존 사용자 제외)
+    if (!deferredInstall && !isIOS()) return;        // 죽은 카드 방지 — 다음 완주 때 재시도
+    store.set("bw_install_nudge", 1);
+    const detail = $("#result-detail");
+    const card = document.createElement("div");
+    card.className = "install-nudge";
+    card.innerHTML = `<b>🐾 홈에 앱으로 추가할까요?</b>
+      <small>매일 아이콘 한 번으로 바로 산책 — 오프라인도 OK</small>
+      <div class="nudge-row">
+        <button class="big-btn primary" id="nudge-yes">📲 추가하기</button>
+        <button class="big-btn ghost" id="nudge-no">나중에</button>
+      </div>`;
+    detail.insertBefore(card, detail.firstChild);
+    $("#nudge-yes").onclick = () => { card.remove(); doInstall(); };
+    $("#nudge-no").onclick = () => card.remove();
+  }
 
   // 자동 연결 링크: ?board=<웹앱URL> 로 열면 온라인 순위 URL 자동 저장 (폰 설정 원클릭)
   try {

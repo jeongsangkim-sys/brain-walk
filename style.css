@@ -535,6 +535,17 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   border-radius: var(--radius-lg); background: var(--charcoal-50);
   font-size: 16px; animation: screenIn 0.25s ease-out;
 }
+.install-nudge {
+  margin-bottom: var(--sp-4); padding: var(--sp-4);
+  border: 2px solid var(--aia-red); border-radius: var(--radius-lg);
+  background: var(--surface); color: var(--fg-primary);
+  text-align: center; animation: screenIn 0.25s ease-out;
+}
+.install-nudge b { font-size: 18px; }
+.install-nudge small { display: block; margin-top: 4px; color: var(--fg-tertiary); }
+.nudge-row { display: flex; gap: var(--sp-3); margin-top: var(--sp-3); }
+.nudge-row .big-btn { flex: 1; margin-top: 0; }
+
 .tease { margin-top: var(--sp-3); font-size: 15px; color: var(--fg-secondary); }
 .tease small { display: block; color: var(--fg-tertiary); }
 .tease-icons img {
