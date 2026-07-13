@@ -207,7 +207,54 @@
     $("#chk-sound").checked = settings().sound !== false;
     $("#chk-notify").checked = !!settings().notify;
     $("#chk-ink").checked = !!settings().ink;
+    renderCourse();
     renderTour();
+  }
+
+  // ---------- 🚩 첫 산책 코스 (훈련+뇌나이 완주 → 보상 상자, 완주 미터가 세션을 끝까지 끌고 감) ----------
+  const COURSE_REWARD = 300; // 🐾 완주 보상 마일
+  function course() {
+    let c = store.get("bw_course", null);
+    if (c === null) { // 기존 사용자는 코스 생략 (그랜드파더링)
+      const vet = history().length || ageChecks().length;
+      c = { daily: !!vet, check: !!vet, claimed: !!vet };
+      store.set("bw_course", c);
+    }
+    return c;
+  }
+  function courseAdvance(kind) {
+    const c = course();
+    if (c.claimed || c[kind]) return;
+    c[kind] = true;
+    store.set("bw_course", c);
+  }
+  function renderCourse() {
+    const old = document.querySelector(".course-card");
+    if (old) old.remove();
+    const c = course();
+    if (c.claimed) return;
+    const both = c.daily && c.check;
+    const card = document.createElement("div");
+    card.className = "course-card";
+    card.innerHTML = `<b>🚩 첫 산책 코스</b>
+      <div class="course-steps">
+        <span class="course-step${c.daily ? " done" : ""}">${c.daily ? "✅" : "①"} 오늘의 훈련</span>
+        <span class="course-step${c.check ? " done" : ""}">${c.check ? "✅" : "②"} 뇌 나이 체크</span>
+        <span class="course-step${both ? "" : " lock"}">${both ? "🎁" : "③ 🎁"} 보상 상자</span>
+      </div>` +
+      (both ? `<button class="big-btn primary" id="course-claim">🎁 보상 상자 열기</button>`
+        : `<small>두 걸음 완주하면 🐾 ${COURSE_REWARD}마일 보상!</small>`);
+    document.querySelector(".home-menu").prepend(card);
+    if (both) $("#course-claim").onclick = () => {
+      const c2 = course();
+      if (c2.claimed) return;
+      c2.claimed = true;
+      store.set("bw_course", c2);
+      earnMiles(COURSE_REWARD);
+      FX.confetti();
+      alert(`🎁 첫 산책 코스 완주!\n🐾 ${COURSE_REWARD}마일을 받았어요. (보유 ${miles().toLocaleString()}마일)\n테마 상점에서 새 색을 골라 보세요!`);
+      renderHome();
+    };
   }
 
   // ---------- 🚶 첫걸음 안내 투어 (첫 방문: 이름→훈련부터, 이후 메뉴를 순서대로 코치가 안내) ----------
@@ -590,8 +637,10 @@
     $("#result-detail").textContent = detail + (rtAvg ? ` · 평균 반응 ${rtAvg.toFixed(1)}초` : "") + mc + mileLine;
     coachSay(score, isRecord);
     if (isRecord) FX.confetti();
+    // 니어미스를 원버튼 재도전으로 — "3점만 더!"는 텍스트보다 버튼일 때 눌린다 (자유 플레이만, 데일리는 큐 유지)
     $("#btn-next").textContent = last
-      ? (session.mode === "daily" ? "종합 결과 보기" : session.mode === "check" ? "뇌 나이 확인" : "🔁 다시 도전")
+      ? (session.mode === "daily" ? "종합 결과 보기"
+        : near ? `아깝다! ${near[1]}까지 ${near[0] - score}점 — 한 판 더!` : "🔁 다시 도전")
       : "다음 게임 →";
     $("#btn-next").onclick = () => {
       if (!last) { session.i++; runCurrent(); }
@@ -659,6 +708,7 @@
     const h = history();
     const who = player() || "게스트";
     const already = h.some(r => r.date === today() && mine(r, who));
+    const prevLimit = unlockLimit(); // 해금 연출용 — 기록 전 해금선
     if (!already) {
       h.push({ date: today(), score: total, games: session.results, name: who });
       store.set("bw_history", h);
@@ -666,6 +716,9 @@
       CLOUD.submit("daily", who, total); // 온라인 기록판 (연결 시)
       earnMiles(total); // 🐾 점수만큼 마일리지 적립
     }
+    courseAdvance("daily"); // 🚩 첫 산책 코스 미션 ①
+    // 🎉 이번 완주로 새로 열린 게임 (도장 +1 → 해금선 +3) — 조용히 열리던 걸 연출로 승격
+    const newly = UNLOCK_SEQ.slice(prevLimit, unlockLimit()).map(id => ALL.find(g => g.id === id)).filter(Boolean);
     // 어제의 나와 대결 (본인 기록만)
     const yd = new Date(); yd.setDate(yd.getDate() - 1);
     const yRec = h.find(r => r.date === localDate(yd) && mine(r, who));
@@ -684,8 +737,15 @@
     $("#result-comment").textContent = already ? "오늘 점수는 이미 기록되어 있어 연습으로만 남아요." : comment(total);
     $("#result-detail").innerHTML =
       session.queue.map(g => `${icon(g)} ${g.name}: ${session.results[g.id]}점 ${medal(session.results[g.id])}`).join("<br>") + vs;
-    $("#btn-next").textContent = "기록 보기";
-    $("#btn-next").onclick = () => { renderStats(); show("stats"); };
+    // 🧠 개선 루프: 오늘 뇌 나이를 쟀다면 훈련 직후 "다시 재기"가 자연스러운 다음 걸음 (측정→훈련→재측정)
+    const measuredAge = ageChecks().some(r => r.date === today() && mine(r, who));
+    if (measuredAge) {
+      $("#btn-next").textContent = "🧠 뇌 나이 다시 재기 — 젊어졌나?";
+      $("#btn-next").onclick = () => startSession("check", U.shuffle(CHECK_POOL).slice(0, 3));
+    } else {
+      $("#btn-next").textContent = "기록 보기";
+      $("#btn-next").onclick = () => { renderStats(); show("stats"); };
+    }
 
     // 🍪 웰니스 쿠키 + 🔮 내일 예고 (자이가르닉 — 끝났다는 느낌을 지움)
     const el2 = $("#result-detail");
@@ -693,12 +753,21 @@
     const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
     const teaseGames = dailyLineup(localDate(tmr));
     const hoursLeft = 24 - new Date().getHours();
-    el2.innerHTML += (already ? "" : `<br>🐾 <b>+${total} 마일</b> 적립! (보유 ${miles().toLocaleString()}마일)`) + `
+    el2.insertAdjacentHTML("beforeend", (already ? "" : `<br>🐾 <b>+${total} 마일</b> 적립! (보유 ${miles().toLocaleString()}마일)`) +
+      (newly.length ? `
+      <div class="tease">🎉 <b>새 게임 ${newly.length}종 해금!</b>
+        <span class="tease-icons">${newly.map(g => `<img src="${iconSrc(g)}" alt="" onerror="this.outerHTML='🆕'">`).join("")}</span>
+        <small>${newly.map(g => g.name).join(" · ")}</small>
+      </div>
+      <button class="big-btn ghost" id="try-new">🆕 '${newly[0].name}' 지금 해보기</button>` : "") + `
+      <button class="big-btn ghost" id="try-puzzle">🧗 퍼즐 산책 — 점 잇기 Lv.${puzzleLv("flow")} 등반하기</button>
       <button class="cookie-card" id="cookie-card">🍪 <b>오늘의 웰니스 쿠키</b> <small>눌러서 열기</small></button>
       <div class="tease">🔮 내일의 산책 예고
         <span class="tease-icons">${teaseGames.map(g => `<img src="${iconSrc(g)}" alt="?" onerror="this.outerHTML='❓'">`).join("")}</span>
         <small>새 훈련 5종, 자정에 열려요 (약 ${hoursLeft}시간 뒤)</small>
-      </div>`;
+      </div>`);
+    if (newly.length) $("#try-new").onclick = () => startSession("free", [newly[0]]);
+    $("#try-puzzle").onclick = () => startCampaign(window.GAME_FLOW, puzzleLv("flow"));
     $("#cookie-card").onclick = e => {
       e.currentTarget.outerHTML = `<div class="cookie-open">🥠 ${COOKIES[cookieIdx]}</div>`;
       SND.pop && SND.pop();
@@ -711,11 +780,10 @@
         const list = top.daily;
         const rank = list.filter(r => r.score > total).length + 1;
         const el = $("#result-detail");
-        // 서열식 대신 산책 은유 — 콘셉트 톤 유지
-        if (rank <= 10 && (list.length < 10 || total >= list[list.length - 1].score))
-          el.innerHTML += `<br>🌐 오늘 함께 산책한 사람들 중 <b>${rank}번째</b>로 상쾌한 걸음!`;
-        else
-          el.innerHTML += `<br>🌐 오늘의 선두 ${list[0].name}님과 ${list[0].score - total}점 차이 — 내일 나란히 걸어봐요!`;
+        // 서열식 대신 산책 은유 — 콘셉트 톤 유지. innerHTML +=는 앞서 단 버튼 핸들러를 죽여서 insertAdjacentHTML 사용
+        el.insertAdjacentHTML("beforeend", rank <= 10 && (list.length < 10 || total >= list[list.length - 1].score)
+          ? `<br>🌐 오늘 함께 산책한 사람들 중 <b>${rank}번째</b>로 상쾌한 걸음!`
+          : `<br>🌐 오늘의 선두 ${list[0].name}님과 ${list[0].score - total}점 차이 — 내일 나란히 걸어봐요!`);
       }).catch(() => {});
     }
   }
@@ -742,9 +810,12 @@
     $("#coach-bubble").textContent = "두구두구두구…";
     // 드럼롤 → 숫자 롤링 → 쾅 공개
     FX.reveal($("#result-score"), age, "세", () => {
+      // 개선 루프 델타: 같은 날 재측정(연습)은 아까 기록과 직접 비교 — "젊어졌다"가 훅
       $("#result-comment").textContent =
-        measuredToday ? "오늘은 이미 측정했어요 — 이번 건 연습 기록이에요. 내일 다시 재 봐요!"
-          : prev == null ? "첫 측정이에요. 내일 또 재 보세요!"
+        measuredToday ? (age < prev ? `아까 ${prev}세 → 지금 ${age}세, ${prev - age}살 젊어졌어요! (연습 기록)`
+          : age > prev ? `아까 ${prev}세 → 지금 ${age}세. 몸이 덜 풀렸나요? 한 번 더!`
+            : `아까와 같은 ${prev}세 — 안정적이에요! (연습 기록)`)
+          : prev == null ? "첫 측정이에요. 훈련하면 젊어질 수 있어요!"
             : age < prev ? `지난번 ${prev}세보다 젊어졌어요!`
               : age > prev ? `지난번 ${prev}세보다 살짝 높네요. 컨디션 탓일 거예요.`
                 : "지난번과 같아요. 안정적!";
@@ -760,8 +831,16 @@
       setCoachFace((prev != null && age < prev) || age <= 35 ? "happy" : prev != null && age > prev ? "sad" : "base");
       if (prev != null && age < prev) FX.confetti();
     });
-    $("#btn-next").textContent = "기록 보기";
-    $("#btn-next").onclick = () => { renderStats(); show("stats"); };
+    courseAdvance("check"); // 🚩 첫 산책 코스 미션 ②
+    // 🧠 개선 루프: 오늘 훈련 전이면 "훈련하고 젊어지기"가 다음 걸음 (측정→훈련→재측정)
+    const trainedToday = myHist(who).some(r => r.date === today());
+    if (!trainedToday) {
+      $("#btn-next").textContent = "💪 1분 30초 훈련하고 다시 재기";
+      $("#btn-next").onclick = () => startSession("daily", dailyLineup(today()));
+    } else {
+      $("#btn-next").textContent = "기록 보기";
+      $("#btn-next").onclick = () => { renderStats(); show("stats"); };
+    }
   }
 
   // ---------- 진입점 ----------
