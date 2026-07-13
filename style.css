@@ -782,6 +782,7 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 
 /* 본 그림 기억 (회상형 재인) */
 .recall-show { display: flex; gap: var(--sp-4); justify-content: center; align-items: center; flex-wrap: wrap; min-height: 96px; }
+.recall-show[hidden] { display: none; } /* .recall-show의 display:flex가 [hidden] 기본 display:none을 덮어 안 숨겨지던 버그 — 세트가 계속 보임 */
 .recall-face { font-size: 56px; animation: cardPop 0.3s ease both; }
 .recall-item { font-size: 84px; text-align: center; min-height: 112px; line-height: 112px; }
 @media (max-width: 480px) { .recall-face { font-size: 46px; } .recall-item { font-size: 68px; min-height: 96px; line-height: 96px; } }
