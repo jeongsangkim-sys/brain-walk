@@ -259,6 +259,7 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
   padding: var(--sp-3) var(--sp-4);
 }
 .age-hist small { color: var(--fg-tertiary); font-size: 12px; }
+.tease-mystery { font-size: 26px; letter-spacing: 4px; }
 .age-basis {
   font-size: 18px; margin: var(--sp-2) 0;
   background: var(--charcoal-50); border-radius: var(--radius-lg);

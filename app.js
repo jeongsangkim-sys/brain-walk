@@ -758,11 +758,9 @@
       $("#btn-next").onclick = () => { renderStats(); show("stats"); };
     }
 
-    // 🍪 웰니스 쿠키 + 🔮 내일 예고 (자이가르닉 — 끝났다는 느낌을 지움)
+    // 🍪 웰니스 쿠키 + 🔮 내일 예고 (자이가르닉 — 끝났다는 느낌을 지움. 라인업이 랜덤이라 예고는 미스터리로)
     const el2 = $("#result-detail");
     const cookieIdx = Math.floor(Date.now() / 86400000) % COOKIES.length; // 하루 하나 고정
-    const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
-    const teaseGames = dailyLineup(localDate(tmr));
     const hoursLeft = 24 - new Date().getHours();
     el2.insertAdjacentHTML("beforeend", (already ? "" : `<br>🐾 <b>+${total} 마일</b> 적립! (보유 ${miles().toLocaleString()}마일)`) +
       (newly.length ? `
@@ -774,8 +772,8 @@
       <button class="big-btn ghost" id="try-puzzle">🧗 퍼즐 산책 — 점 잇기 Lv.${puzzleLv("flow")} 등반하기</button>
       <button class="cookie-card" id="cookie-card">🍪 <b>오늘의 웰니스 쿠키</b> <small>눌러서 열기</small></button>
       <div class="tease">🔮 내일의 산책 예고
-        <span class="tease-icons">${teaseGames.map(g => `<img src="${iconSrc(g)}" alt="?" onerror="this.outerHTML='❓'">`).join("")}</span>
-        <small>새 훈련 5종, 자정에 열려요 (약 ${hoursLeft}시간 뒤)</small>
+        <span class="tease-icons tease-mystery">❓❓❓❓❓</span>
+        <small>내일은 랜덤 5종! 자정에 새 기록이 열려요 (약 ${hoursLeft}시간 뒤)</small>
       </div>`);
     if (newly.length) $("#try-new").onclick = () => startSession("free", [newly[0]]);
     $("#try-puzzle").onclick = () => startCampaign(window.GAME_FLOW, puzzleLv("flow"));
@@ -882,7 +880,7 @@
     const trainedToday = myHist(who).some(r => r.date === today());
     if (!trainedToday) {
       $("#btn-next").textContent = "💪 1분 30초 훈련하고 다시 재기";
-      $("#btn-next").onclick = () => startSession("daily", dailyLineup(today()));
+      $("#btn-next").onclick = () => startSession("daily", dailyLineup());
     } else {
       $("#btn-next").textContent = "기록 보기";
       $("#btn-next").onclick = () => { renderStats(); show("stats"); };
@@ -893,31 +891,13 @@
   const DAILY_COUNT = 5; // 오늘의 훈련 게임 수
   const DAILY_SEC = 18;  // 게임당 18초 × 5 = 정확히 90초 — "1분 30초면 끝" 카피와 실플레이 일치
   const CHECK_SEC = 20;  // 체크 과제당 20초 × 5 + 카운트다운 ≈ "약 2분" 안내와 일치
-  // 데일리: 인지 영역별 1개씩 우선 확보 — 완전 랜덤이면 같은 계열만 몰릴 수 있음
-  const CATS = {
-    calc: "수", calc25: "수", sign: "수", change: "수",
-    memory: "기억", photo: "기억", simon: "기억", pairs: "기억",
-    stroop: "반응", rps: "반응", flags: "반응", dual: "반응",
-    trail: "관찰", people: "관찰", birds: "관찰", boxes: "관찰", compare: "관찰", flow: "관찰", arrows: "관찰"
-  };
-  // 날짜 시드 결정적 랜덤 — 오늘 라인업을 어제 미리 알 수 있음 (내일 예고용)
-  function dailyLineup(dateStr) {
-    let h = 2166136261;
-    for (const c of dateStr) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
-    const rnd = () => {
-      h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909);
-      return ((h ^= h >>> 16) >>> 0) / 4294967296;
-    };
-    const shuffle = a => { const x = [...a]; for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
-    // '18초씩 5게임=1분 30초' 약속 — 시간제 게임만(분량제 count는 시간 컷이 안 먹혀 제외), 영역별 1개 먼저 뽑고 나머지 채움
+  // 데일리 라인업: 매번 완전 랜덤 5종 (JS 결정 — 체크는 고정 배터리, 훈련은 다양성)
+  // '18초씩 5게임=1분 30초' 약속 유지 — 시간제 게임만(분량제 count는 시간 컷이 안 먹혀 제외)
+  function dailyLineup() {
     const pool = DAILY_POOL.filter(g => isUnlocked(g) && !g.mode);
-    const byCat = {};
-    pool.forEach(g => (byCat[CATS[g.id]] = byCat[CATS[g.id]] || []).push(g));
-    const picked = shuffle(Object.keys(byCat).sort()).map(c => shuffle(byCat[c])[0]);
-    const rest = shuffle(pool.filter(g => !picked.includes(g)));
-    return picked.concat(rest).slice(0, DAILY_COUNT);
+    return U.shuffle(pool).slice(0, DAILY_COUNT);
   }
-  $("#btn-daily").onclick = () => startSession("daily", dailyLineup(today()));
+  $("#btn-daily").onclick = () => startSession("daily", dailyLineup());
   function startCheck() { startSession("check", U.shuffle(CHECK_POOL).slice(0, 5)); } // 시간제 5과제 전부(순서만 셔플)
   $("#btn-check").onclick = startCheck;
   $("#btn-free").onclick = () => {
