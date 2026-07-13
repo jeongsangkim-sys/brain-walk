@@ -351,10 +351,11 @@
         b.style.minHeight = "120px";
         b.textContent = label;
         b.onclick = () => {
-          if (i !== next) { fb.textContent = "번갈아서!"; fb.className = "feedback flash-bad"; return; }
+          if (i !== next) { fb.textContent = "번갈아서!"; fb.className = "feedback flash-bad"; FX.flash(false); return; }
           n++; next = 1 - next;
           num.textContent = n;
           fb.textContent = ""; fb.className = "feedback";
+          FX.flash(true);
           if (n >= GOAL) {
             const el = api.elapsedSec();
             api.finish(Math.min(100, Math.round(100 * 14 / el)), `40까지 ${el}초 · ${U.speedGrade(14 / el)}`);

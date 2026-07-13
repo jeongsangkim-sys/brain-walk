@@ -502,6 +502,7 @@
         }
         U.renderChoices(area.querySelector("#du-sc"), U.shuffle([...opts]), v => {
           const starPart = v === stars ? 1 : Math.abs(v - stars) === 1 ? 0.5 : 0;
+          FX.flash(v === stars);
           const n = eqOk + eqBad, eqAcc = n ? eqOk / n : 0;
           const score = Math.round(70 * eqAcc * Math.min(1, n / 8) + 30 * starPart);
           api.finish(score, `계산 ${eqOk}/${n} · 별 ${stars}개 (답 ${v})`);
