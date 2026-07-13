@@ -184,7 +184,7 @@
     const GREET = hh < 5 ? "늦은 밤에도 반가워요!" : hh < 11 ? "좋은 아침이에요!" : hh < 17 ? "오후 머리 깨우기 딱 좋은 시간!" : hh < 22 ? "오늘 하루 마무리 산책 어때요?" : "자기 전 가볍게 한 판!";
     $("#daily-sub").textContent = doneToday
       ? `오늘 완료 ✓ 새 훈련 5종이 약 ${24 - hh}시간 뒤 열려요`
-      : "20초씩 5게임 — 1분 30초면 끝!";
+      : "게임당 18초, 5게임 — 딱 1분 30초!";
     $("#btn-daily").classList.toggle("todo", !doneToday);
 
     // 오늘의 한 마디 (박사 잡담 포지션 — 일반 상식만, 의료 조언 아님)
@@ -212,7 +212,7 @@
 
   // ---------- 🚶 첫걸음 안내 투어 (첫 방문: 이름→훈련부터, 이후 메뉴를 순서대로 코치가 안내) ----------
   const TOUR = [
-    { btn: "#btn-daily", msg: () => player() ? "먼저 '오늘의 훈련' — 20초씩 5게임, 1분 30초면 끝!" : "처음 오셨네요! 이름 정하고 1분 30초짜리 '오늘의 훈련'부터 🐾" },
+    { btn: "#btn-daily", msg: () => player() ? "먼저 '오늘의 훈련' — 5게임 딱 1분 30초면 끝!" : "처음 오셨네요! 이름 정하고 1분 30초짜리 '오늘의 훈련'부터 🐾" },
     { btn: "#btn-check", msg: () => "훈련 잘하셨어요! 이번엔 '뇌 나이 체크' — 누르면 바로 측정 시작!" },
     { btn: "#btn-free", msg: () => "'자유 플레이'에선 원하는 게임만 골라서 할 수 있어요." },
     { btn: "#btn-sudoku", msg: () => "'퍼즐 산책'에선 스도쿠·점 잇기를 느긋하게 — 레벨 1000 등반도!" },
@@ -400,7 +400,7 @@
         elT.textContent = "0초";
         timerId = setInterval(() => { t++; elT.textContent = t + "초"; }, 1000);
       } else {
-        // BW_TEST_SEC: 콘솔 테스트용 단축 타이머 · 데일리는 게임당 20초 고정("1분 30초" 약속)
+        // BW_TEST_SEC: 콘솔 테스트용 단축 타이머 · 데일리는 게임당 18초 고정(5게임=1분 30초 약속)
         const baseSec = session.mode === "daily" ? DAILY_SEC : (game.sec || 25);
         const dur = Math.round((window.BW_TEST_SEC || baseSec) * (settings().relaxMode ? 1.5 : 1));
         let left = dur;
@@ -758,7 +758,7 @@
 
   // ---------- 진입점 ----------
   const DAILY_COUNT = 5; // 오늘의 훈련 게임 수
-  const DAILY_SEC = 20;  // 게임당 20초 — "1분 30초면 끝" 후킹의 근거
+  const DAILY_SEC = 18;  // 게임당 18초 × 5 = 정확히 90초 — "1분 30초면 끝" 카피와 실플레이 일치
   // 데일리: 인지 영역별 1개씩 우선 확보 — 완전 랜덤이면 같은 계열만 몰릴 수 있음
   const CATS = {
     calc: "수", calc25: "수", sign: "수", change: "수",
@@ -775,7 +775,7 @@
       return ((h ^= h >>> 16) >>> 0) / 4294967296;
     };
     const shuffle = a => { const x = [...a]; for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
-    // '20초씩 5게임' 약속 — 시간제 게임만(분량제 count는 20초 컷이 안 먹혀 제외), 영역별 1개 먼저 뽑고 나머지 채움
+    // '18초씩 5게임=1분 30초' 약속 — 시간제 게임만(분량제 count는 시간 컷이 안 먹혀 제외), 영역별 1개 먼저 뽑고 나머지 채움
     const pool = DAILY_POOL.filter(g => isUnlocked(g) && !g.mode);
     const byCat = {};
     pool.forEach(g => (byCat[CATS[g.id]] = byCat[CATS[g.id]] || []).push(g));
