@@ -1143,6 +1143,31 @@
     else tip.textContent = ["💬 멍멍! 🐾", "💬 헤헤, 간지러워요!", "💬 오늘도 같이 훈련해요!", "💬 멍! (쓰다듬 +1)"][petCount % 4];
   };
 
+  // ---------- 📲 홈 화면에 추가 (앱 설치) ----------
+  // 안드로이드·PC 크롬은 네이티브 설치 팝업, iOS 등 미지원 브라우저는 단계 안내로 폴백
+  const installBtn = $("#btn-install");
+  let deferredInstall = null;
+  const isStandalone = () => matchMedia("(display-mode: standalone)").matches || !!navigator.standalone;
+  if (!isStandalone()) installBtn.hidden = false; // 이미 앱으로 열었으면 숨김
+  window.addEventListener("beforeinstallprompt", e => {
+    e.preventDefault(); // 크롬 자동 배너 대신 우리 버튼으로
+    deferredInstall = e;
+    if (!isStandalone()) installBtn.hidden = false;
+  });
+  window.addEventListener("appinstalled", () => { installBtn.hidden = true; deferredInstall = null; });
+  installBtn.onclick = async () => {
+    if (deferredInstall) { // 원클릭 설치 (안드로이드 크롬 · PC 크롬/엣지)
+      deferredInstall.prompt();
+      await deferredInstall.userChoice.catch(() => {});
+      deferredInstall = null;
+      return;
+    }
+    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    alert(ios
+      ? "📲 아이폰·아이패드에 추가하기\n\n1️⃣ Safari 아래쪽 공유 버튼(⬆️)을 누르세요\n2️⃣ '홈 화면에 추가'를 찾아 누르세요\n3️⃣ 오른쪽 위 '추가'를 누르면 끝!\n\n홈 화면 아이콘으로 앱처럼 열 수 있어요 🐾"
+      : "📲 홈 화면에 추가하기\n\n· 안드로이드(크롬): 오른쪽 위 ⋮ 메뉴 → '홈 화면에 추가'\n· 컴퓨터(크롬·엣지): 주소창 오른쪽 설치 아이콘 클릭\n\n홈 화면 아이콘으로 앱처럼 열 수 있어요 🐾");
+  };
+
   // 자동 연결 링크: ?board=<웹앱URL> 로 열면 온라인 순위 URL 자동 저장 (폰 설정 원클릭)
   try {
     const bp = new URLSearchParams(location.search).get("board");
