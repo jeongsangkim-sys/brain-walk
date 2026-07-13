@@ -849,6 +849,18 @@
   // simon은 불빛 재생 대기가 첫 탭 간격에 섞여 구조적으로 길어짐 → 앵커도 그만큼 높게
   const BEST_RT = { stroop: 0.55, trail: 0.5, sign: 1.2, simon: 1.1, recall: 0.9 };
 
+  // 🎓 과제별 강약을 교수 어투로 서술 — 뇌 나이의 개인화된 근거 (납득성)
+  function ageNarrative(queue, metas, speedAge, errAdd) {
+    const withName = queue.map((g, i) => ({ name: g.name, ...metas[i] }));
+    const fast = withName.reduce((a, b) => b.ratio < a.ratio ? b : a);
+    const slow = withName.reduce((a, b) => b.ratio > a.ratio ? b : a);
+    const worst = withName.reduce((a, b) => b.err > a.err ? b : a);
+    let s = speedAge <= 35 ? `${fast.name}에선 젊은 층 못지않게 빨랐어요.`
+      : `전반적으로 반응이 조금 느긋했어요(특히 ${slow.name}).`;
+    s += errAdd >= 9 ? ` 다만 ${worst.name}에서 실수가 있어 나이가 올라갔습니다.` : ` 정확도는 훌륭했어요.`;
+    return s;
+  }
+
   function finishCheck() {
     const scores = Object.values(session.results);
     const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
@@ -887,7 +899,7 @@
     $("#result-title").textContent = "🧠 당신의 뇌 나이는…";
     $("#result-comment").textContent = "";
     $("#result-detail").innerHTML = "";
-    $("#coach-bubble").textContent = "두구두구두구…";
+    $("#coach-bubble").textContent = PROF.revealDrum;
     $("#btn-ghost-share").hidden = true; // 이전 자유 플레이의 대결 버튼 잔상 제거
     // 🔒 오터치 가드: 게임 중 연타 잔여 터치가 공개 화면을 실수로 닫지 않게, 공개가 끝날 때까지 버튼 잠금
     const guarded = [$("#btn-next"), document.querySelector("#screen-result [data-goto]")];
@@ -913,6 +925,16 @@
           return `${icon(g)} ${g.name}: ${m.rt != null ? m.rt.toFixed(1) + "초" : "무응답"} · ${m.acc != null ? Math.round(m.acc * 100) + "%" : "-"}`;
         }).join("<br>") +
         `<br><span class="disclaimer">빠르고 정확할수록 젊어져요 (최고 속도·무오답 = 20세). 놀이용 추정치예요. 의료 검사가 아닙니다.</span>`;
+      const narrative = ageNarrative(session.queue, metas, speedAge, errAdd);
+      const spPct = Math.round(Math.max(0, Math.min(100, (speedAge - 20) / 65 * 100)));
+      const erPct = Math.round(Math.max(0, Math.min(100, errAdd / 45 * 100)));
+      $("#result-detail").insertAdjacentHTML("beforeend", `
+        <div class="age-why">
+          <div class="why-line">🎓 ${narrative}</div>
+          <div class="why-bar"><span>속도</span><div class="bar"><i style="width:${spPct}%"></i></div></div>
+          <div class="why-bar"><span>정확도</span><div class="bar err"><i style="width:${erPct}%"></i></div></div>
+          <small class="why-note">속도·실수가 각각 나이를 얼마나 끌어올렸는지예요. 재미로 보는 추정치랍니다.</small>
+        </div>`);
       $("#coach-bubble").textContent =
         prev != null && age < prev ? "젊어졌어요! 훈련 효과 제대로네요! 🐾"
           : age <= 35 ? "이 두뇌, 팔팔한데요?"

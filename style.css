@@ -546,6 +546,15 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 .nudge-row { display: flex; gap: var(--sp-3); margin-top: var(--sp-3); }
 .nudge-row .big-btn { flex: 1; margin-top: 0; }
 
+.age-why { margin-top: var(--sp-4); padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-hairline); border-radius: var(--radius-lg);
+  background: var(--surface); color: var(--fg-primary); text-align: left; }
+.why-line { font-size: 16px; margin-bottom: var(--sp-3); }
+.why-bar { display: flex; align-items: center; gap: var(--sp-2); font-size: 14px; margin: 4px 0; color: var(--fg-secondary); }
+.why-bar .bar { flex: 1; height: 10px; border-radius: 5px; background: var(--charcoal-100); overflow: hidden; }
+.why-bar .bar i { display: block; height: 100%; background: var(--aia-red); }
+.why-bar .bar.err i { background: var(--charcoal-500); }
+.why-note { display: block; margin-top: var(--sp-2); color: var(--fg-tertiary); }
 .tease { margin-top: var(--sp-3); font-size: 15px; color: var(--fg-secondary); }
 .tease small { display: block; color: var(--fg-tertiary); }
 .tease-icons img {
