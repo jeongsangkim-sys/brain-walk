@@ -555,6 +555,14 @@ h2 { font-size: 28px; font-weight: var(--fw-bold); line-height: var(--lh-heading
 .why-bar .bar i { display: block; height: 100%; background: var(--aia-red); }
 .why-bar .bar.err i { background: var(--charcoal-500); }
 .why-note { display: block; margin-top: var(--sp-2); color: var(--fg-tertiary); }
+.peer-curve { margin-top: var(--sp-3); }
+.peer-curve svg { width: 100%; height: 56px; display: block; }
+.pc-fill { fill: color-mix(in srgb, var(--aia-red) 16%, transparent); stroke: var(--aia-red); stroke-width: 2; stroke-linejoin: round; }
+.pc-mark { stroke: var(--charcoal-900); stroke-width: 2.5; stroke-dasharray: 3 3; }
+.pc-scale { display: flex; justify-content: space-between; font-size: 12px; color: var(--fg-tertiary); margin-top: 2px; }
+.pc-label { font-size: 14px; color: var(--fg-secondary); margin-top: 4px; }
+.pc-label b { color: var(--aia-red); }
+.pc-label small { color: var(--fg-tertiary); }
 .tease { margin-top: var(--sp-3); font-size: 15px; color: var(--fg-secondary); }
 .tease small { display: block; color: var(--fg-tertiary); }
 .tease-icons img {

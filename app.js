@@ -512,7 +512,8 @@
     if (session.mode === "check") {
       if (session.i === 0 && !session.briefed) {
         session.briefed = true;
-        ii.style.visibility = "hidden";
+        ii.src = "assets/professor.png"; // 🎓 말티씨 박사가 시험을 주관
+        ii.style.visibility = "visible";
         if (onboarding) {
           $("#intro-title").textContent = `🎓 ${PROF.name}`;
           $("#intro-desc").textContent = PROF.intro + "\n\n" + PROF.checkBrief;
@@ -866,6 +867,29 @@
     return s;
   }
 
+  // 🔔 또래 분포 곡선 — 이 뇌 나이가 전체 분포 어디쯤인지 (그럴듯한 노멀, 실측 아님)
+  function peerCurve(age) {
+    const MEAN = 50, SD = 13, LO = 20, HI = 85, W = 260, H = 64, PAD = 6;
+    const erf = x => { const t = 1 / (1 + 0.3275911 * Math.abs(x)); const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return x >= 0 ? y : -y; };
+    const cdf = v => 0.5 * (1 + erf((v - MEAN) / (SD * Math.SQRT2)));
+    const topPct = Math.min(99, Math.max(1, Math.round(cdf(age) * 100)));
+    const xAt = v => PAD + (v - LO) / (HI - LO) * (W - 2 * PAD);
+    const yAt = v => { const z = (v - MEAN) / SD; return (H - PAD) - Math.exp(-0.5 * z * z) * (H - 2 * PAD); };
+    let d = `M ${xAt(LO).toFixed(1)} ${H - PAD}`;
+    for (let v = LO; v <= HI; v += 1.5) d += ` L ${xAt(v).toFixed(1)} ${yAt(v).toFixed(1)}`;
+    d += ` L ${xAt(HI).toFixed(1)} ${H - PAD} Z`;
+    const mx = xAt(age).toFixed(1);
+    const label = age < MEAN - 3 ? `또래 평균(약 ${MEAN}세)보다 젊은 편` : age > MEAN + 3 ? `또래 평균(약 ${MEAN}세)보다 높은 편` : "또래 평균 수준";
+    return `<div class="peer-curve">
+        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+          <path d="${d}" class="pc-fill"/>
+          <line x1="${mx}" y1="${PAD}" x2="${mx}" y2="${H - PAD}" class="pc-mark"/>
+        </svg>
+        <div class="pc-scale"><span>20세</span><span>85세</span></div>
+        <div class="pc-label">🔔 ${label} — 상위 <b>${topPct}%</b> <small>(재미용 분포, 실측 아님)</small></div>
+      </div>`;
+  }
+
   function finishCheck() {
     const scores = Object.values(session.results);
     const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
@@ -938,6 +962,7 @@
           <div class="why-line">🎓 ${narrative}</div>
           <div class="why-bar"><span>속도</span><div class="bar"><i style="width:${spPct}%"></i></div></div>
           <div class="why-bar"><span>정확도</span><div class="bar err"><i style="width:${erPct}%"></i></div></div>
+          ${peerCurve(age)}
           <small class="why-note">속도·실수가 각각 나이를 얼마나 끌어올렸는지예요. 재미로 보는 추정치랍니다.</small>
         </div>`);
       $("#coach-bubble").textContent =
