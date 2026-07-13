@@ -206,6 +206,9 @@
       ? `오늘 완료 ✓ 새 훈련 5종이 약 ${24 - hh}시간 뒤 열려요`
       : "게임당 18초, 5게임 — 딱 1분 30초!";
     $("#btn-daily").classList.toggle("todo", !doneToday);
+    const measuredToday = ageChecks().some(r => r.date === today() && mine(r, player()));
+    const cb = $("#btn-check");
+    if (cb) cb.classList.toggle("todo", !measuredToday);
 
     // 오늘의 한 마디 (박사 잡담 포지션 — 일반 상식만, 의료 조언 아님)
     const TIPS = [
@@ -222,7 +225,9 @@
     ];
     const dayIdx = Math.floor(Date.now() / 86400000) % TIPS.length; // 하루 하나 고정
     // 미완료: 시간대 인사로 유도 / 완료: 오늘의 팁
-    $("#home-tip").textContent = doneToday ? `💬 ${TIPS[dayIdx]}` : `💬 ${GREET} 딱 1분 30초만 걷고 가요!`;
+    $("#home-tip").textContent = doneToday
+      ? `💬 ${PROF.name}: ${TIPS[dayIdx]}`
+      : `🎓 ${PROF.name}: ${PROF.homeGreet(new Date().getHours(), streakDays().n)}`;
     $("#chk-relax").checked = settings().relaxMode;
     $("#chk-sound").checked = settings().sound !== false;
     $("#chk-notify").checked = !!settings().notify;
