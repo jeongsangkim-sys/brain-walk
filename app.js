@@ -879,14 +879,18 @@
     for (let v = LO; v <= HI; v += 1.5) d += ` L ${xAt(v).toFixed(1)} ${yAt(v).toFixed(1)}`;
     d += ` L ${xAt(HI).toFixed(1)} ${H - PAD} Z`;
     const mx = xAt(age).toFixed(1);
-    const label = age < MEAN - 3 ? `또래 평균(약 ${MEAN}세)보다 젊은 편` : age > MEAN + 3 ? `또래 평균(약 ${MEAN}세)보다 높은 편` : "또래 평균 수준";
+    // 낮은 뇌 나이 = 좋은 결과. 젊으면 "상위 N%"(엘리트처럼), 나이 들면 "하위 N%"(솔직하게). 딱 평균이면 백분위 생략.
+    let label, rank;
+    if (age < MEAN - 3) { label = `또래 평균(약 ${MEAN}세)보다 젊은 편`; rank = ` — 상위 <b>${topPct}%</b>`; }
+    else if (age > MEAN + 3) { label = `또래 평균(약 ${MEAN}세)보다 높은 편`; rank = ` — 하위 <b>${100 - topPct}%</b>`; }
+    else { label = "또래 평균 수준"; rank = ""; }
     return `<div class="peer-curve">
         <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
           <path d="${d}" class="pc-fill"/>
           <line x1="${mx}" y1="${PAD}" x2="${mx}" y2="${H - PAD}" class="pc-mark"/>
         </svg>
         <div class="pc-scale"><span>20세</span><span>85세</span></div>
-        <div class="pc-label">🔔 ${label} — 상위 <b>${topPct}%</b> <small>(재미용 분포, 실측 아님)</small></div>
+        <div class="pc-label">🔔 ${label}${rank} <small>(재미용 분포, 실측 아님)</small></div>
       </div>`;
   }
 
